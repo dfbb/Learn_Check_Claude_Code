@@ -1,0 +1,247 @@
+category: "隐私与可观测性"
+category_id: 14
+source_file: "guide/data-privacy.md"
+
+questions:
+  - id: "14-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "使用 Claude Code 时，哪些内容会被发送给 Anthropic？"
+    options:
+      a: "只有你输入的提示词"
+      b: "提示词、Claude 读取的文件（包括 .env！）、MCP 结果、Bash 输出、错误信息"
+      c: "只有你手动粘贴的代码片段"
+      d: "只有加密的元数据"
+    correct: "b"
+    explanation: |
+      Claude 看到的所有内容都会发送给 Anthropic：你的提示词、Claude 读取的文件（如果没有排除，包括 .env 文件！）、MCP 服务器结果（SQL 查询、API 响应）、Bash 命令输出，以及带堆栈跟踪的错误信息。应在 settings.json 的 permissions.deny 中阻止敏感文件被读取。
+    doc_reference:
+      file: "guide/data-privacy.md"
+      section: "What Leaves Your Machine"
+      anchor: "#what-leaves-your-machine"
+
+  - id: "14-002"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "你想防止 Claude 读取项目中的 .env 文件，应该怎么配置？"
+    options:
+      a: "把 .env 加入 .gitignore"
+      b: "在 settings.json 的 permissions.deny 中添加 Read(./.env)"
+      c: "在 CLAUDE.md 里写\"不要读取 .env 文件\""
+      d: "把 .env 文件移到项目目录外"
+    correct: "b"
+    explanation: |
+      在 settings.json 的 permissions.deny 中配置 `"Read(./.env)"` 可以完全阻止 Claude 读取该文件。.gitignore 只防止提交，不防止 Claude 读取；CLAUDE.md 里的指令 Claude 可能不遵守；移动文件会破坏项目结构。这是保护敏感文件不被发送给 Anthropic 的正确方式。
+    doc_reference:
+      file: "guide/data-privacy.md"
+      section: "What Leaves Your Machine"
+      anchor: "#what-leaves-your-machine"
+
+  - id: "14-003"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "通过 MCP 连接数据库时有什么风险？"
+    options:
+      a: "数据库可能会变慢"
+      b: "查询结果（包括 PII）会发送给 Anthropic 并按保留策略存储"
+      c: "Claude 可能会删除表"
+      d: "MCP 会使用太多 tokens"
+    correct: "b"
+    explanation: |
+      当 MCP 执行数据库查询时，所有结果都会发送给 Anthropic："SELECT * FROM orders" → 100 行客户姓名、邮箱、地址 → 按你���保留层级存储。绝不要连接生产数据库。应使用匿名化数据的开发/预发布环境。
+    doc_reference:
+      file: "guide/data-privacy.md"
+      section: "Risk 2: MCP Database Access"
+      anchor: "#risk-2-mcp-database-access"
+
+  - id: "14-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "如何将 Claude Code 的数据保留从 5 年降到 30 天？"
+    options:
+      a: "删除 ~/.claude 文件夹"
+      b: "在 claude.ai/settings/data-privacy-controls 关闭 'Allow model training'"
+      c: "使用无痕模式"
+      d: "添加 --no-retention 标志"
+    correct: "b"
+    explanation: |
+      访问 claude.ai/settings/data-privacy-controls 并关闭 "Allow model training"。这会立即将保留期从 5 年降到 30 天（仅安全监控）。企业 API（ZDR）可提供 0 天保留，以满足 HIPAA/GDPR 合规。
+    doc_reference:
+      file: "guide/data-privacy.md"
+      section: "Opt-Out of Training"
+      anchor: "#41-opt-out-of-training"
+
+  - id: "14-005"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "Enterprise API（ZDR）的数据保留策略���什么？"
+    options:
+      a: "保留 30 天"
+      b: "保留 1 年"
+      c: "0 天（仅实时处理，不存储数据）"
+      d: "与默认相同，5 年"
+    correct: "c"
+    explanation: |
+      Enterprise API（Zero Data Retention）是 0 天保留——数据实时处理且不存储。适用于 HIPAA、GDPR、PCI-DSS 合规和政府合同。需要与 Anthropic 签订企业合同。
+    doc_reference:
+      file: "guide/data-privacy.md"
+      section: "Tier 3: Enterprise API (Zero Data Retention)"
+      anchor: "#tier-3-enterprise-api-zero-data-retention"
+
+  - id: "14-006"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "指南推荐的会话搜索工具是什么？"
+    options:
+      a: "claude-conversation-extractor"
+      b: "session-search.sh（零依赖 bash 脚本）"
+      c: "ran CLI（npm）"
+      d: "内置 /search 命令"
+    correct: "b"
+    explanation: |
+      推荐工具是 session-search.sh：零依赖（仅 bash）、速度快（列表约 10ms，搜索约 400ms）、可显示可直接使用的 `claude --resume` 命令。可设置别名 `cs` 以便快速访问。也有 Python 方案但更慢。
+    doc_reference:
+      file: "guide/observability.md"
+      section: "Recommended: session-search.sh"
+      anchor: "#recommended-session-searchsh"
+
+  - id: "14-007"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "会话日志使用哪个 hook 事件？"
+    options:
+      a: "PreToolUse"
+      b: "PostToolUse"
+      c: "SessionStart"
+      d: "Notification"
+    correct: "b"
+    explanation: |
+      会话日志使用 PostToolUse hook——每个工具完成后运行，捕获工具名、文件路径、项目和 token 估算。在 settings.json 中配置 session-logger.sh 脚本即可。日志以 JSONL 文件存储在 ~/.claude/logs/。
+    doc_reference:
+      file: "guide/observability.md"
+      section: "Register in Settings"
+      anchor: "#2-register-in-settings"
+
+  - id: "14-008"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "session logger 使用的 token 估算方法是什么？"
+    options:
+      a: "API 提供的精确计数"
+      b: "约 4 个字符 = 1 token（启发式，略偏高）"
+      c: "1 个单词 = 1 token"
+      d: "仅基于文件大小"
+    correct: "b"
+    explanation: |
+      logger 使用约 4 字符/1 token 的启发式方法估算 token。这是近似值，通常会略高估。Claude Code CLI 不暴露真实 API token 指标，因此估算与实际计费约有 15-25% 偏差。
+    doc_reference:
+      file: "guide/observability.md"
+      section: "Token Estimation Method"
+      anchor: "#token-estimation-method"
+
+  - id: "14-009"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "会话监控不能做什么？"
+    options:
+      a: "跟踪工具使用次数"
+      b: "识别文件访问模式"
+      c: "提供精确 token 计数和真实 API 成本"
+      d: "记录操作时间戳"
+    correct: "c"
+    explanation: |
+      监控不能提供：精确 token 计数（CLI 不暴露 API 指标）、真实 API 成本（仅估算）、TTFT 时间、实时流式指标或上下文窗口使用率。它可以跟踪：工具使用次数、文件访问模式、相对比较、操作时序。
+    doc_reference:
+      file: "guide/observability.md"
+      section: "What This Monitoring CANNOT Do"
+      anchor: "#what-this-monitoring-cannot-do"
+
+  - id: "14-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 会话日志在本地存储在哪里？"
+    options:
+      a: "~/.config/claude/"
+      b: "~/.claude/projects/<project>/"
+      c: "/var/log/claude/"
+      d: "仅在云端"
+    correct: "b"
+    explanation: |
+      会话在本地以 JSONL 文件存储在 ~/.claude/projects/<project>/。这支持通过 `claude --resume <id>` 恢复会话，或用 `claude -c` 恢复最近会话。session-logger.sh 的自定义日志存储在 ~/.claude/logs/（可通过 CLAUDE_LOG_DIR 配置）。
+    doc_reference:
+      file: "guide/observability.md"
+      section: "Native Commands"
+      anchor: "#native-commands"
+
+  - id: "14-011"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "在 git 提交中，什么时候用 'Co-Authored-By'，什么时候用 'Assisted-By'？"
+    options:
+      a: "只要有 AI 参与，一律使用 Co-Authored-By"
+      b: "AI 生成大量代码时用 Co-Authored-By，AI 仅提供建议或审查时用 Assisted-By"
+      c: "永远不要在提交中标注 AI"
+      d: "每次提交都同时用两者"
+    correct: "b"
+    explanation: |
+      git 提交中的 AI 可追溯性：
+
+      - **Co-Authored-By**：当 AI 生成了重要代码部分（实现、重构）
+      - **Assisted-By**：当 AI 仅提供建议、审查或小幅修改建议
+
+      这种区分对代码归属、审计轨迹以及理解是谁（或什么）实际编写了代码非常重要。有些团队会把这条作为 CLAUDE.md 的强制提交规范。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "AI Traceability"
+      anchor: "#ai-traceability"
+
+  - id: "14-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB 做什么，为什么需要它？"
+    options:
+      a: "每条命令后清空终端输出"
+      b: "防止敏感环境变量泄漏到子进程上下文（如 MCP servers、hooks）"
+      c: "禁用 bash 命令中的所有环境变量展开"
+      d: "在环境变量传给 Claude 前先加密"
+    correct: "b"
+    explanation: |
+      CLAUDE_CODE_SUBPROCESS_ENV_SCRUB 是一个安全控制，用于防止敏感环境变量（API keys、tokens、secrets）泄漏到子进程上下文。没有它时，父 shell 中的环境变量会被 MCP server 进程、hooks 和生成的子进程继承。可将其设置为���清理的变量名逗号列表，或使用 glob 模式。对于 Claude 运行在带生产凭据环境中的团队，这是关键配置。
+    doc_reference:
+      file: "guide/security/data-privacy.md"
+      section: "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"
+      anchor: "#claude_code_subprocess_env_scrub"
+
+  - id: "14-013"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude Code 设置中的 sandbox.failIfUnavailable 控制什么？"
+    options:
+      a: "当网络不可用时 Claude Code 是否崩溃"
+      b: "当无法激活沙箱隔离层时，Claude Code 是否拒绝运行"
+      c: "当沙箱超时时 MCP servers 是否优雅失败"
+      d: "当沙箱繁忙时是否跳过 hooks"
+    correct: "b"
+    explanation: |
+      sandbox.failIfUnavailable（布尔值，默认 false）控制当沙箱隔离无法激活时 Claude Code 是否硬失败。在生产/CI 环境应设为 true，以强制每个会话都在沙箱中运行——避免静默回退到非沙箱模式。在开发环境（沙箱可能不可用，如某些 Linux 内核或 Docker-in-Docker）可设为 false。它是纵深防御配置的一部分。
+    doc_reference:
+      file: "guide/security/sandbox-native.md"
+      section: "sandbox.failIfUnavailable"
+      anchor: "#sandboxfaililunavailable"
+
+  - id: "14-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是 X-Claude-Code-Session-Id header，在 nginx 中应如何处理？"
+    options:
+      a: "Claude Code 注入用于认证 API 请求的 header，应在转发前移除"
+      b: "Claude Code 每个 API 请求都会发送的会话关联 header，可用于追踪；nginx 应透传给上游服务"
+      c: "nginx 用于限流 Claude Code 流量的 header"
+      d: "由 Anthropic servers 设置、用于标识 Claude 模型版本的 header"
+    correct: "b"
+    explanation: |
+      X-Claude-Code-Session-Id 是 Claude Code 附加在每个出站 API 请求上的会话关联 header。它支持分布式追踪：可在微服务间关联一个会话的工具调用、API 请求和日志。在 nginx 中应透传到上游：`proxy_pass_header X-Claude-Code-Session-Id;`。在可观测性栈中，可将其作为 trace 根来聚合单个 Claude 会话的全部活动。
+    doc_reference:
+      file: "guide/ops/observability.md"
+      section: "X-Claude-Code-Session-Id"
+      anchor: "#x-claude-code-session-id"

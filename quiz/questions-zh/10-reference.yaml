@@ -1,0 +1,507 @@
+category: "参考与故障排除"
+category_id: 10
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "10-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "进入 Plan Mode（切换 plan/execute）的键盘快捷键是什么？"
+    options:
+      a: "Ctrl+P"
+      b: "Shift+Tab"
+      c: "Alt+P"
+      d: "Ctrl+Shift+P"
+    correct: "b"
+    explanation: |
+      `Shift+Tab` 在 Plan Mode 和 Execute Mode 之间切换。
+
+      Plan Mode 导航：
+      - `Shift+Tab` 一次：切换 plan/execute
+      - `Shift+Tab` 两次：进入深度 Plan Mode（在 OpusPlan 中使用 Opus）
+
+      Plan Mode 允许在做出更改前进行安全的只读探索。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.2 Keyboard Shortcuts"
+      anchor: "#session-control"
+
+  - id: "10-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "回退到上一个检查点（撤销 Claude 的更改）的键盘快捷键是什么？"
+    options:
+      a: "Ctrl+Z"
+      b: "Esc（双击）"
+      c: "Ctrl+R"
+      d: "Alt+Z"
+    correct: "b"
+    explanation: |
+      双击 `Esc`（Esc×2）回退到上一个检查点。
+
+      这等同于 `/rewind` 命令。
+      它撤销 Claude 在当前会话中的最近更改，而不会创建 git 提交。
+
+      在 Claude 犯错且你想尝试不同方法时使用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.2 Keyboard Shortcuts"
+      anchor: "#session-control"
+
+  - id: "10-003"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "`/compact` 有什么作用？"
+    options:
+      a: "压缩磁盘上的文件"
+      b: "总结并压缩对话上下文"
+      c: "最小化终端窗口"
+      d: "减少 Claude 的响应长度"
+    correct: "b"
+    explanation: |
+      `/compact` 总结并压缩对话上下文。
+
+      在以下情况使用 `/compact`：
+      - 上下文使用率达到 70-90%
+      - 响应变慢
+      - Claude 开始忘记较早的上下文
+
+      这可以在保留重要信息的同时释放上下文空间。
+      使用 `/status` 检查上下文使用情况。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.1 Commands Table"
+      anchor: "#built-in-commands"
+
+  - id: "10-004"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude 的回复越来越短，而且开始忘记你之前说的内容。你应该怎么做？"
+    options:
+      a: "重启终端重新开始"
+      b: "切换到更强的模型"
+      c: "用 /status 检查上下文使用率，然后用 /compact 压缩或 /clear 重置"
+      d: "继续工作，这是正常现象"
+    correct: "c"
+    explanation: |
+      回复变短、忘记内容是上下文接近上限的症状。先用 /status 确认上下文使用率，然后根据情况处理：上下文较高时用 /compact（保留关键信息并压缩），已经很严重时用 /clear（完全重置）。养成主动监控上下文的习惯，不要等到出问题再处理。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.4 Troubleshooting"
+      anchor: "#context-recovery"
+
+  - id: "10-005"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "取消当前操作的键盘快捷键是什么？"
+    options:
+      a: "Esc"
+      b: "Ctrl+C"
+      c: "Ctrl+Z"
+      d: "Alt+C"
+    correct: "b"
+    explanation: |
+      `Ctrl+C` 取消当前操作。
+
+      重要快捷键：
+      - `Ctrl+C`：取消操作
+      - `Ctrl+D`：退出 Claude Code
+      - `Ctrl+R`：重试上次操作
+      - `Ctrl+L`：清屏（保留上下文）
+      - `Esc`：关闭当前建议
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.2 Keyboard Shortcuts"
+      anchor: "#session-control"
+
+  - id: "10-006"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "允许所有 git 命令的正确权限模式是什么？"
+    options:
+      a: 'Bash(git)'
+      b: 'Bash(git *)'
+      c: 'git:*'
+      d: 'Bash(*git*)'
+    correct: "b"
+    explanation: |
+      模式 `Bash(git *)` 允许任何 git 命令。
+
+      权限模式示例：
+      - `Bash(git *)` - 任何 git 命令
+      - `Bash(npm test)` - 精确的 "npm test"
+      - `Edit` - 所有文件编辑
+      - `mcp__serena__*` - 所有 Serena 工具
+
+      通配符 (*) 支持灵活的权限匹配。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.3 Configuration Reference"
+      anchor: "#permission-patterns"
+
+  - id: "10-007"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "项目特定的 CLAUDE.md 应该放在哪里（提交到 git）？"
+    options:
+      a: "~/.claude/CLAUDE.md"
+      b: "/project/.claude/CLAUDE.md"
+      c: "/project/CLAUDE.md"
+      d: "~/.config/claude/project.md"
+    correct: "c"
+    explanation: |
+      CLAUDE.md 位置：
+
+      | 位置 | 范围 | 是否提交 |
+      |----------|-------|-----------|
+      | `~/.claude/CLAUDE.md` | 所有项目 | N/A（全局） |
+      | `/project/CLAUDE.md` | 当前项目 | **是** |
+      | `/project/.claude/CLAUDE.md` | 个人 | 否 |
+
+      根目录的 `CLAUDE.md` 会被提交并与团队共享。
+      `.claude/CLAUDE.md` 是个人使用的，应放入 `.gitignore`。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.3 Configuration Reference"
+      anchor: "#claudemd-locations"
+
+  - id: "10-008"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "--mcp-debug 标志有什么作用？"
+    options:
+      a: "禁用 MCP servers"
+      b: "以详细输出调试 MCP server 连接"
+      c: "测试 MCP 配置"
+      d: "启用 MCP 自动发现"
+    correct: "b"
+    explanation: |
+      `--mcp-debug` 标志启用 MCP server 连接的调试模式。
+
+      MCP 调试技术：
+      ```bash
+      claude --mcp-debug  # 调试所有 MCP 连接
+      /mcp               # 在 Claude Code 内查看 MCP 状态
+      ```
+
+      在 MCP servers 无法连接或工具未出现时使用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.4 Troubleshooting"
+      anchor: "#mcp-debugging-techniques"
+
+  - id: "10-009"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "如果 MCP server 名称验证因模式错误而失败，允许使用哪些字符？"
+    options:
+      a: "仅字母"
+      b: "字母、数字、下划线、连字符（最多 64 个字符）"
+      c: "除空格外的任何字符"
+      d: "字母数字和句点"
+    correct: "b"
+    explanation: |
+      MCP server 名称必须匹配：`^[a-zA-Z0-9_-]{1,64}`
+
+      允许：
+      - 字母（a-z, A-Z）
+      - 数字（0-9）
+      - 下划线（_）
+      - 连字符（-）
+      - 最多 64 个字符
+
+      不允许：
+      - 空格
+      - 特殊字符（@、# 等）
+      - 超过 64 个字符
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.4 Troubleshooting"
+      anchor: "#error-1-tool-name-validation-failed"
+
+  - id: "10-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个命令显示包含上下文使用和成本的会话信息？"
+    options:
+      a: "/info"
+      b: "/status"
+      c: "/stats"
+      d: "/session"
+    correct: "b"
+    explanation: |
+      `/status` 命令显示会话信息。
+
+      输出包括：
+      - 正在使用的模型
+      - 上下文使用百分比
+      - 会话成本
+      - Token 数量
+
+      示例输出：
+      `Model: Sonnet | Ctx: 45.2k | Cost: $1.23 | Ctx(u): 42.0%`
+
+      使用 `/stats` 查看带有活动图表的使用统计信息。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.1 Commands Table"
+      anchor: "#built-in-commands"
+
+  - id: "10-011"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个标志限制 headless 模式下的最大 API 支出？"
+    options:
+      a: "--cost-limit"
+      b: "--max-budget-usd"
+      c: "--spending-cap"
+      d: "--budget"
+    correct: "b"
+    explanation: |
+      `--max-budget-usd` 标志设置最大 API 支出（仅与 `--print` 一起使用）：
+
+      ```bash
+      claude -p "analyze" --max-budget-usd 5.00
+      ```
+
+      这可以防止自动化流水线中的成本失控。
+      如果超出预算，操作将停止。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.3 Configuration Reference"
+      anchor: "#cli-flags-reference"
+
+  - id: "10-012"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "如何从 Claude Code 提示符直接运行 shell 命令？"
+    options:
+      a: "shell: command"
+      b: "!command"
+      c: "$command"
+      d: "run command"
+    correct: "b"
+    explanation: |
+      `!command` 前缀直接运行 shell 命令。
+
+      快速操作：
+      - `!command` - 运行 shell 命令
+      - `@filename` - 引用文件
+      - `Ctrl+C` - 取消操作
+      - `Ctrl+R` - 重试上次操作
+
+      示例：`!git status` 运行 git status，无需 Claude 解释。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.1 Commands Table"
+      anchor: "#quick-actions"
+
+  - id: "10-013"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "通过 ID 恢复特定会话的正确方式是什么？"
+    options:
+      a: "claude --session abc123"
+      b: "claude -r abc123"
+      c: "claude --load abc123"
+      d: "claude -s abc123"
+    correct: "b"
+    explanation: |
+      使用 `-r` 或 `--resume` 恢复特定会话：
+
+      ```bash
+      claude -r abc123           # 恢复会话 abc123
+      claude --resume abc123     # 同上
+      claude -c                  # 恢复上次会话（短形式）
+      claude --continue          # 恢复上次会话（长形式）
+      ```
+
+      与 `-p` 组合用于脚本：`claude -r abc123 -p "check status"`
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.3 Configuration Reference"
+      anchor: "#cli-flags-reference"
+
+  - id: "10-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Claude Code 文件的推荐 .gitignore 模式是什么？"
+    options:
+      a: "忽略所有 .claude/ 内容"
+      b: "忽略 settings.local.json 和 .claude/CLAUDE.md，保留 agents/commands/hooks"
+      c: "不要忽略任何内容"
+      d: "仅忽略 agents/"
+    correct: "b"
+    explanation: |
+      推荐的 .gitignore：
+
+      ```gitignore
+      # Claude Code - 个人（忽略）
+      .claude/settings.local.json
+      .claude/CLAUDE.md
+      .claude/.serena/
+
+      # Claude Code - 团队（保留/提交）
+      # .claude/agents/
+      # .claude/commands/
+      # .claude/hooks/
+      # .claude/settings.json
+      ```
+
+      这样可以在保持团队工作流共享的同时，让个人设置保持私有。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.11 Common Pitfalls & Best Practices"
+      anchor: "#recommended-gitignore"
+
+  - id: "10-015"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "根据指南，日常工作早晨的设置是什么？"
+    options:
+      a: "直接开始写代码"
+      b: "Git pull，/status，加载项目记忆，回顾昨天的进展"
+      c: "先运行所有测试"
+      d: "清除所有上下文"
+    correct: "b"
+    explanation: |
+      早晨设置工作流：
+
+      1. Git pull 最新更改
+      2. 用 `/status` 检查上下文
+      3. 加载项目记忆（如果使用 Serena 则使用 `/sc:load`）
+      4. 回顾昨天的进展
+
+      这确保你以最新的代码和完整的上下文意识开始工作。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.6 Daily Workflow & Checklists"
+      anchor: "#daily-workflow-pattern"
+
+  - id: "10-016"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个标志允许 Claude 的工具访问当前工作目录之外的目录？"
+    options:
+      a: "--include-dir"
+      b: "--add-dir"
+      c: "--context-dir"
+      d: "--load-dir"
+    correct: "b"
+    explanation: |
+      使用 `--add-dir` 允许工具访问其他目录：
+
+      ```bash
+      claude --add-dir ../shared ../utils
+      claude --add-dir packages/api
+      ```
+
+      默认情况下，Claude 只能访问当前工作目录中的文件。
+      使用 --add-dir 将权限扩展到其他目录（例如 monorepo 中的共享库）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.3 Configuration Reference"
+      anchor: "#cli-flags-reference"
+
+  - id: "10-017"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "当 Sequential Thinking MCP 似乎缓慢或无响应时，你应该期待什么？"
+    options:
+      a: "它坏了，需要重启"
+      b: "由于大量计算，10-30 秒的响应是正常的"
+      c: "切换到不同的 MCP"
+      d: "降低查询复杂度"
+    correct: "b"
+    explanation: |
+      Sequential Thinking 使用大量计算——预计响应时间为 10-30 秒。
+
+      这不是错误，只需耐心等待。
+
+      Sequential 使用技巧：
+      - 最适合具体、定义明确的问题
+      - 好："调试为什么移动端用户认证失败"
+      - 不好："让应用更好"
+
+      较长的响应时间反映了更深入的分析。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.4 Troubleshooting"
+      anchor: "#sequential-thinking-mcp-issues"
+
+  - id: "10-018"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个快捷键可以打开外部编辑器来编写长文本输入？"
+    options:
+      a: "Ctrl+E"
+      b: "Ctrl+G"
+      c: "Ctrl+O"
+      d: "Ctrl+L"
+    correct: "b"
+    explanation: |
+      `Ctrl+G` 打开外部编辑器来编写长文本。
+
+      有用的输入快捷键：
+      - `Ctrl+A`：跳到行首
+      - `Ctrl+E`：跳到行尾
+      - `Ctrl+W`：删除前一个词
+      - `Ctrl+G`：打开外部编辑器
+      - `Tab`：自动补全文件路径
+
+      外部编辑器允许舒适地编辑复杂提示。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.2 Keyboard Shortcuts"
+      anchor: "#input--navigation"
+
+  - id: "10-019"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "在 Claude Code v2.1.27 中，'--from-pr' 标志有什么作用？"
+    options:
+      a: "创建新的 pull request"
+      b: "恢复链接到 GitHub PR 编号或 URL 的会话"
+      c: "将所有 PR 评论拉入上下文"
+      d: "关闭 pull request"
+    correct: "b"
+    explanation: |
+      `--from-pr` 标志（v2.1.27）允许你恢复链接到特定 GitHub PR 的 Claude Code 会话。用法：`claude --from-pr 123` 或 `claude --from-pr https://github.com/org/repo/pull/123`。这会将 PR 上下文（diff、评论、检查）直接加载到会话中。
+    doc_reference:
+      file: "guide/claude-code-releases.md"
+      section: "v2.1.27"
+      anchor: "#v2127"
+
+  - id: "10-020"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude Code v2.1.19 中为 hook/command 参数引入了什么破坏性变更？"
+    options:
+      a: "参数被完全移除"
+      b: "从 $ARGUMENTS.0（点语法）迁移到 $ARGUMENTS[0]（括号语法）"
+      c: "新的 $PARAMS 变量替代了 $ARGUMENTS"
+      d: "参数现在需要 JSON 格式"
+    correct: "b"
+    explanation: |
+      Claude Code v2.1.19 将参数访问语法从点符号（`$ARGUMENTS.0`）改为括号符号（`$ARGUMENTS[0]`）。这一破坏性变更影响了所有引用参数的自定义命令和 hooks。请更新你的脚本以使用新的括号语法。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Breaking Changes"
+      anchor: "#breaking-changes"
+
+  - id: "10-021"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "根据指南的'Myths vs Reality'部分，关于'隐藏的 Claude Code 功能'的真相是什么？"
+    options:
+      a: "存在面向高级用户的秘密标志"
+      b: "隐藏功能需要企业版计划"
+      c: "没有隐藏功能——Anthropic 使用渐进式推出，而不是秘密标志"
+      d: "Beta 标志存储在 .claude/config 中"
+    correct: "c"
+    explanation: |
+      Myths vs Reality 部分揭穿了"隐藏功能"的神话。Anthropic 使用渐进式推出（功能逐步向用户启用），而不是秘密标志或隐藏配置。所有功能都在发布说明中有文档记录。没有秘密的高级用户模式。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Myths vs Reality"
+      anchor: "#myths-vs-reality"

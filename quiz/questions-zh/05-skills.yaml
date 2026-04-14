@@ -1,0 +1,361 @@
+category: "技能"
+category_id: 5
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "05-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "技能与代理之间的关系是什么？"
+    options:
+      a: "技能取代代理"
+      b: "技能是代理可以继承的知识包"
+      c: "代理是一种技能"
+      d: "它们完全独立"
+    correct: "b"
+    explanation: |
+      技能是代理可以继承的知识包。代理是专门的角色（任务导向），技能是可重用的知识模块（领域导向）。多个代理可以继承同一个技能，避免重复。例如，code-reviewer 和 security-auditor 代理都可以继承 security-guardian 技能。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.1 理解技能"
+      anchor: "#51-understanding-skills"
+
+  - id: "05-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "技能文件应存储在哪里？"
+    options:
+      a: ".claude/commands/"
+      b: ".claude/skills/{skill-name}/"
+      c: ".claude/agents/"
+      d: "~/.claude/skills/"
+    correct: "b"
+    explanation: |
+      技能存放在项目中的 `.claude/skills/{skill-name}/` 目录里。每个技能有自己的文件夹，至少包含一个 SKILL.md 文件，以及可选的 reference.md、checklists/、examples/ 和 scripts/ 子目录。这种组织方式使知识模块化和可重用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#52-creating-skills"
+
+  - id: "05-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "技能文件夹中的必需文件是什么？"
+    options:
+      a: "README.md"
+      b: "skill.yaml"
+      c: "SKILL.md"
+      d: "index.md"
+    correct: "c"
+    explanation: |
+      SKILL.md 是每个技能文件夹中的必需主文件。可选文件包括：reference.md（详细文档）、checklists/（验证清单）、examples/（带好坏示例的代码模式）和 scripts/（辅助脚本）。SKILL.md 包含技能的 frontmatter 和核心说明。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#skill-folder-structure"
+
+  - id: "05-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "技能、代理和命令之间的关键区别是什么？"
+    options:
+      a: "它们做同样的事情"
+      b: "技能 = 知识模块（被继承），代理 = 专门角色（被委派），命令 = 流程工作流（斜杠调用）"
+      c: "命令是唯一可重用的组件"
+      d: "代理不能使用技能或命令"
+    correct: "b"
+    explanation: |
+      这三个概念有不同的用途：技能是代理继承的知识模块（如 OWASP 安全知识），代理是 Claude 委派任务的专门角色（如安全审查员），命令是用斜杠命令调用的流程工作流（如 /tech:commit）。它们可以组合：代理继承技能并执行命令。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.1 理解技能"
+      anchor: "#skills-vs-agents-vs-commands"
+
+  - id: "05-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "SKILL.md frontmatter 中的 'context' 字段控制什么？"
+    options:
+      a: "上下文窗口大小"
+      b: "技能在隔离（fork）还是共享（inherit）上下文中运行"
+      c: "要加载的文件上下文"
+      d: "数据库连接上下文"
+    correct: "b"
+    explanation: |
+      `context` 字段控制执行上下文：'fork' 表示隔离上下文（技能独立运行），'inherit' 表示共享上下文（技能与调用代理共享上下文）。对需要干净状态的技能使用 fork，对需要访问对话历史和已加载文件的技能使用 inherit。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#skillmd-frontmatter"
+
+  - id: "05-006"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "为什么使用技能而不是在多个代理中重复知识？"
+    options:
+      a: "技能更快"
+      b: "技能提供单一事实来源——更新一次，所有代理受益"
+      c: "Claude Code 要求使用技能"
+      d: "技能成本更低"
+    correct: "b"
+    explanation: |
+      技能遵循 DRY（不要重复自己）原则。不使用技能时，你会在代理 A、B 和 C 中重复安全知识。使用技能时，security-guardian 技能是单一来源——所有代理都继承它，更新会传播到所有地方。这确保了 consistency 并简化了维护。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.1 理解技能"
+      anchor: "#why-skills"
+
+  - id: "05-007"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么使一个好技能区别于坏技能？"
+    options:
+      a: "好技能更长，坏技能更短"
+      b: "好技能可重用、领域聚焦，并包含参考资料；坏技能仅适用于单个代理且范围太广"
+      c: "好技能使用 opus，坏技能使用 haiku"
+      d: "好技能有更多文件"
+    correct: "b"
+    explanation: |
+      好技能的特点是：可跨多个代理重用、领域聚焦（不太广）、包含参考资料和清单、包含验证步骤。坏技能的特点是：仅适用于一个代理、范围太广、只有说明没有参考资料、缺少验证清单。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.1 理解技能"
+      anchor: "#what-makes-a-good-skill"
+
+  - id: "05-008"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "TDD（测试驱动开发）技能的核心方法论是什么？"
+    options:
+      a: "先写代码后写测试"
+      b: "RED（失败测试）-> GREEN（最小代码通过）-> REFACTOR（保持绿色时改进）"
+      c: "先写所有测试，再写所有代码"
+      d: "为了速度跳过测试"
+    correct: "b"
+    explanation: |
+      TDD 技能遵循：1）RED——在写代码之前先写一个失败测试，2）GREEN——写最少代码使测试通过，3）REFACTOR——在保持测试绿色的同时改进实现，然后重复。这个循环通过要求先失败再增量改进，确保测试真正验证行为。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.4 技能示例"
+      anchor: "#example-2-tdd-skill"
+
+  - id: "05-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Security Guardian 技能应包含什么以实现 OWASP 覆盖？"
+    options:
+      a: "仅漏洞列表"
+      b: "每个 OWASP Top 10 类别的清单及具体验证项"
+      c: "外部安全工具链接"
+      d: "密码示例"
+    correct: "b"
+    explanation: |
+      Security Guardian 技能应包含每个 OWASP Top 10 类别的详细清单：A01 失效访问控制（检查授权、IDOR、权限提升）、A02 加密失败（硬编码密钥、TLS、密码哈希）、A03 注入（SQL、NoSQL、XSS）等。每个类别应有带复选框的具体验证项。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.4 技能示例"
+      anchor: "#example-1-security-guardian-skill"
+
+  - id: "05-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "SKILL.md frontmatter 中的 'agent' 字段是什么？"
+    options:
+      a: "哪个代理创建了该技能"
+      b: "技能是 'specialist'（领域聚焦）还是 'general'（范围广泛）"
+      c: "必须使用此技能的代理"
+      d: "代理的名称"
+    correct: "b"
+    explanation: |
+      `agent` 字段表示技能是 'specialist'（领域聚焦，在一个领域有深度专业知识）还是 'general'（范围广泛，适用于多个领域）。 Specialist 技能如 security-guardian 提供深入的领域知识，而 general 技能可能提供广泛适用的模式或工具。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#skillmd-frontmatter"
+
+  - id: "05-011"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "技能 frontmatter 中的 'allowed-tools' 字段控制什么？"
+    options:
+      a: "技能记录的工具"
+      b: "技能被激活时可以使用的工具"
+      c: "可以激活技能的工具"
+      d: "要安装的工具"
+    correct: "b"
+    explanation: |
+      `allowed-tools` 字段指定技能被激活时可以使用的工具。例如，security-guardian 技能可能有 `allowed-tools: Read, Grep, Bash`——允许它读取文件、搜索模式和运行安全扫描命令，但不能修改文件。这为每个技能提供了安全边界。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#skillmd-frontmatter"
+
+  - id: "05-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "技能目录可以包含哪些可选文件夹？"
+    options:
+      a: "仅允许 SKILL.md"
+      b: "reference.md、checklists/、examples/ 和 scripts/"
+      c: "src/、dist/ 和 node_modules/"
+      d: "tests/、docs/ 和 config/"
+    correct: "b"
+    explanation: |
+      技能目录可以包含：SKILL.md（必需）、reference.md（详细文档）、checklists/（验证清单如 security.md、performance.md）、examples/（代码模式如 good-example.ts、bad-example.ts）和 scripts/（辅助脚本如 audit.sh）。这种丰富的结构支持全面的领域知识。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.2 创建技能"
+      anchor: "#skill-folder-structure"
+
+  - id: "05-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "你想让团队的所有代理都遵循同一套安全检查规范，最好的做法是？"
+    options:
+      a: "在每个代理文件里重复写安全规范"
+      b: "创建一个 security-guardian 技能，所有代理通过 skills 字段继承它"
+      c: "在 CLAUDE.md 里写安全规范"
+      d: "每次调用代理时手动提醒安全要求"
+    correct: "b"
+    explanation: |
+      技能遵循 DRY 原则：把安全知识封装成 security-guardian 技能，所有需要安全检查的代理都通过 `skills: [security-guardian]` 继承它。更新一次技能，所有代理自动受益。这比在每个代理里重复写规范更易维护，也更一致。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.1 理解技能"
+      anchor: "#why-skills"
+
+  - id: "05-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "TDD 测试中的 AAA 模式是什么？"
+    options:
+      a: "Ask, Answer, Assert"
+      b: "Arrange, Act, Assert"
+      c: "Analyze, Apply, Approve"
+      d: "Accept, Adjust, Acknowledge"
+    correct: "b"
+    explanation: |
+      AAA 代表 Arrange, Act, Assert：1）Arrange——设置测试数据和前置条件，2）Act——执行被测代码，3）Assert——验证结果是否符合预期。示例：Arrange items 数组，Act 调用 calculateTotal(items)，Assert 总和等于预期值。这种结构使测试可读且可维护。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.4 技能示例"
+      anchor: "#test-structure-aaa-pattern"
+
+  - id: "05-015"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你的团队创建了一个 TDD 技能，但发现 Claude 有时不会自动使用它。如何解决？"
+    options:
+      a: "把技能内容直接复制到 CLAUDE.md"
+      b: "用 Trigger Tuning：调整技能描述，使其更精确匹配目标任务的语言和上下文"
+      c: "改用 AGENTS.md 主动上下文加载，确保 100% 激活"
+      d: "在每次对话开始时手动调用技能"
+    correct: "b"
+    explanation: |
+      Trigger Tuning 专门解决"技能存在但 Claude 不调用"的问题：调整技能描述，使其更精确匹配目标任务的语言。如果需要 100% 可靠激活，可改用 AGENTS.md 主动上下文加载（始终在上下文中），但代价是每次会话都消耗上下文。两种方式各有权衡。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.Y 技能评估"
+      anchor: "#skill-evals"
+
+  - id: "05-016"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "技能应包含什么才能最有用？"
+    options:
+      a: "仅理论和概念"
+      b: "清单、好坏代码示例和方法论步骤"
+      c: "外部网站链接"
+      d: "营销描述"
+    correct: "b"
+    explanation: |
+      有用的技能包括：方法论步骤（要遵循的清晰流程）、清单（带复选框的验证项）、好坏代码示例（展示正确模式和反模式）和参考资料。这种组合同时提供理论知识和可直接应用于任务的实践指导。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.3 技能模板"
+      anchor: "#53-skill-template"
+
+  - id: "05-017"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "如何在代理的 frontmatter 中引用技能？"
+    options:
+      a: "import: skill-name"
+      b: "skills: [skill-name]"
+      c: "use: skill-name"
+      d: "require: skill-name"
+    correct: "b"
+    explanation: |
+      在代理的 frontmatter 中使用 `skills` 数组引用技能：`skills: [security-guardian, tdd]`。这使代理继承这些技能的所有知识。你可以引用多个技能，代理会组合它们的专业知识。技能名称与 `.claude/skills/` 中的文件夹名称匹配。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.4 最佳实践"
+      anchor: "#skill-composition"
+
+  - id: "05-018"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "社区网络安全技能适用什么免责声明？"
+    options:
+      a: "它们已获得官方认证"
+      b: "充分测试、确保授权、根据策略验证、仅合法使用"
+      c: "它们适用于所有系统"
+      d: "无需免责声明"
+    correct: "b"
+    explanation: |
+      社区网络安全技能附带重要免责声明：在生产评估使用前充分测试、进行渗透测试前确保获得适当授权、根据组织安全策略审查和验证、仅在法律范围内使用并获得系统所有者的书面许可、发现问题时回馈社区。对任何安全工具来说，验证都是必不可少的。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.5 社区技能仓库"
+      anchor: "#important-disclaimer"
+
+  - id: "05-019"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 Skills 2.0 分类法中，Capability Uplift 技能与 Encoded Preference 技能的区别是什么，哪种类型在模型改进后仍然持久？"
+    options:
+      a: "Capability Uplift 技能面向初级开发者；Encoded Preference 技能面向高级开发者"
+      b: "Capability Uplift 弥补模型当前能力的不足，随着模型变强变得不那么必要；Encoded Preference 编码团队工作流决策，长期持久"
+      c: "Capability Uplift 运行更快；Encoded Preference 输出质量更高"
+      d: "Capability Uplift 自动触发；Encoded Preference 需要手动调用"
+    correct: "b"
+    explanation: |
+      Skills 2.0 分类法根据技能与模型改进的关系进行分类。Capability Uplift 技能补偿当前模型局限性——模型还做不好但技能能帮助完成的事情。随着模型变强，这些技能变得多余，应被淘汰。Encoded Preference 技能编码团队特定的工作流决策（命名约定、审查清单、部署约定）。这些偏好不是更好的模型会自动知道的，因此无论模型版本如何，它们都保持持久。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.0 技能分类法"
+      anchor: "#skills-20-taxonomy"
+
+  - id: "05-020"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "技能生命周期的三个阶段是什么，退役清单解决什么问题？"
+    options:
+      a: "创建、部署、监控——清单涵盖安全扫描"
+      b: "草稿、审查、发布——清单涵盖文档完整性"
+      c: "捕获回归、发现过度增长、退役——清单确保安全移除而不破坏团队工作流"
+      d: "安装、配置、卸载——清单涵盖依赖清理"
+    correct: "c"
+    explanation: |
+      技能生命周期有三个阶段。捕获回归：每次 Claude 模型更新后运行技能特定测试，因为模型变化可能改变技能的触发方式或性能。发现过度增长：定期检查模型现在是否能原生处理该技能的工作——Capability Uplift 技能是最可能的候选。退役：清单涵盖验证没有活跃工作流依赖该技能、向团队沟通移除决定、在删除前确认模型能充分处理该用例。跳过退役清单是团队意外破坏自动化流程的原因。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.X 技能生命周期"
+      anchor: "#skill-lifecycle"
+
+  - id: "05-021"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "三种技能评估方法是什么，Trigger Tuning 具体解决什么问题？"
+    options:
+      a: "单元测试、集成测试、端到端测试——Trigger Tuning 减少单元测试中的误报"
+      b: "基准模式（有技能 vs 无技能对比）、A/B 测试（并行执行路径）、Trigger Tuning——Trigger Tuning 调整技能描述以提高 Claude 应该使用技能但未使用时的自动调用率"
+      c: "代码审查、同行审查、自动审查——Trigger Tuning 使技能输出与团队风格指南对齐"
+      d: "Alpha、beta、生产——Trigger Tuning 控制哪些用户群体接收该技能"
+    correct: "b"
+    explanation: |
+      技能评估使用三种方法。基准模式比较有技能激活和无技能激活时的输出，给出可衡量的质量差异。A/B 测试在实际任务上并行运行两条路径以衡量实际条件下的影响。Trigger Tuning 解决特定的失败模式：技能存在且工作正常，但 Claude 在应该调用时没有调用它。调整技能描述以更精确匹配目标任务的语言和上下文，可以在不改变技能逻辑的情况下提高自动调用率。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "5.Y 技能评估"
+      anchor: "#skill-evals"

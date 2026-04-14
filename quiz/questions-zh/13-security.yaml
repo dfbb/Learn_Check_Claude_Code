@@ -1,0 +1,259 @@
+category: "安全"
+category_id: 13
+source_file: "guide/security-hardening.md"
+
+questions:
+  - id: "13-001"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "什么是 'MCP Rug Pull' 攻击？"
+    options:
+      a: "MCP server 意外崩溃"
+      b: "一个看似良性的 MCP 在获得信任后变得恶意（无需再次审批）"
+      c: "一个使用过多 tokens 的 MCP"
+      d: "对 MCP 协议本身的攻击"
+    correct: "b"
+    explanation: |
+      MCP Rug Pull 利用了一次性批准模型：攻击者发布良性 MCP → 用户批准一次 → MCP 正常工作（建立信任）→ 攻击者推送恶意更新 → MCP 在无需重新批准的情况下窃取凭据。缓解措施：版本固定 + 哈希校验。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Attack: MCP Rug Pull"
+      anchor: "#attack-mcp-rug-pull"
+
+  - id: "13-002"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "CVE-2025-53109/53110（EscapeRoute）利用了什么？"
+    options:
+      a: "Claude 系统提示中的提示注入"
+      b: "通过前缀绕过 + 符号链接实现 Filesystem MCP 沙箱逃逸"
+      c: "Bash 工具中的内存损坏"
+      d: "网络请求中的 API key 泄露"
+    correct: "b"
+    explanation: |
+      CVE-2025-53109/53110（EscapeRoute）允许通过前缀绕过结合符号链接在 Filesystem MCP 中实现沙箱逃逸。严重级别：高。缓解措施：避免使用无限制访问的 Filesystem MCP，或应用官方补丁。来源：Cymulate 安全研究。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "CVE Summary (2025)"
+      anchor: "#cve-summary-2025"
+
+  - id: "13-003"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: ".claude/settings.json 中 permissions.deny 的一个已知限制是什么？"
+    options:
+      a: "它只在 macOS 上有效"
+      b: "系统提醒机制可能在工具权限检查前暴露文件内容"
+      c: "它无法阻止 Bash 命令"
+      d: "它需要管理员权限"
+    correct: "b"
+    explanation: |
+      permissions.deny 存在架构限制：后台索引可能在工具权限检查生效之前，通过内部“system reminder”机制暴露文件内容。这在 GitHub #4160 中有记录。纵深防御：将密钥存储在项目目录之外。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Known Security Gaps"
+      anchor: "#known-security-gaps"
+
+  - id: "13-004"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "保护密钥的推荐纵深防御策略是什么？"
+    options:
+      a: "只使用 permissions.deny"
+      b: "将密钥存储在项目外 + 外部 vault + PreToolUse hooks + 永不提交"
+      c: "加密项目中的所有文件"
+      d: "运行 Claude Code 时使用 VPN"
+    correct: "b"
+    explanation: |
+      纵深防御包括：(1) 将密钥存储在项目目录之外（~/.secrets/ 或 vault），(2) 使用外部密钥管理（AWS Secrets Manager、1Password），(3) 添加 PreToolUse hooks 作为二次阻断，(4) 永不提交密钥，(5) 手动审查 bash 命令。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Defense-in-Depth Strategy"
+      anchor: "#defense-in-depth-strategy"
+
+  - id: "13-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪种提示注入规避技术使用 U+200B、U+200C、U+200D？"
+    options:
+      a: "Base64 编码"
+      b: "RTL override"
+      c: "零宽字符（人类不可见）"
+      d: "同形异义字符"
+    correct: "c"
+    explanation: |
+      零宽字符（U+200B、U+200C、U+200D）会让指令对人类不可见，但仍可被系统解释。检测方法：Unicode 正则模式 [\x{200B}-\x{200D}\x{FEFF}\x{202A}-\x{202E}]。已在 v3.6.0 的 prompt-injection-detector.sh 中加入。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Evasion Techniques"
+      anchor: "#evasion-techniques"
+
+  - id: "13-006"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "你想在 pre-commit hook 中自动检测代码里的密钥泄露，应该用哪个工具？"
+    options:
+      a: "GitGuardian——企业级监控"
+      b: "Gitleaks——速度快，适合 pre-commit hooks"
+      c: "TruffleHog——精确率最高，适合 CI 校验"
+      d: "detect-secrets——基线方案"
+    correct: "b"
+    explanation: |
+      Gitleaks 速度快（约 2 分钟/10 万提交），召回率高，最适合 pre-commit hooks 这种需要快速反馈的场景。TruffleHog 精确率更高但较慢，适合 CI 校验。GitGuardian 适合企业级持续监控。选择工具要根据使用场景：pre-commit 优先速度，CI 优先精确率。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Tool Comparison"
+      anchor: "#tool-comparison"
+
+  - id: "13-007"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "settings.json 中推荐的安全 hook 栈是什么？"
+    options:
+      a: "只用 PostToolUse hooks 做日志"
+      b: "PreToolUse（危险阻断、注入检测）+ PostToolUse（输出扫描）+ SessionStart（MCP 完整性）"
+      c: "不使用 hooks——只依赖 permissions.deny"
+      d: "只使用 UserPromptSubmit hooks"
+    correct: "b"
+    explanation: |
+      推荐安全 hook 栈：PreToolUse → dangerous-actions-blocker.sh（Bash）、prompt-injection-detector.sh + unicode-injection-scanner.sh（Edit/Write）。PostToolUse → output-secrets-scanner.sh（Bash）。SessionStart → mcp-config-integrity.sh。多层纵深防御。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Hook Stack Setup"
+      anchor: "#23-hook-stack-setup"
+
+  - id: "13-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在社区审查的安全列表中，哪些 MCP servers 被标记为“Safe”？"
+    options:
+      a: "filesystem（无限制）、database（生产凭据）"
+      b: "@anthropic/mcp-server-*、context7、sequential-thinking、memory"
+      c: "browser（完全访问）、自定义 MCPs"
+      d: "所有 MCP 默认都安全"
+    correct: "b"
+    explanation: |
+      MCP 安全列表：@anthropic/mcp-server-*（官方）、context7（只读文档）、sequential-thinking（无外部访问，本地）、memory（本地文件型）。风险项：filesystem 无限制（CVE-2025-53109）、生产 database（可外泄）。不安全：browser 完全访问。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "MCP Safe List (Community Vetted)"
+      anchor: "#mcp-safe-list-community-vetted"
+
+  - id: "13-009"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "当密钥泄露时，第一步行动是什么？"
+    options:
+      a: "记录事故用于事后复盘"
+      b: "立即吊销凭据"
+      c: "扫描整个仓库"
+      d: "通知团队"
+    correct: "b"
+    explanation: |
+      前 15 分钟（先止血）：(1) 立即吊销——AWS delete-access-key、GitHub revoke token、Stripe roll key。(2) 确认暴露范围。然后：审计 git 历史、扫描依赖、检查 CI/CD 日志。前 24 小时：轮换所有相关凭据、通知合规、记录时间线。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Secret Exposed"
+      anchor: "#31-secret-exposed"
+
+  - id: "13-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "指南中的三种安全姿态级别是什么？"
+    options:
+      a: "Low、Medium、High"
+      b: "Basic（5 分钟）、Standard（30 分钟）、Hardened（2 小时）"
+      c: "Development、Staging、Production"
+      d: "Free、Pro、Enterprise"
+    correct: "b"
+    explanation: |
+      安全姿态级别：Basic（5 分钟）= 输出扫描 + 危险操作阻断（适合个人开发/实验）；Standard（30 分钟）= + 注入 hooks + MCP 审核（适合团队/敏感代码）；Hardened（2 小时）= + 完整性验证 + ZDR（适合企业/生产）。
+    doc_reference:
+      file: "guide/security-hardening.md"
+      section: "Security Posture Levels"
+      anchor: "#security-posture-levels"
+
+  - id: "13-011"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪种沙箱隔离方法结合了 microVM 隔离与网络策略以支持 agent 自主性？"
+    options:
+      a: "E2B（托管云沙箱）"
+      b: "Fly.io Sprites（边缘计算）"
+      c: "Docker Sandboxes（带自定义模板和网络策略）"
+      d: "Cloudflare Sandbox SDK"
+    correct: "c"
+    explanation: |
+      Docker Sandboxes 提供了 microVM 级别隔离和可定制网络策略。关键特性：用于可复现环境的自定义 Dockerfile 模板、控制出入站的网络策略、持久化存储的卷挂载、以及 CPU/内存限制。该方案适合希望完全掌控沙箱配置且保持强隔离的团队。
+    doc_reference:
+      file: "guide/sandbox-isolation.md"
+      section: "Docker Sandboxes"
+      anchor: "#docker-sandboxes"
+
+  - id: "13-012"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "什么是 GitHub Issue 自动创建漏洞（#13797），为什么危险？"
+    options:
+      a: "Issues 会被自动删除"
+      b: "Claude Code 会意外创���包含私有项目细节的公开 GitHub issues"
+      c: "Issues 会被创建但保持私有"
+      d: "只影响付费企业账户"
+    correct: "b"
+    explanation: |
+      GitHub Issue 自动创建漏洞（#13797）会导致 Claude Code 意外创建包含私有项目细节的公开 GitHub issues。已记录超过 17 起意外披露，影响 v2.0.65+。危险在于：内部代码、架构决策和私有上下文会被公开泄露。缓解措施：禁用 gh CLI 工具或限制 GitHub 权限。
+    doc_reference:
+      file: "guide/known-issues.md"
+      section: "GitHub Issue Auto-Creation Bug"
+      anchor: "#github-issue-auto-creation-bug"
+
+  - id: "13-013"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪些路径受 bypassPermissions 安全不变量保护，也就是 Claude 修改前始终会提示确认？"
+    options:
+      a: "仅 .git/ 和 .env 文件"
+      b: ".git/、.claude/、shell 配置（.bashrc、.zshrc）、.gitconfig、.mcp.json、.claude.json"
+      c: "home 目录下所有 dotfiles"
+      d: "任何大于 100KB 的文件"
+    correct: "b"
+    explanation: |
+      bypassPermissions 安全不变量保护一组高影响路径：.git/（仓库完整性）、.claude/（agent 配置，不含 .claude/worktrees/）、shell 配置文件（.bashrc、.zshrc——修改后可在会话间持久化恶意行为）、.gitconfig、.mcp.json、.claude.json。即使启用了 bypassPermissions，Claude 在触及这些路径前也始终会弹出确认。原因：这些文件出错会造成影响巨大且难以逆转的后果。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.4 Permission Modes"
+      anchor: "#bypasspermissions-safety-invariant"
+
+  - id: "13-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Cache Bug 2 的根因是什么，它对 --resume 会话的成本影响是什么？"
+    options:
+      a: "API 限流器会重置 token 计数器，导致每次恢复都完全重读上下文"
+      b: "JSONL 写入器在写入前剥离 deferred_tools_delta 记录；在 --resume 时，完整重新公告会移动所有消息位置，导致 0% 缓存命中率且每次恢复重建 87-118K tokens"
+      c: "缓存 TTL 在 5 分钟不活动后过期，强制完整上下文重载"
+      d: "工具调用结果未序列化，因此每次恢复都从头生成"
+    correct: "b"
+    explanation: |
+      Cache Bug 2 的根因：JSONL 写入器在将会话写盘前剥离了 DTD��deferred_tools_delta）记录。当会话通过 --resume 恢复时，Claude 会完整重新公告所有工具，这会移动后续每条消息的位置。由于 Anthropic 的 prompt cache 对位置敏感，位置偏移导致 0% 缓存命中率。成本影响：每次 --resume 都要从头重建 87,000 到 118,000 tokens。临时方案：在 bug 修复前，避免对长会话使用 --resume。
+    doc_reference:
+      file: "guide/core/known-issues.md"
+      section: "Prompt Cache Bugs"
+      anchor: "#prompt-cache-bugs"
+
+  - id: "13-015"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "CLAUDE_CODE_ATTRIBUTION_HEADER=false 解决什么问题，为什么与 Cache Bug 2 相比其影响被认为较小？"
+    options:
+      a: "它禁用所有请求头，消除导致 Bug 2 的会话跟踪开销"
+      b: "它移除 API 请求中的 attribution header（Cache Bug 3 的临时方案），但 Bug 3 的成本影响远小于 Bug 2 在每次恢复时重建 87-118K tokens 的影响"
+      c: "它禁用生成文件中的代码归属，将 token 使用降低 30%"
+      d: "它阻止 Claude 在提交中添加共同作者注释，从而加速 git 操作"
+    correct: "b"
+    explanation: |
+      CLAUDE_CODE_ATTRIBUTION_HEADER=false 是 Cache Bug 3 的临时方案，Bug 3 涉及 attribution header 对缓存行为的影响。然而，Cache Bug 3 在实践中的成本影响较小。主导问题是 Cache Bug 2——JSONL 写入器剥离 deferred_tools_delta 记录并导致 --resume 时 0% 缓存命中率，每次恢复重建 87,000 到 118,000 tokens。对于经常使用 --resume 的团队，只修复 Bug 3 而不处理 Bug 2，节省几乎可以忽略。
+    doc_reference:
+      file: "guide/core/known-issues.md"
+      section: "Prompt Cache Bugs"
+      anchor: "#prompt-cache-bugs"

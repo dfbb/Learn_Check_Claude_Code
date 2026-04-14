@@ -1,0 +1,441 @@
+category: "命令"
+category_id: 6
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "06-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "自定义命令应放在哪里才能在 Claude Code 中使用？"
+    options:
+      a: "~/.claude/commands/"
+      b: ".claude/commands/"
+      c: "/usr/local/claude/commands/"
+      d: ".claude/config/commands/"
+    correct: "b"
+    explanation: |
+      自定义命令放在项目目录的 `.claude/commands/` 中。
+
+      这允许项目特定的命令与代码库一起提交。
+      全局目录 `~/.claude/` 用于个人设置，不是项目命令。
+
+      命令按子目录组织：
+      - `.claude/commands/tech/` 用于开发工作流
+      - `.claude/commands/product/` 用于产品工作流
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.2 创建自定义命令"
+      anchor: "#62-creating-custom-commands"
+
+  - id: "06-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "如何调用位于 `.claude/commands/tech/` 中名为 `commit.md` 的自定义命令？"
+    options:
+      a: "/commit"
+      b: "/tech-commit"
+      c: "/tech:commit"
+      d: "!tech/commit"
+    correct: "c"
+    explanation: |
+      自定义命令使用 `/folder:filename` 格式（不带 .md 扩展名）。
+
+      因此 `.claude/commands/tech/commit.md` 变为 `/tech:commit`。
+      这种命名约定允许按领域组织命令，同时保持调用直观。
+
+      示例：
+      - `.claude/commands/tech/pr.md` -> `/tech:pr`
+      - `.claude/commands/product/scope.md` -> `/product:scope`
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.2 创建自定义命令"
+      anchor: "#command-naming"
+
+  - id: "06-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "命令文件中用什么变量来访问传递给命令的参数？"
+    options:
+      a: "$ARGS"
+      b: "$INPUT"
+      c: "$ARGUMENTS"
+      d: "$PARAMS"
+    correct: "c"
+    explanation: |
+      `$ARGUMENTS` 变量包含命令调用后传递的任何文本。
+
+      例如，当你运行 `/tech:deploy production` 时，变量 `$ARGUMENTS`
+      将包含 `production`。
+
+      这使动态命令能够根据用户输入进行调整。
+      命令应记录如何处理参数以及未提供参数时的行为。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.2 创建自定义命令"
+      anchor: "#variable-interpolation"
+
+  - id: "06-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个内置命令显示所有可用命令，包括自定义命令？"
+    options:
+      a: "/commands"
+      b: "/list"
+      c: "/help"
+      d: "/show"
+    correct: "c"
+    explanation: |
+      `/help` 命令显示所有可用命令，包括内置和自定义的。
+
+      内置命令包括：
+      - `/clear` - 清除对话
+      - `/compact` - 总结上下文
+      - `/status` - 显示会话信息
+      - `/plan` - 进入计划模式
+      - `/rewind` - 撤销更改
+
+      来自 `.claude/commands/` 的自定义命令也会在此列出。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.1 斜杠命令"
+      anchor: "#61-slash-commands"
+
+  - id: "06-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "根据最佳实践，结构良好的命令模板应包含哪些部分？"
+    options:
+      a: "Purpose, Steps, Output"
+      b: "Purpose, Process, Arguments, Output Format, Examples, Error Handling"
+      c: "Name, Description, Code"
+      d: "Title, Body, Footer"
+    correct: "b"
+    explanation: |
+      完整的命令模板应包括：
+
+      1. **Purpose** - 命令功能的简要描述
+      2. **Process** - Claude 应遵循的分步说明
+      3. **Arguments** - 如何处理 $ARGUMENTS（提供/未提供时）
+      4. **Output Format** - 输出的预期结构
+      5. **Examples** - 具体使用示例
+      6. **Error Handling** - 如何处理边缘情况和失败
+
+      这种全面的结构确保命令执行的一致性和可靠性。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.3 命令模板"
+      anchor: "#63-command-template"
+
+  - id: "06-006"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个命令进入计划模式以进行安全的只读探索？"
+    options:
+      a: "/safe"
+      b: "/readonly"
+      c: "/plan"
+      d: "/explore"
+    correct: "c"
+    explanation: |
+      `/plan` 命令进入计划模式，Claude 可以在不做出任何更改的情况下分析和探索代码库。
+
+      这适用于：
+      - 理解不熟悉的代码库
+      - 变更前的架构分析
+      - 安全地探索风险操作
+
+      准备好进行更改时，使用 `/execute` 退出计划模式。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.1 斜杠命令"
+      anchor: "#built-in-commands"
+
+  - id: "06-007"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 commit 命令示例中，推荐的提交消息格式是什么？"
+    options:
+      a: "简单描述"
+      b: "Conventional Commits: type(scope): description"
+      c: "Date - Author - Message"
+      d: "JIRA-123: Message"
+    correct: "b"
+    explanation: |
+      指南推荐 Conventional Commits 格式：`type(scope): description`
+
+      常见类型：
+      - `feat`: 新功能
+      - `fix`: 错误修复
+      - `refactor`: 代码重构
+      - `docs`: 文档
+      - `test`: 测试变更
+      - `chore`: 维护
+
+      这提供了对变更日志和发布有用的、一致的、可解析的提交历史。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.4 命令示例"
+      anchor: "#example-1-commit-command"
+
+  - id: "06-008"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Problem Framer 命令使用什么技术来找到根本原因？"
+    options:
+      a: "SWOT 分析"
+      b: "5 Whys 分析"
+      c: "帕累托分析"
+      d: "鱼骨图"
+    correct: "b"
+    explanation: |
+      Problem Framer 命令使用 "5 Whys 分析" 技术。
+
+      这涉及连续问五次"为什么？"以深入挖掘根本原因：
+      - 为什么 1：第一个答案
+      - 为什么 2：更深入的答案
+      - 为什么 3：再深入
+      - 为什么 4：接近根源
+      - 为什么 5：根本原因
+
+      然后命令将问题重新定义为："How might we [action] for [user] so that [outcome]?"
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.4 命令示例"
+      anchor: "#example-3-problem-framer-command"
+
+  - id: "06-009"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "`/rewind` 命令有什么作用？"
+    options:
+      a: "恢复到之前的 git 提交"
+      b: "撤销 Claude 在当前会话中的最近更改"
+      c: "清除整个对话历史"
+      d: "回滚上次命令执行"
+    correct: "b"
+    explanation: |
+      `/rewind` 命令撤销 Claude 在当前会话中的最近更改。
+
+      要点：
+      - 仅适用于 Claude 做出的未提交更改
+      - 不会创建 git 提交
+      - 当 Claude 出错且你想尝试不同方法时使用
+
+      对于已提交的更改，请改用 `git revert`。
+      双击 `Esc` 的快捷键也会触发 rewind。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.1 斜杠命令"
+      anchor: "#built-in-commands"
+
+  - id: "06-010"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "如果用户不在功能分支上，PR 命令的错误处理应该做什么？"
+    options:
+      a: "自动创建功能分支"
+      b: "继续执行并发出警告"
+      c: "警告：先创建功能分支"
+      d: "静默退出"
+    correct: "c"
+    explanation: |
+      根据 PR 命令示例，如果用户不在功能分支上，
+      命令应发出警告："先创建功能分支"。
+
+      同样，如果工作目录不干净，应询问："先提交更改？"
+
+      良好的命令设计包括清晰的错误处理：
+      - 警告用户先决条件
+      - 建议纠正措施
+      - 防止意外错误
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.4 命令示例"
+      anchor: "#example-2-pr-command"
+
+  - id: "06-011"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "PR 创建工作流中 git 命令的推荐顺序是什么？"
+    options:
+      a: "push, diff, create PR"
+      b: "status, branch, log, diff, push if needed, create PR"
+      c: "add, commit, push, create PR"
+      d: "checkout, status, push, create PR"
+    correct: "b"
+    explanation: |
+      推荐的 PR 工作流顺序是：
+
+      1. `git status` - 验证工作目录干净
+      2. `git branch` - 确认在功能分支上
+      3. `git log main..HEAD` - 审查所有提交
+      4. `git diff main...HEAD` - 查看与 main 的所有变更
+      5. `git push -u origin [branch]` - 如果尚未推送则推送
+      6. `gh pr create` - 创建 PR
+
+      这个彻底的流程确保高质量的 PR 和适当的上下文。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.4 命令示例"
+      anchor: "#example-2-pr-command"
+
+  - id: "06-012"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "与 Claude Code 对话时如何引用文件？"
+    options:
+      a: "#filename"
+      b: "@filename"
+      c: "!filename"
+      d: "$filename"
+    correct: "b"
+    explanation: |
+      `@filename` 语法用于在与 Claude 的对话中引用文件。
+
+      快捷操作：
+      - `@file` - 引用文件
+      - `!command` - 运行 shell 命令
+      - `Ctrl+C` - 取消操作
+      - `Ctrl+R` - 重试上次操作
+
+      这允许你轻松将特定文件带入 Claude 的上下文中进行分析。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "10.1 命令表"
+      anchor: "#quick-actions"
+
+  - id: "06-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 中 `/powerup` 命令有什么作用（在 v2.1.90 中添加）？"
+    options:
+      a: "将 Claude Code 订阅升级到 Pro 层级"
+      b: "将当前会话的模型努力级别提升到最大"
+      c: "运行交互式动画课程，通过实时终端演示教授 Claude Code 功能"
+      d: "为会话启用快速模式（2.5 倍速度）"
+    correct: "c"
+    explanation: |
+      `/powerup` 在 v2.1.90 中作为学习工具添加，通过实时终端演示以交互式动画课程教授 Claude Code 功能。它与 `/fast`（切换更快但更昂贵的模式）、努力设置和订阅管理不同。可以把它看作终端内的教程系统，对入门或发现你可能错过的功能很有用。
+    doc_reference:
+      file: "guide/core/claude-code-releases.md"
+      section: "v2.1.90"
+      anchor: "#v2190"
+
+  - id: "06-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你运行 `/loop 5m check the deploy`。Claude Code 如何执行它，以及如何停止？"
+    options:
+      a: "运行一次提示，然后等待手动重新触发。通过关闭终端停止。"
+      b: "每 5 分钟执行一次提示，直到你按 Ctrl+C 或发送任何新消息"
+      c: "创建一个后台 cron 作业，即使 Claude Code 退出后也会继续运行"
+      d: "在单独的子代理会话中按 5 分钟计划运行提示"
+    correct: "b"
+    explanation: |
+      `/loop [interval] [prompt]` 按指定间隔重复运行给定的提示或斜杠命令。每次执行后，Claude 等待间隔时间然后再次执行。未提供间隔时的默认间隔是 10 分钟。停止很简单：按 Ctrl+C 或发送任何新消息。循环不会持久化到会话之外。常见用例包括监控部署、轮询 PR 反馈和检查后台任务。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "/loop 命令"
+      anchor: "#the-loop-command"
+
+  - id: "06-015"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "`/branch` 与在决策点启动全新的 `claude` 会话之间的关键区别是什么？"
+    options:
+      a: "没有区别——`/branch` 只是启动新会话的别名"
+      b: "`/branch` 将当前会话分叉为一个保留所有先前上下文的独立副本，而全新会话从零开始"
+      c: "`/branch` 自动创建 git 分支，而全新会话不会"
+      d: "`/branch` 仅在计划模式下可用；全新会话在任何模式下都有效"
+    correct: "b"
+    explanation: |
+      `/branch` 创建一个从当前会话历史开始的新独立会话。然后两个分支独立发展。等效的 CLI 方法是 `claude --resume <session-id> --fork-session`。全新的 `claude` 会话没有对话历史，会丢失决策点之前积累的所有上下文。当你想尝试同一问题的两种不同方法而不丢失任何一个起点时，使用 `/branch`。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "会话分叉"
+      anchor: "#session-forking"
+
+  - id: "06-016"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "自定义命令或技能文件中的 `argument-hint` frontmatter 字段有什么作用？"
+    options:
+      a: "当用户调用命令不带参数时，为 `$ARGUMENTS` 提供回退值"
+      b: "在斜杠命令选择器 UI 中显示占位文本，展示预期的参数格式"
+      c: "在命令运行前根据模式验证参数"
+      d: "当命令带参数调用时设置默认努力级别"
+    correct: "b"
+    explanation: |
+      `argument-hint` 是一个 frontmatter 字段，控制当命令或技能接受 `$ARGUMENTS` 时，斜杠命令选择器中显示什么占位文本。当用户输入命令名称时，选择器将提示作为预期参数格式的视觉指南。示例：`argument-hint: "<env> [--skip-tests] [--dry-run]"`。此字段对参数验证或默认值没有影响——纯粹是用于可发现性的 UI 辅助。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "6.3 变量插值"
+      anchor: "#variable-interpolation"
+
+  - id: "06-017"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在指南的示例命令 `/investigate`、`/qa` 和 `/canary` 中，哪个命令与用途的配对是正确的？"
+    options:
+      a: "`/investigate` = 部署后监控；`/qa` = 根本原因调试；`/canary` = 质量保证测试"
+      b: "`/investigate` = 任何修复前的根本原因调试；`/qa` = 基于差异的 Web 应用 QA 测试；`/canary` = 部署后生产监控"
+      c: "`/investigate` = 代码审查工作流；`/qa` = 金丝雀部署 rollout；`/canary` = 自动化测试生成"
+      d: "`/investigate` = 安全漏洞扫描；`/qa` = 测试覆盖率报告；`/canary` = 渐进流量 rollout"
+    correct: "b"
+    explanation: |
+      这三个都是 `examples/commands/` 中的自定义命令模板。`/investigate` 在编写任何修复前强制执行系统的根本原因分析。`/qa` 通过识别当前分支变更中受影响的路由，对 Web 应用运行基于差异的分层质量保证。`/canary` 在部署后监控实时应用并与部署前基线进行比较。这些命令展示了如何将结构化工作流编码到简单提示之外。
+    doc_reference:
+      file: "examples/commands/"
+      section: "自定义命令模板"
+      anchor: "#command-examples"
+
+  - id: "06-018"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你需要不受本地开发者设置影响的确定性 CI/CD 执行。哪个 CLI 标志可以实现这一点？"
+    options:
+      a: "`--dangerously-skip-permissions` — 绕过所有权限检查以进行无头执行"
+      b: "`--bare` — 禁用 hooks、LSP、插件同步和技能目录扫描；需要 ANTHROPIC_API_KEY"
+      c: "`--no-mcp` — 禁用所有 MCP 服务器以获得干净的执行环境"
+      d: "仅 `-p` — 打印模式已经提供了密封的执行环境"
+    correct: "b"
+    explanation: |
+      `--bare` 是专门为 CI 环境中的脚本化 `-p` 调用添加的。它禁用 hooks、LSP、插件同步和技能目录遍历，因此本地开发者配置永远不会渗入管道执行。它还完全禁用自动记忆，并要求通过 `--settings` 提供 `ANTHROPIC_API_KEY` 或 `apiKeyHelper`。没有 `--bare`，CI 中的 `claude -p` 调用可能会拾取设置运行器的机器上安装的本地 hooks、插件和技能，使管道行为非确定性。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.2 CI/CD 集成"
+      anchor: "#bare-flag"
+
+  - id: "06-019"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "`--channels` CLI 标志的用途是什么？"
+    options:
+      a: "指定哪些通信渠道（Slack、邮件、webhook）接收 Claude 的输出"
+      b: "设置并行工具执行通道的数量以提高性能"
+      c: "启用权限中继，MCP 通道服务器可以将工具批准提示转发到外部系统"
+      d: "配置 Claude 订阅外部服务的事件通道"
+    correct: "c"
+    explanation: |
+      `--channels` 是一种权限中继机制。声明了 `permission` 能力的 MCP 服务器可以使用它将工具批准提示从终端转发出去，例如转发到你的手机，这样你就可以在不在键盘前的情况下远程批准或拒绝工具调用。这与远程控制（镜像完整会话）不同。channels 功能专门关于将权限决策流委托给外部系统。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "CLI 标志"
+      anchor: "#channels-flag"
+
+  - id: "06-020"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "运行 `claude auth login` 时，`--console` 标志有什么作用？"
+    options:
+      a: "将认证令牌输出到 stdout 而不是存储在钥匙串中"
+      b: "通过 Anthropic Console（API 计费）认证，而不是默认的 claude.ai OAuth 流程"
+      c: "打开浏览器控制台调试视图以排查认证问题"
+      d: "为登录命令启用结构化 JSON 输出"
+    correct: "b"
+    explanation: |
+      `--console` 标志将认证路由到 Anthropic Console，这是 API 计费路径。对于通过 console.anthropic.com 管理的 API 密钥访问 Claude Code 的团队和开发者来说，这是正确选择，而不是标准的 claude.ai 订阅 OAuth 流程。如果你的组织通过 Anthropic Console 管理 API 凭据而不是个人 claude.ai 账户，请使用 `claude auth login --console` 进行正确认证。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.1 安装"
+      anchor: "#console-auth"

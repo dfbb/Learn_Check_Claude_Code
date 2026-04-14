@@ -1,0 +1,568 @@
+category: "钩子"
+category_id: 7
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "07-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "钩子应返回什么退出码来阻止操作？"
+    options:
+      a: "0"
+      b: "1"
+      c: "2"
+      d: "255"
+    correct: "c"
+    explanation: |
+      钩子退出码有特定含义：
+
+      - **退出码 0**：成功 - 允许操作继续
+      - **退出码 2**：阻止 - 防止操作执行。重要：退出码 2 会静默丢弃任何 stdout/JSON 输出——只有 stderr 会作为错误消息转发给 Claude。
+      - **其他退出码**：错误 - 记录错误并继续
+
+      这对于需要阻止危险命令的安全钩子至关重要。
+      例如，检测到 `rm -rf /` 的钩子应 `exit 2` 来阻止执行并将原因写入 stderr。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#exit-codes"
+
+  - id: "07-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个钩子事件在工具执行之前触发？"
+    options:
+      a: "BeforeToolUse"
+      b: "PreToolUse"
+      c: "ToolStart"
+      d: "OnToolCall"
+    correct: "b"
+    explanation: |
+      `PreToolUse` 事件在任何工具运行之前触发。
+
+      Claude Code 支持 27 个钩子事件，分为 7 组：
+      - **生命周期**：SessionStart、SessionEnd、Setup、Stop
+      - **代理动作**：PreToolUse（安全）、PostToolUse（格式化）、PostToolUseFailure（错误日志）
+      - **权限**：PermissionRequest、PermissionDenied
+      - **压缩**：PreCompact、PostCompact
+      - **多代理**：SubagentStart、SubagentStop、TeammateIdle、TaskCompleted、TaskCreated
+      - **配置**：ConfigChange、InstructionsLoaded、CwdChanged
+      - **文件系统**：WorktreeCreate、WorktreeRemove、FileChanged
+      - **用户交互**：UserPromptSubmit、Notification、Elicitation、ElicitationResult
+
+      钩子也可以在运行时按会话范围注册（无需修改 settings.json）——这就是技能在调用期间注册临时回调的方式。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#event-types"
+
+  - id: "07-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "钩子如何接收来自 Claude Code 的输入数据？"
+    options:
+      a: "作为命令行参数"
+      b: "通过 stdin 的 JSON"
+      c: "作为环境变量"
+      d: "来自临时文件"
+    correct: "b"
+    explanation: |
+      钩子通过 stdin 接收事件信息的 JSON 数据。
+
+      示例输入结构（通用字段 + 事件特定字段）：
+      ```json
+      {
+        "session_id": "abc123",
+        "transcript_path": "/home/user/.claude/projects/.../transcript.jsonl",
+        "cwd": "/project",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git status"
+        }
+      }
+      ```
+
+      发送到所有事件的通用字段：`session_id`、`transcript_path`、`cwd`、`permission_mode`、`hook_event_name`。
+
+      钩子通常这样解析：`INPUT=$(cat)` 然后用 `jq` 提取 JSON。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#hook-input-stdin-json"
+
+  - id: "07-004"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在钩子注册（settings.json）中，`matcher` 字段指定什么？"
+    options:
+      a: "要监视的文件扩展名"
+      b: "哪些工具触发该钩子的正则模式"
+      c: "用户权限级别"
+      d: "输出格式要求"
+    correct: "b"
+    explanation: |
+      `matcher` 字段是一个正则模式，用于决定哪些工具会触发该钩子。
+
+      示例配置：
+      ```json
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [{"type": "command", "command": "./hooks/security-check.sh"}]
+      }
+      ```
+
+      这个钩子会对 Bash、Edit 或 Write 工具触发。你可以匹配特定工具，或使用 `.*` 匹配所有工具。除了 `matcher`，钩子还支持条件 `if` 字段用于运行时过滤——`if` 会针对钩子输入 JSON 评估条件，若为 false 则跳过执行，从而实现基于环境的门控（例如仅在 CI 中运行，或仅在编辑特定文件时运行）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#configuration-fields"
+
+  - id: "07-005"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "`UserPromptSubmit` 钩子事件的最佳用例是什么？"
+    options:
+      a: "阻止危险命令"
+      b: "自动格式化代码"
+      c: "为每个提示添加上下文，如 git status"
+      d: "播放通知声音"
+    correct: "c"
+    explanation: |
+      `UserPromptSubmit` 事件非常适合上下文增强。
+
+      按事件划分的用例：
+      - **UserPromptSubmit**：添加上下文（git status、当前分支、暂存文件）
+      - **PreToolUse**：安全校验（阻止危险命令）
+      - **PostToolUse**：格式化、日志、质量检查
+      - **SessionStart**：初始化环境、扫描 CLAUDE.md 注入
+      - **Notification**：声音提醒、桌面通知
+
+      上下文增强器示例会添加 git 分支、最近提交和暂存/未暂存信息。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.3 钩子模板"
+      anchor: "#template-3-userpromptsubmit-context-enricher"
+
+  - id: "07-006"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个退出码允许操作继续？"
+    options:
+      a: "1"
+      b: "0"
+      c: "2"
+      d: "-1"
+    correct: "b"
+    explanation: |
+      退出码 0 表示成功，并允许操作继续。
+
+      退出码系统：
+      - **0**：成功 - 允许操作
+      - **2**：阻止 - 防止操作
+      - **其他**：错误 - 记录并继续
+
+      如果要允许操作，始终以 `exit 0` 结束钩子；
+      若要阻止，使用 `exit 2`。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#exit-codes"
+
+  - id: "07-007"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "安全钩子通常应阻止哪些命令？"
+    options:
+      a: "git status, npm test"
+      b: "rm -rf /, sudo rm, git push --force origin main"
+      c: "cd, ls, pwd"
+      d: "npm install, pip install"
+    correct: "b"
+    explanation: |
+      安全钩子应阻止如下危险操作：
+
+      - `rm -rf /` 或 `rm -rf ~` - 文件系统破坏
+      - `sudo rm` - 提权删除
+      - `git push --force origin main` - 强推受保护分支
+      - `npm publish` - 意外发布包
+      - `> /dev/sda` 或 `dd if=` - 直接磁盘操作
+
+      像 `git status`、`npm test`、`ls` 这样的安全命令应被允许。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.4 安全钩子"
+      anchor: "#recommended-security-rules"
+
+  - id: "07-008"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "钩子应返回什么 JSON 结构才能向 Claude 发送消息？"
+    options:
+      a: '{"message": "text"}'
+      b: '{"systemMessage": "text", "hookSpecificOutput": {...}}'
+      c: '{"response": "text"}'
+      d: '{"output": "text"}'
+    correct: "b"
+    explanation: |
+      钩子在 stdout 上返回具有特定字段的 JSON：
+
+      ```json
+      {
+        "systemMessage": "显示给 Claude 的消息",
+        "hookSpecificOutput": {
+          "additionalContext": "额外信息"
+        }
+      }
+      ```
+
+      - `systemMessage`：作为上下文显示给 Claude
+      - `hookSpecificOutput`：附加结构化数据
+
+      这使钩子能够提供 Claude 可在响应中使用的上下文。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#hook-output"
+
+  - id: "07-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "对于需要'理解'的任务和基于模式的任务，推荐的方法是什么？"
+    options:
+      a: "两者都应使用 bash 脚本"
+      b: "两者都应使用 AI 代理"
+      c: "基于模式用 bash 脚本；需要理解的用 AI 代理"
+      d: "基于模式用 AI 代理；需要理解的用 bash 脚本"
+    correct: "c"
+    explanation: |
+      指南建议选择合适的工具：
+
+      **以下场景使用 Bash 脚本：**
+      - 任务是确定性的（创建分支、推送）
+      - 基于模式（用正则检查密钥）
+      - 快速、可预测、无 token 成本
+
+      **以下场景使用 AI 代理：**
+      - 需要解释判断（代码审查质量）
+      - 依赖上下文的决策
+      - 需要理解和判断
+
+      规则："如果你能用正则表达式写出来，就用 bash 脚本。"
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#shell-scripts-vs-ai-agents-when-to-use-what"
+
+  - id: "07-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个钩子事件在工具执行完成后触发？"
+    options:
+      a: "AfterToolUse"
+      b: "PostToolUse"
+      c: "ToolComplete"
+      d: "OnToolDone"
+    correct: "b"
+    explanation: |
+      `PostToolUse` 事件在任何工具完成执行后触发。
+
+      PostToolUse 的常见用例：
+      - 编辑后自动格式化代码
+      - 文件更改后运行 linter
+      - 记录工具使用以供审计
+      - 代码更改后触发测试
+
+      Auto-Formatter 模板使用 PostToolUse 在 Edit/Write 操作后运行 Prettier。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#event-types"
+
+  - id: "07-011"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在部署安全钩子前如何测试它？"
+    options:
+      a: "运行 Claude Code 并祈祷它有效"
+      b: "将测试 JSON 管道输入钩子脚本并检查退出码"
+      c: "部署到生产后监控"
+      d: "安全钩子无法测试"
+    correct: "b"
+    explanation: |
+      通过管道输入 JSON 并检查退出码来测试钩子：
+
+      ```bash
+      # 测试应被阻止的命令
+      echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | ./hooks/security-blocker.sh
+      echo "Exit code: $?"  # 应为 2
+
+      # 测试安全命令
+      echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | ./hooks/security-blocker.sh
+      echo "Exit code: $?"  # 应为 0
+      ```
+
+      这能确保你的钩子在部署前正确阻止危险命令。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.4 安全钩子"
+      anchor: "#testing-security-hooks"
+
+  - id: "07-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 Windows 中，为避免执行策略限制，钩子应如何调用？"
+    options:
+      a: "以管理员身份运行"
+      b: "使用 powershell -ExecutionPolicy Bypass -File script.ps1"
+      c: "禁用所有安全设置"
+      d: "只转换为 batch 文件"
+    correct: "b"
+    explanation: |
+      Windows 钩子应使用完整的 PowerShell 调用：
+
+      ```json
+      {
+        "type": "command",
+        "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/security-check.ps1"
+      }
+      ```
+
+      这会绕过可能阻止脚本执行的默认执行策略。
+      对于更简单的钩子，也可使用批处理文件（.cmd）作为替代。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.3 钩子模板"
+      anchor: "#windows-hook-templates"
+
+  - id: "07-013"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "活动日志钩子示例使用什么来存储日志？"
+    options:
+      a: "SQLite 数据库"
+      b: "纯文本文件"
+      c: "JSONL（JSON Lines）文件"
+      d: "CSV 文件"
+    correct: "c"
+    explanation: |
+      活动日志钩子以 JSONL（JSON Lines）格式存储日志。
+
+      关键特性：
+      - 日志写入 `~/.claude/logs/activity-YYYY-MM-DD.jsonl`
+      - 每条记录包含时间戳、工具名和会话 ID
+      - 自动清理 7 天前的日志
+      - 使用 `jq` 构建 JSON
+
+      JSONL 非常适合日志文件，因为每行都是一个有效的 JSON 对象，
+      便于追加和解析。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.5 钩子示例"
+      anchor: "#example-1-activity-logger"
+
+  - id: "07-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你有一个发送 Slack 通知的 PostToolUse 钩子，不需要等待结果再继续。应该怎么配置？"
+    options:
+      a: "不需要特殊配置，钩子默认就是非阻塞的"
+      b: "设置 async: true，让钩子触发后不阻塞 Claude 的执行"
+      c: "设置 timeout: 0 来跳过等待"
+      d: "使用 background: true 参数"
+    correct: "b"
+    explanation: |
+      对于不需要等待结果的钩子（日志、通知、分析），使用 `async: true`：
+
+      ```json
+      {
+        "type": "command",
+        "command": ".claude/hooks/notify-slack.sh",
+        "async": true
+      }
+      ```
+
+      `async: true` 让钩子触发后立即继续，不阻塞 Claude 的执行。
+      适用于：Slack 通知、日志记录、分析上报等场景。
+      需要等待结果的钩子（安全检查、格式化）则不应使用 async。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#hook-registration-settingsjson"
+
+  - id: "07-015"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个配置参数使钩子异步运行（v2.1.0+）？"
+    options:
+      a: "background: true"
+      b: "async: true"
+      c: "nonblocking: true"
+      d: "mode: async"
+    correct: "b"
+    explanation: |
+      从 Claude Code v2.1.0 开始，钩子在配置中支持 `async: true`。这使钩子触发时不会阻塞 Claude 的执行。适用于日志、通知或分析钩子，因为这些场景不需要等待结果再继续。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "钩子执行模型"
+      anchor: "#hook-execution-model"
+
+  - id: "07-016"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "与同步钩子相比，异步钩子的 3 个限制是什么？"
+    options:
+      a: "不能访问 stdin、不能写文件、不能读环境变量"
+      b: "没有退出码反馈（不能阻止）、不返回 additionalContext、没有阻塞能力"
+      c: "不能使用网络、不能创建进程、不能读文件"
+      d: "仅限 1 秒超时、不捕获 stderr、不支持参数传递"
+    correct: "b"
+    explanation: |
+      异步钩子以控制力换取速度：
+
+      1. **无退出码反馈** - 不能根据成功/失败阻止 Claude
+      2. **无 additionalContext** - 不能向对话注入上下文
+      3. **无阻塞能力** - 仅 fire-and-forget
+
+      对非关键操作（日志、遥测）使用异步。对安全门禁、格式化和验证使用同步。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "钩子执行模型"
+      anchor: "#hook-execution-model"
+
+  - id: "07-017"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "PreToolUse 钩子返回 `permissionDecision: \"defer\"` 时会发生什么，这在哪些场景有效？"
+    options:
+      a: "Claude 在任何会话类型中都会交互式询问用户批准"
+      b: "Claude 以 stop_reason: \"tool_deferred\" 暂停并等待 --resume；仅在无头会话中有效"
+      c: "该工具在会话剩余时间内被永久拒绝"
+      d: "Claude 回退到默认权限提示"
+    correct: "b"
+    explanation: |
+      `defer` 权限决策（v2.1.89+）专为无头集成设计。返回后，Claude 会以 `stop_reason: "tool_deferred"` 暂停，等待外部编排器收集输入并通过 `--resume <session-id>` 恢复会话。在交互式终端会话中，`defer` 会被忽略并给出警告。这使外部 UI、队列或审批系统中的 human-in-the-loop 审批流成为可能，而不会破坏会话。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#hook-output"
+
+  - id: "07-018"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 v2.1.89+ 中，当多个 PreToolUse 钩子返回冲突的权限决策时，正确的优先级顺序是什么（从高到低）？"
+    options:
+      a: "allow > ask > defer > deny"
+      b: "deny > ask > defer > allow"
+      c: "deny > defer > ask > allow"
+      d: "ask > deny > defer > allow"
+    correct: "c"
+    explanation: |
+      从 v2.1.89 开始，当多个 PreToolUse 钩子返回不同 `permissionDecision` 值时，解析顺序为：`deny` > `defer` > `ask` > `allow`。最严格的决策胜出。即使其他钩子允许，只要有一个钩子返回 `deny` 就会阻止工具；`defer`（暂停等待外部审批）优先于 `ask`（交互式提示）。设计钩子流水线时请考虑此优先级，以便安全钩子始终可以覆盖宽松钩子。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#hook-output"
+
+  - id: "07-019"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "会话范围钩子与 settings.json 中定义的钩子有何区别？"
+    options:
+      a: "会话范围钩子以更高权限运行并可绕过安全门禁"
+      b: "会话范围钩子在运行时注册，仅持续当前会话，且永不写入任何配置文件"
+      c: "会话范围钩子仅支持 `command` 类型，不支持 `http` 或 `agent`"
+      d: "会话范围钩子在所有事件中都先于 settings.json 钩子触发"
+    correct: "b"
+    explanation: |
+      会话范围钩子是临时性的：通过编程 API 在运行时注册，或由技能在调用时注册，它们仅在该会话期间存在，会话结束即消失。不会写入 `settings.json` 或任何配置文件。这正是技能在调用期间注册临时回调的方式。技能结束或会话结束后，这些钩子就会消失。会话范围钩子遵循与持久钩子相同的 JSON 模式。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#session-scoped-hooks"
+
+  - id: "07-020"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "即使在 `bypassPermissions` 模式下，哪些路径始终受保护并会提示审批？"
+    options:
+      a: ".env 文件、node_modules/ 和 /tmp/ 路径"
+      b: ".git/、.claude/（除 .claude/worktrees/）、shell 配置文件（.bashrc、.zshrc）、.gitconfig、.mcp.json 和 .claude.json"
+      c: "当前工作目录之外的任何文件"
+      d: "仅生产数据库配置和 SSH 密钥"
+    correct: "b"
+    explanation: |
+      `bypassPermissions` 模式会自动批准除固定的一组始终受保护路径之外的所有操作。Claude Code 在修改以下内容前始终会提示：`.git/` 目录、`.claude/` 目录（不含 `.claude/worktrees/`）、shell 配置文件（`.bashrc`、`.zshrc`、`.bash_profile`、`.profile`）和工具配置（`.gitconfig`、`.mcp.json`、`.claude.json`）。这个安全不变量与权限模式无关，可防止对配置层本身的意外或恶意修改。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.4 权限模式"
+      anchor: "#bypasspermissions-safety-invariant"
+
+  - id: "07-021"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "`Setup` 钩子事件在什么时候触发，它的主要用例是什么？"
+    options:
+      a: "在第一条用户消息后触发，用于初始化项目特定工具"
+      b: "在会话启动的环境设置阶段触发，用于在会话接受提示前安装工具或验证前置条件"
+      c: "首次加载 CLAUDE.md 文件时触发，用于审计指令内容"
+      d: "每次工具调用前触发，用于准备执行环境"
+    correct: "b"
+    explanation: |
+      `Setup` 事件在会话启动期间的环境设置阶段触发（不是在第一条用户消息后）。它不能阻止操作。其主要用例是在会话开始接受用户提示前，安装工具、验证前置条件或运行任何初始化逻辑。这与 `SessionStart`（会话开始或恢复时触发）和 `InstructionsLoaded`（加载 CLAUDE.md 文件时触发）不同。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#event-types"
+
+  - id: "07-022"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪项配对正确映射了 `Elicitation` 和 `ElicitationResult` 钩子事件及其用例？"
+    options:
+      a: "Elicitation = 用户提交表单时触发；ElicitationResult = Claude 响应后触发"
+      b: "Elicitation = Claude 向用户请求信息时触发（可阻止）；ElicitationResult = 收到响应时触发（不可阻止）"
+      c: "Elicitation = 在 SubagentStart 进行数据收集时触发；ElicitationResult = 在 SubagentStop 触发"
+      d: "两个事件仅在多代理编排期间按顺序触发"
+    correct: "b"
+    explanation: |
+      `Elicitation` 在 Claude 向用户请求信息时触发，主要用于无法进行交互式提示的无头会话。它可以阻止，从而允许钩子拦截并预先回答问题，再决定是否传递到任何交互式 UI（在 CI 流水线或 Web 前端中很有用）。`ElicitationResult` 在收到响应后触发，且不能阻止，适用于日志或审计。二者结合使无头集成能够全面控制 Claude 的信息收集流程。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#event-types"
+
+  - id: "07-023"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "与在钩子脚本内处理条件相比，在钩子上使用 `if` 字段的主要性能优势是什么？"
+    options:
+      a: "`if` 字段可启用跨多个事件的并行钩子执行"
+      b: "带 `if` 的钩子在单独进程池中运行且永不超时"
+      c: "当条件为 false 时，`if` 字段可完全避免生成子进程，在每会话触发数百次事件时减少开销"
+      d: "`if` 字段会在发送回 Claude 前压缩钩子输出"
+    correct: "c"
+    explanation: |
+      没有 `if` 时，每次 PostToolUse 事件都会生成一个子进程，即使钩子逻辑会因工具不匹配而立即退出。在大型仓库中，PostToolUse 每个会话可能触发数百次。`if` 字段由 Claude Code 在创建任何子进程前评估。当条件为 false 时，钩子会被直接跳过，从而完全消除子进程生成开销。把过滤逻辑放到钩子脚本里用 `case` 语句虽然逻辑相同，但每次仍要付出启动进程的成本。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.2 创建钩子"
+      anchor: "#conditional-hooks-with-if"
+
+  - id: "07-024"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "`PostCompact` 钩子事件允许你做什么，这是其他生命周期钩子无法提供的？"
+    options:
+      a: "在上下文仍较小时阻止 context compaction 运行"
+      b: "会话结束并归档转录后运行清理逻辑"
+      c: "在 context compaction 完成后恢复状态或记录元数据"
+      d: "在 compaction 后 Claude 下一轮前注入系统消息"
+    correct: "c"
+    explanation: |
+      `PostCompact` 在 context compaction 完成后触发，且不能阻止。它是唯一专门针对 compaction 生命周期的钩子事件。其主要用例是在 compaction 运行前由 `PreCompact` 捕获状态后进行恢复，以及记录 compaction 发生的时间和频率元数据。`SessionStart` 或其他生命周期钩子都不会因 compaction 事件触发，因此 `PostCompact` 是任何依赖“刚刚发生 compaction”逻辑的正确位置。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "7.1 事件系统"
+      anchor: "#event-types"

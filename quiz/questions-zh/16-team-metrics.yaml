@@ -1,0 +1,212 @@
+category: "团队与指标"
+category_id: 16
+source_file: "guide/ops/team-metrics.md"
+
+questions:
+  - id: "16-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "四个核心 DORA 指标是什么？"
+    options:
+      a: "提交频率、PR 数量、代码覆盖率、部署速度"
+      b: "部署频率、变更交付前置时间、变更失败率、平均恢复时间（MTTR）"
+      c: "Sprint 速度、故事点、Bug 数量、测试覆盖率"
+      d: "代码行数、NPS、正常运行时间、开发者满意度"
+    correct: "b"
+    explanation: |
+      四个核心 DORA 指标衡量交付系统健康度：(1) 部署频率——向生产环境部署的频率；(2) 变更交付前置时间——从提交到生产环境运行的时间；(3) 变更失败率——导致事故或回滚的部署百分比；(4) 平均恢复时间（MTTR）——故障后恢复服务的时间。这四个是业界验证度最高的交付健康指标，有多年的 DORA 研究支持。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "The DORA Foundation"
+      anchor: "#the-dora-foundation"
+
+  - id: "16-002"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "引入 Claude Code 后，团队应该如何重新校准 DORA 指标的基线？"
+    options:
+      a: "保持原有基线不变，AI 不影响这些指标"
+      b: "AI 增强团队的基线已上移，原来的'中等'级别已不再可信，需要重新设定更高的目标"
+      c: "降低基线，因为 AI 会引入更多 bug"
+      d: "只关注部署频率，其他指标不受影响"
+    correct: "b"
+    explanation: |
+      AI 工具显著提升了开发速度（如每位工程师每天 PR 数量大幅增加），这意味着原有的 DORA 基线已经过时。引入 Claude Code 后，团队应重新测量实际表现，并基于新的能力设定更高的目标。继续用旧基线衡量 AI 增强团队会低估实际潜力。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "The DORA Foundation"
+      anchor: "#the-dora-foundation"
+
+  - id: "16-003"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "2025 年 DORA 报告引入了哪些重大方法论变化？"
+    options:
+      a: "增加了第 5 个指标：开发者幸福感指数"
+      b: "退役了 4 级 Elite/High/Medium/Low 模型，改为基于 8 个维度的 7 种组织原型"
+      c: "用特性开关推出频率替代了部署频率"
+      d: "引入了替代原始四个指标的 AI 专用基准"
+    correct: "b"
+    explanation: |
+      2025 年 DORA 报告退役了 4 级模型（Elite/High/Medium/Low），现在识别出 7 种组织原型（例如"繁荣成就者"、"挣扎挣扎者"、"平衡表现者"），并在 8 个维度上衡量：吞吐量、稳定性、团队绩效、产品绩效、个人效能、高价值工作时间、摩擦和倦怠。启示：不要再把"Elite"当作终点去追求——它可能与倦怠和高摩擦共存。识别你的原型，并改进最弱的维度。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "On the 2025 DORA Evolution"
+      anchor: "#on-the-2025-dora-evolution"
+
+  - id: "16-004"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "SPACE 框架的 5 个维度是什么？"
+    options:
+      a: "Speed, Productivity, Accuracy, Collaboration, Efficiency"
+      b: "Satisfaction/Well-being, Performance, Activity, Communication/Collaboration, Efficiency/Flow"
+      c: "Security, Performance, Availability, Capacity, Experience"
+      d: "Sprints, PRs, Automation, Code quality, Engineering debt"
+    correct: "b"
+    explanation: |
+      SPACE（由 GitHub、Microsoft 和 Victoria 大学于 2021 年开发）涵盖：(S) 满意度与幸福感——开发者满意度和倦怠信号；(P) 绩效——交付工作的质量和可靠性（CFR、Bug Escape Rate）；(A) 活动——工作产出量（部署频率、吞吐量）；(C) 沟通与协作——PR 审查延迟、跨团队依赖解决；(E) 效率与心流——深度工作能力、上下文切换频率、摩擦。DORA 衡量交付系统；SPACE 衡量系统中的人。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "Beyond DORA: The SPACE Framework"
+      anchor: "#beyond-dora-the-space-framework"
+
+  - id: "16-005"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "AI 增强团队中的'速度陷阱'是什么？"
+    options:
+      a: "部署太频繁，每次发布都破坏生产"
+      b: "DORA 得分很高，但同时在满意度、幸福感和效率上得分很差——更多部署却以开发者健康和质量为代价"
+      c: "用 AI 生成夸大了实际团队绩效的速度报告"
+      d: "当 AI 写了所有代码时，Sprint 速度变得毫无意义"
+    correct: "b"
+    explanation: |
+      速度陷阱：团队可以在 DORA 部署频率上达到"高"，同时在满意度、幸福感和效率上得分很差。症状：开发者熬夜赶 sprint 承诺、跳过设计讨论因为 AI 让编码快到可以绕过规划、因审查不完全理解的 AI 代码而积累认知债务。SPACE 能捕获这一点；DORA 不能。同时运行两个框架才能获得完整图景。DORA 强 + SPACE 弱的团队是未来 DORA 恶化的先行指标。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "The Velocity Trap"
+      anchor: "#the-velocity-trap"
+
+  - id: "16-006"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "当 AI PR 审查时间比人工 PR 审查时间快 30% 时，这代表什么警告信号？"
+    options:
+      a: "正常且预期——AI 代码更简单、审查更快"
+      b: "一个黄旗，表明可能存在机械盖章；AI 生成的代码至少需要与人工代码同等的审查力度"
+      c: "AI 代码质量更高的积极信号"
+      d: "只有在变更失败率也更低时才可以接受"
+    correct: "b"
+    explanation: |
+      如果 AI 生成的 PR 比人工 PR 合并速度快 30% 以上，这是一个黄旗，表明可能存在机械盖章。AI 生成的代码至少需要与人工代码同等的审查力度——甚至可以说需要更多，因为它可能在不明显的方式上自信地出错。分别追踪 AI 生成与人工代码的 CFR：如果 AI 的 CFR 明显更高（超过 2-3 个百分点），说明你的审查纪律下降了，而不是 AI 工具质量差。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "AI-Specific Metrics"
+      anchor: "#ai-specific-metrics"
+
+  - id: "16-007"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "引入 Claude Code 后，为什么需要分别追踪 AI 生成代码和人工代码的变更失败率？"
+    options:
+      a: "只是为了统计目的，实际没有区别"
+      b: "如果 AI 代码的失败率明显更高，说明代码审查纪律下降了，而不是 AI 工具质量差"
+      c: "AI 代码总是比人工代码失败率更高"
+      d: "这样可以减少 AI 的使用量"
+    correct: "b"
+    explanation: |
+      分别追踪 AI 生成与人工代码的变更失败率（CFR）是关键诊断手段。如果 AI 代码的 CFR 明显更高，通常意味着审查纪律下降——审查者对 AI 生成的代码进行机械盖章，而不是认真审查。AI 代码可能以不明显的方式自信地出错，需要至少同等甚至更严格的审查。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "AI-Specific Metrics"
+      anchor: "#ai-specific-metrics"
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "Product Metrics"
+      anchor: "#product-metrics-the-often-missing-layer"
+
+  - id: "16-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "哪个指标应该替代 Sprint Velocity，为什么？"
+    options:
+      a: "PR 数量——比故事点更客观"
+      b: "Cycle Time + 部署频率——velocity 可以在 2 个 sprint 内通过改变估算实践来操纵，而 cycle time 更难造假"
+      c: "代码行数——更可测量、更一致"
+      d: "按团队规模归一化的故事点"
+    correct: "b"
+    explanation: |
+      Sprint velocity 应该被 Cycle Time + 部署频率替代。Velocity 可以在 2 个 sprint 内通过改变估算实践来操纵（团队膨胀点值以显得更快）。Cycle time（提交到生产）更难造假。指南中应放弃的虚荣指标对照表：Sprint Velocity → Cycle Time + 部署频率。代码行数 → Bug Escape Rate。仅看 NPS → CSAT + Time-to-value。每日提交数 → 变更交付前置时间。故事点 → 吞吐量（发布的功能数）。代码覆盖率 % → 变异测试得分 + Bug Escape Rate。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "Vanity Metrics to Drop"
+      anchor: "#vanity-metrics-to-drop"
+
+  - id: "16-009"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "决定是否在追踪栈中添加一个指标的'4 问题测试'是什么？"
+    options:
+      a: "是否免费？是否自动化？在报告中好看吗？领导关心吗？"
+      b: "能否在 2 周内据此行动？它解释的是为什么（而不只是是什么）？是否与业务结果相关？能否自动测量？"
+      c: "是否是 DORA 指标？是否出现在 SPACE 框架中？是否是行业标准？是否需要自定义代码？"
+      d: "是否追踪个人绩效？是否在 GitHub 中可用？是否可导出 CSV？是否每天运行？"
+    correct: "b"
+    explanation: |
+      4 问题测试：(1) 能否在 2 周内据此行动？——如果不能，它是报告指标，不是引导指标。(2) 它解释的是为什么，而不只是是什么？——当这个数字变动时，你知道该调查什么吗？(3) 是否与业务结果相关？——在 SaaS 中，部署频率与收入相关；代码行数与什么都不相关。(4) 能否自动测量？——如果收集它需要手工劳动，3 个月内就会被放弃。规则：少于 3 个"是"的答案，就放弃这个指标。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "The 4-Question Test"
+      anchor: "#the-4-question-test"
+
+  - id: "16-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "5 人团队和 25 人团队推荐的指标工具有什么不同？"
+    options:
+      a: "两者都应该用 LinearB——它从小团队扩展到大团队"
+      b: "5 人：GitHub Insights + 电子表格（不需要专用仪表板）。25 人：LinearB 或 Faros.ai 做自动化 DORA，按 squad 细分"
+      c: "5 人：不需要指标。25 人：完整的 SPACE + DORA + AI 指标仪表板"
+      d: "两者应该用相同工具，只是刷新频率不同"
+    correct: "b"
+    explanation: |
+      5 人团队：GitHub Insights + 共享电子表格。不需要专用仪表板——开销不值得。每月审查指标。25 人团队：LinearB 或 Faros.ai 做自动化 DORA（连接 GitHub + CI/CD），GitHub Analytics 做 AI 贡献指标，PostHog 或 Amplitude 做产品指标。25 人时的关键：按 squad 追踪 DORA，而不仅仅是整个组织——全局平均数会掩盖 squad 级别的问题（一个 3-squad 团队中，如果 80% 的事故来自一个 squad，整体 CFR 会显示"中等"，从而漏掉信号）。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "By Team Size"
+      anchor: "#by-team-size"
+
+  - id: "16-011"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "在 AI 采用缺乏审查纪律的情况下，哪个 DORA 指标风险最大？"
+    options:
+      a: "部署频率——AI 生成了太多部署"
+      b: "MTTR——AI 事故响应使恢复太慢"
+      c: "变更失败率——AI 生成语法正确但 subtly wrong 的代码；机械盖章审查导致 CFR 在 6-12 个月内缓慢上升"
+      d: "前置时间——AI 通过生成更大 diff 拖慢审查队列"
+    correct: "c"
+    explanation: |
+      当 AI 采用速度超过审查纪律时，变更失败率是风险最大的指标。AI 生成的代码语法正确、结构合理，但仍可能有 subtle 的行为错误。那些将 AI PR 视为"低风险"并机械盖章审查的团队，会在 6-12 个月内看到 CFR 缓慢上升。这种失败是渐进的——每个单独的 AI PR 看起来都没问题，但累积的审查松懈最终会体现在生产环境中。分别追踪 AI 生成与人工代码的 CFR；如果 AI 的 CFR 明显更高，就要加强审查流程。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "DORA in an AI-Augmented Context"
+      anchor: "#dora-in-an-ai-augmented-context"
+
+  - id: "16-012"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "指标项目的推荐 3 阶段实施路线图是什么？"
+    options:
+      a: "第 1 阶段：聘请指标工程师。第 2 阶段：购买企业工具。第 3 阶段：向董事会汇报。"
+      b: "第 1 阶段（第 1-2 周）：先实现 DORA 指标（先部署频率 + 前置时间）。第 2 阶段（第 3-4 周）：建立基线并设定内部改进目标。第 3 阶段（第 2 个月+）：叠加产品和 AI 专用指标。"
+      c: "第 1 阶段：追踪一切。第 2 阶段：移除没用的。第 3 阶段：自动化剩余部分。"
+      d: "第 1 阶段：SPACE 调查。第 2 阶段：DORA 工具化。第 3 阶段：AI 贡献指标。"
+    correct: "b"
+    explanation: |
+      3 阶段路线图：第 1 阶段（第 1-2 周）——将 CI/CD 连接到指标工具，先实现部署频率 + 前置时间的自动化（手动配置最少），建立实时基线。第 2 阶段（第 3-4 周）——从真实数据中建立基线，设定内部改进目标（暂时不与行业基准比较），运行首次开发者满意度脉搏调查。第 3 阶段（第 2 个月+）——添加产品指标（time-to-value、功能 CSAT）和 AI 专用信号（AI 代码占比、按来源的 CFR）。每季度审查和修剪：任何 3 个月内没有驱动决策的指标都是报告指标，不是引导指标。
+    doc_reference:
+      file: "guide/ops/team-metrics.md"
+      section: "Implementation Roadmap"
+      anchor: "#implementation-roadmap"

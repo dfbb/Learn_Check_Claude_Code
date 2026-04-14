@@ -1,0 +1,394 @@
+category: "AI 生态系统"
+category_id: 15
+source_file: "guide/ai-ecosystem.md"
+
+questions:
+  - id: "15-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "将互补 AI 工具与 Claude Code 一起使用的主要理念是什么？"
+    options:
+      a: "用更好的工具替代 Claude Code"
+      b: "增强，而非替代——为每个步骤链式使用合适的工具"
+      c: "尽可能同时用尽可能多的工具"
+      d: "避免用 Claude Code 做编码任务"
+    correct: "b"
+    explanation: |
+      理念是"增强，而非替代"。
+
+      Claude Code 擅长上下文推理和实现，但存在不足：
+      - 没有带来源验证的实时网页搜索
+      - 没有图像生成
+      - 没有 PowerPoint/幻灯片生成
+      - 没有音频合成
+
+      目标是为工作流的每个步骤链式使用合适的工具。
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "Introduction"
+      anchor: "#introduction"
+
+  - id: "15-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "什么时候应该使用 Perplexity 而不是 Claude Code？"
+    options:
+      a: "在代码库中实现功能时"
+      b: "当你需要带有 100+ 验证来源的深度研究时"
+      c: "在编辑多个文件时"
+      d: "在运行测试时"
+    correct: "b"
+    explanation: |
+      Perplexity 擅长带验证来源的研究。
+
+      使用 Perplexity 的场景：
+      - "X 的最新 API 是什么？"（实时信息）
+      - "对比 5 个 auth 库"（带来源的对比）
+      - Deep Research 模式可综合 100+ 来源
+
+      使用 Claude Code 的场景：
+      - 在代码库中实现
+      - 上下文代码解释
+      - 多文件编辑
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "1. Perplexity AI"
+      anchor: "#1-perplexity-ai-research--sourcing"
+
+  - id: "15-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "推荐的 Research-to-Code 流水线是什么？"
+    options:
+      a: "Claude Code -> Perplexity -> Implementation"
+      b: "Perplexity Deep Research -> 导出 spec.md -> Claude Code 实现"
+      c: "Google Search -> 复制代码 -> 粘贴到项目中"
+      d: "先让 Claude Code 搜索网页"
+    correct: "b"
+    explanation: |
+      Research-to-Code 流水线：
+
+      1. PERPLEXITY（Deep Research）
+         - 研究最佳实践并带引用
+         - 输出：2000 字的带引用规范
+
+      2. 导出为 spec.md
+
+      3. CLAUDE CODE
+         - "按照 spec.md 实现"
+         - 输出：带测试的可工作实现
+
+      这确保实现基于经过验证的最新信息。
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "Integration Workflow"
+      anchor: "#integration-workflow"
+
+  - id: "15-004"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个工具最适合将 UI 截图转换为 React 代码？"
+    options:
+      a: "Perplexity"
+      b: "直接使用 Claude Code"
+      c: "Gemini 2.5 Pro -> 然后 Claude Code 细化"
+      d: "NotebookLM"
+    correct: "c"
+    explanation: |
+      Gemini 2.5 Pro 擅长视觉理解：
+
+      Visual-to-Code 流水线：
+      1. GEMINI：上传截图 -> 获得 JSX + Tailwind（保真度 90%+）
+      2. CLAUDE CODE：针对你的项目进行细化
+         - 添加 TypeScript 类型
+         - 连接到你的组件
+         - 集成到你的状态管理
+
+      与 Gemini 相比，Claude Code 单独的图像理解能力有限。
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "2. Google Gemini"
+      anchor: "#2-google-gemini-visual-understanding"
+
+  - id: "15-005"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "你应该用哪个工具从代码文档创建 PowerPoint 演示文稿？"
+    options:
+      a: "Claude Code"
+      b: "Perplexity"
+      c: "Kimi（Moonshot AI）"
+      d: "Gemini"
+    correct: "c"
+    explanation: |
+      Kimi（kimi.ai）来自 Moonshot AI，专攻 PPTX 生成：
+
+      特性：
+      - 原生 PPTX 导出（真正的幻灯片，不是 markdown）
+      - 128K+ token 上下文（可处理整个代码库）
+      - 代码感知布局，带语法高亮
+      - 非常适合从技术内容生成利益相关者汇报材料
+
+      工作流：Claude Code 生成摘要 -> Kimi 创建演示文稿
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "3. Kimi"
+      anchor: "#3-kimi-pptx--long-document-generation"
+
+  - id: "15-006"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "NotebookLM 在开发者入职方面的独特功能是什么？"
+    options:
+      a: "代码执行"
+      b: "Audio Overview - 从文档生成播客式讲解"
+      c: "实时协作"
+      d: "Git 集成"
+    correct: "b"
+    explanation: |
+      NotebookLM 的 Audio Overview 功能：
+
+      - 上传 50+ 文档文件
+      - 生成 10-15 分钟的"播客"
+      - 两位 AI 主持人讨论你的代码库
+      - 非常适合入职或回顾大型系统
+
+      工作流：
+      1. 将文档导出为 combined-docs.md
+      2. 上传到 NotebookLM
+      3. 生成 Audio Overview
+      4. 通勤时收听
+      5. 带着更深的理解回到 Claude Code
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "4. NotebookLM"
+      anchor: "#4-notebooklm-synthesis--audio"
+
+  - id: "15-007"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在完整工作流流水线中，各阶段的正确顺序是什么？"
+    options:
+      a: "实现 -> 规划 -> 交付"
+      b: "规划（Perplexity/Gemini/NotebookLM）-> 实现（Claude Code）-> 交付（Kimi）"
+      c: "交付 -> 规划 -> 实现"
+      d: "所有工具同时使用"
+    correct: "b"
+    explanation: |
+      完整流水线有 3 个阶段：
+
+      规划阶段：
+      - Perplexity：Deep Research -> spec.md
+      - Gemini：图表分析 -> mermaid + 计划
+      - NotebookLM：文档综合 -> audio overview
+
+      实现阶段：
+      - Claude Code：多文件实现
+      - IDE + Copilot：内联自动补全
+
+      交付阶段：
+      - Claude Code：PR 描述、发布说明
+      - Kimi：利益相关者汇报（presentation.pptx）
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "7. Workflow Orchestration"
+      anchor: "#7-workflow-orchestration"
+
+  - id: "15-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 AI 生态系统中，v0.dev 最适合做什么？"
+    options:
+      a: "后端 API 开发"
+      b: "数据库查询"
+      c: "使用 Shadcn/Tailwind 快速进行 UI 原型设计"
+      d: "安全审计"
+    correct: "c"
+    explanation: |
+      v0.dev 擅长快速 UI 原型设计：
+
+      - 生成 React + Shadcn + Tailwind 组件
+      - 浏览器中实时预览
+      - UI 设计快速迭代
+
+      工作流：
+      1. v0：提示 -> 获得组件预览
+      2. 导出代码
+      3. Claude Code：适配到你的项目
+         - 添加 TypeScript 类型
+         - 连接到你的 API
+         - 集成到你的设计系统
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "6. UI Prototypers"
+      anchor: "#6-ui-prototypers-v0-bolt-lovable"
+
+  - id: "15-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude WebSearch 与 Perplexity Pro 在研究方面如何比较？"
+    options:
+      a: "Claude WebSearch 有更多来源（100+）"
+      b: "两者功能完全相同"
+      c: "Claude WebSearch：5-10 个来源，快速查询。Perplexity Pro：100+ 来源，综合研究"
+      d: "Perplexity 无法访问实时数据"
+    correct: "c"
+    explanation: |
+      对比：
+
+      | 特性 | Claude WebSearch | Perplexity Pro |
+      |---------|-----------------|----------------|
+      | 来源数量 | 约 5-10 | 100+（Deep Research） |
+      | 来源验证 | 基础 | 完整引用 |
+      | 最适合 | 快速查询 | 综合研究 |
+      | 成本 | 包含 | $20/月 |
+
+      建议：快速事实核查用 Claude WebSearch。
+      重大实现前用 Perplexity Deep Research。
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "Comparison"
+      anchor: "#comparison-claude-websearch-vs-perplexity"
+
+  - id: "15-010"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "构建 AI 工具栈时，哪种订阅策略性价比最高？"
+    options:
+      a: "订阅所有工具的 Pro 版——功能最全"
+      b: "只用免费版——省钱最重要"
+      c: "核心工具（Claude Code + Perplexity Pro）付费，其余用免费版（NotebookLM、Kimi、Gemini）"
+      d: "只订阅一个全能工具，避免工具切换"
+    correct: "c"
+    explanation: |
+      最小栈策略：核心工具付费，其余用免费版。
+
+      **付费**：
+      - Claude Code（按量付费）——核心编码工具
+      - Perplexity Pro——Deep Research 需要付费版
+
+      **免费版足够**：
+      - NotebookLM（文档综合）
+      - Kimi（PPTX 生成）
+      - Gemini 免费版（视觉理解）
+
+      成本优化：简单任务用 Haiku，批量研究在 Perplexity 中完成，用 `/status` 监控上下文使用率。
+    doc_reference:
+      file: "guide/ai-ecosystem.md"
+      section: "8. Cost & Subscription Strategy"
+      anchor: "#8-cost--subscription-strategy"
+
+  - id: "15-011"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你想大幅降低 Claude Code 的 API 成本，同时保留 Opus 的规划能力。最佳策略是什么？"
+    options:
+      a: "完全切换到本地 LLM，放弃 Claude"
+      b: "只用 Haiku 做所有任务"
+      c: "规划阶段用 Opus，执行阶段通过 LM Studio 桥接用本地免费 LLM"
+      d: "减少使用频率，每天只用一次"
+    correct: "c"
+    explanation: |
+      Claude Code 到 LM Studio 桥接策略：
+
+      1. **规划阶段**：用 Opus 进行高层思考和架构决策（成本集中在最有价值的地方）
+      2. **执行阶段**：通过 LM Studio 桥接用本地免费 LLM 实现代码
+
+      桥接脚本将 Claude 的计划翻译为本地 LLM 指令。
+
+      权衡：本地 LLM 能力较弱，适合机械性实现任务；复杂推理仍需 Opus。
+    doc_reference:
+      file: "examples/scripts/bridge.py"
+      section: "LM Studio Bridge"
+      anchor: "#lm-studio-bridge"
+
+  - id: "15-012"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "多 agent Claude Code 的 3 个有文档记录的外部编排系统是什么？"
+    options:
+      a: "LangChain、AutoGPT、CrewAI"
+      b: "Vercel AI SDK、Fly.io Machines、Railway"
+      c: "Gas Town（Steve Yegge）、multiclaude（dlorenc）、agent-chat（Justin Abrahms）"
+      d: "Kubernetes、Docker Compose、Terraform"
+    correct: "c"
+    explanation: |
+      三个有文档记录的外部编排系统：
+
+      1. **Gas Town**（Steve Yegge）- 带共享上下文的多 agent 协调
+      2. **multiclaude**（dlorenc）- 带任务分发的并行 Claude Code 实例
+      3. **agent-chat**（Justin Abrahms）- agent 间通信协议
+
+      这些都是社区构建的工具，不是 Anthropic 官方产品。它们各自以不同方式解决多 agent 协调问题。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "External Orchestration"
+      anchor: "#external-orchestration"
+
+  - id: "15-013"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "子 agents 在 fork 前评估 skeleton project 时应审计哪 3 个领域？"
+    options:
+      a: "性能、成本、可扩展性"
+      b: "UI、API、数据库"
+      c: "安全、架构、开发者体验（DX）"
+      d: "测试、文档、CI/CD"
+    correct: "c"
+    explanation: |
+      Skeleton project 评估使用 3 个专门的子 agents：
+
+      1. **安全** - 审计依赖、密钥管理、认证模式、已知漏洞
+      2. **架构** - 评估代码组织、模式、可扩展性、可维护性
+      3. **开发者体验（DX）** - 检查设置复杂度、文档质量、工具链、入职摩擦
+
+      每个 agent 在 fork 决策前给出评分和建议。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Skeleton Projects Workflow"
+      anchor: "#skeleton-projects-workflow"
+
+  - id: "15-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么是 Google Antigravity，它与传统 IDE 有何不同？"
+    options:
+      a: "一个 Google 内部测试框架，模拟零重力代码审查"
+      b: "一种 agent 优先的 IDE，AI 驱动执行，人类负责审查而非相反"
+      c: "一个将 Google Gemini 模型集成到编辑器中的 VSCode 扩展"
+      d: "Google 使用不同建议 UI 替代 GitHub Copilot 的产品"
+    correct: "b"
+    explanation: |
+      Google Antigravity 是一种 agent 优先的 IDE，它颠覆了传统 IDE 模式。在经典 IDE 中，人类主导，AI 辅助。在 Antigravity 中，agent 驱动执行，而人类审查、批准和引导。人类变成了审查者而不是打字者。这代表了从 AI 辅助编码到 AI 主导编码加人类监督的范式转变——Claude Code 的 agentic 模式已经近似于这一模式。
+    doc_reference:
+      file: "guide/ecosystem/ai-ecosystem.md"
+      section: "Google Antigravity"
+      anchor: "#google-antigravity"
+
+  - id: "15-015"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "维护 AGENTS.md/CLAUDE.md 时，人工策划更新和 LLM 自动生成更新哪个更有效？"
+    options:
+      a: "LLM 自动生成更好——更一致、更完整"
+      b: "两种方法效果相同，优先选自动化"
+      c: "人工策划更好——基于真实会话反馈；LLM 自动生成的规则往往过度具体化、相互冲突"
+      d: "只有初级开发者才需要人工策划"
+    correct: "c"
+    explanation: |
+      研究显示两种方式效果差异显著：
+
+      **人工策划**（基于真实会话反馈和修正）：
+      - agent 性能提升
+      - 规则针对实际遇到的问题
+
+      **LLM 自动生成**：
+      - 性能反而下降
+      - 成本增加
+      - 原因：自动生成的规则倾向于过度具体化、相互冲突或引入噪音
+
+      启示：投入时间人工维护 AGENTS.md/CLAUDE.md——它会随时间复利增长。
+    doc_reference:
+      file: "guide/ecosystem/ai-ecosystem.md"
+      section: "AGENTS.md Compound Learning"
+      anchor: "#agentsmd-compound-learning"

@@ -1,0 +1,310 @@
+category: "代理"
+category_id: 4
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "04-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "Claude Code 中的代理是什么？"
+    options:
+      a: "外部软件程序"
+      b: "Claude 可以委派任务的专门化 AI 角色"
+      c: "人类助手"
+      d: "自动化脚本"
+    correct: "b"
+    explanation: |
+      代理是 Claude 可以委派任务的专门化子进程（AI 角色）。它们封装了领域专业知识，比如安全审查员了解 OWASP Top 10，或后端架构师理解 API 设计。可以把它们想象成"专家顾问"——无需在提示中解释一切，你可以调用一个已经具备该专业知识的代理。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.1 什么是代理"
+      anchor: "#41-what-are-agents"
+
+  - id: "04-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "自定义代理文件应存储在哪里？"
+    options:
+      a: "~/.claude/agents/"
+      b: ".claude/agents/"
+      c: "/agents/"
+      d: ".claude/commands/"
+    correct: "b"
+    explanation: |
+      自定义代理文件应存储在项目目录的 `.claude/agents/` 中。它们是带 YAML frontmatter 的 markdown 文件。例如：`.claude/agents/backend-architect.md`、`.claude/agents/code-reviewer.md`。这些可以提交到版本控制与团队共享。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.2 创建自定义代理"
+      anchor: "#42-creating-custom-agents"
+
+  - id: "04-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "代理的 YAML frontmatter 中哪些字段是必需的？"
+    options:
+      a: "name, model, tools"
+      b: "name, description"
+      c: "name, description, model, tools"
+      d: "name, role, skills"
+    correct: "b"
+    explanation: |
+      代理 frontmatter 中只有 `name` 和 `description` 是必需的。可选字段包括：model（默认 sonnet、opus 或 haiku）、tools（逗号分隔列表）、skills（要继承的技能）和 disallowedTools。description 至关重要——它决定了 Claude 何时自动激活该代理，所以要清晰具体。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.2 创建自定义代理"
+      anchor: "#frontmatter-fields"
+
+  - id: "04-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "与直接提示相比，使用代理的优势是什么？"
+    options:
+      a: "代理更快"
+      b: "代理封装专业知识，无需每次都解释一切"
+      c: "代理成本更低"
+      d: "代理可以访问更多文件"
+    correct: "b"
+    explanation: |
+      代理封装专业知识。不使用代理时，你会写："审查这段代码的安全问题，重点关注 OWASP Top 10，检查 SQL 注入、XSS、CSRF……" 使用代理时："用 security-reviewer 代理审计这段代码。" 代理已经具备该专业知识，使你的提示更短、更一致。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.1 什么是代理"
+      anchor: "#agent-vs-direct-prompt"
+
+  - id: "04-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "执行复杂架构分析的代理应该使用哪个模型？"
+    options:
+      a: "haiku - 用于速度"
+      b: "sonnet - 用于平衡"
+      c: "opus - 用于最大推理能力"
+      d: "任何模型效果都一样"
+    correct: "c"
+    explanation: |
+      复杂推理和架构任务使用 opus。模型选择指南：haiku（快速、低成本）用于快速任务和简单变更；sonnet（平衡、默认）用于大多数任务；opus（慢速、高成本）用于复杂推理、架构决策和关键安全审查。根据任务复杂度匹配模型。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.2 创建自定义代理"
+      anchor: "#model-selection"
+
+  - id: "04-006"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "代理设计中的'工具 SEO'是什么？"
+    options:
+      a: "让工具可在线搜索"
+      b: "优化 description 字段以改善 Claude 自动激活代理的时机"
+      c: "文档的 SEO"
+      d: "一种营销技巧"
+    correct: "b"
+    explanation: |
+      工具 SEO 优化代理的 description 字段以改善自动激活。技术包括：使用 "use PROACTIVELY" 鼓励自动激活、列出明确的触发关键词、描述特定上下文、添加简短昵称。好的描述示例："Security code reviewer - use PROACTIVELY when: reviewing auth code, analyzing API endpoints... Triggers: security, auth, vulnerability, OWASP"
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#tool-seo---optimizing-agent-descriptions"
+
+  - id: "04-007"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "代理设计的最佳实践是专业化还是通用化？"
+    options:
+      a: "创建一个什么都做的通用代理"
+      b: "为每个领域创建专门化代理（安全、测试、后端等）"
+      c: "混合使用专门化和通用代理"
+      d: "完全避免使用代理"
+    correct: "b"
+    explanation: |
+      始终优先选择专业化而非通用化。好的做法：分别为 backend-architect（API、数据库、性能）、security-reviewer（OWASP、认证、加密）、test-engineer（测试策略、覆盖率、TDD）创建单独代理。不好的做法：一个 full-stack-expert "什么都做（但做得差）"。专门化代理具有聚焦的上下文和领域特定专业知识。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.4 最佳实践"
+      anchor: "#specialization-over-generalization"
+
+  - id: "04-008"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "代理如何继承技能中的知识？"
+    options:
+      a: "将技能内容复制到代理中"
+      b: "在 frontmatter 中使用 'skills' 字段"
+      c: "技能和代理不能组合"
+      d: "通过导入技能文件"
+    correct: "b"
+    explanation: |
+      代理通过 frontmatter 中的 `skills` 字段继承技能。例如：`skills: [security-guardian]`。这可以在不重复的情况下组合专业知识——无需将 OWASP 知识复制到每个安全相关代理中，它们都继承 security-guardian 技能。这遵循知识组织的 DRY 原则。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.4 最佳实践"
+      anchor: "#skill-composition"
+
+  - id: "04-009"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是'7 并行任务法'？"
+    options:
+      a: "同时运行 7 个 Claude 实例"
+      b: "并行启动 7 个专门化子代理来实现完整功能"
+      c: "一种调试技术"
+      d: "一份代码审查清单"
+    correct: "b"
+    explanation: |
+      7 并行任务法并行启动 7 个专门化子代理：1）组件、2）样式、3）测试、4）类型、5）钩子、6）集成、7）配置。所有代理并行运行，然后合并结果。这通过并行化独立工作流大幅加速功能实现。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#the-7-parallel-task-method"
+
+  - id: "04-010"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你有一个代码审查代理，但发现 Claude 很少主动调用它。如何提高自动激活率？"
+    options:
+      a: "把代理改成通用代理，覆盖更多场景"
+      b: "优化 description 字段：加入 'use PROACTIVELY'、列出明确触发关键词和具体场景"
+      c: "在 CLAUDE.md 里写\"总是使用代码审查代理\""
+      d: "把代理文件移到 ~/.claude/agents/ 全局目录"
+    correct: "b"
+    explanation: |
+      代理的 description 字段决定 Claude 何时自动激活它。好的描述应包含：'use PROACTIVELY'（鼓励主动激活）、明确的触发关键词（security、auth、vulnerability）、具体的使用场景。模糊的描述如"Backend stuff"会导致 Claude 不知道何时调用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#tool-seo---optimizing-agent-descriptions"
+
+  - id: "04-011"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在多代理编排中，推荐的模型组合是什么？"
+    options:
+      a: "到处使用 Opus 以保证质量"
+      b: "到处使用 Haiku 以节省成本"
+      c: "Sonnet 编排器 + Haiku 工作进程 + Sonnet 验证器"
+      d: "所有代理使用相同模型"
+    correct: "c"
+    explanation: |
+      推荐的模式是：Sonnet 作为编排器（协调）、Haiku 作为工作进程（并行执行）、Sonnet 作为验证器（最终检查）。这比到处使用 Opus 便宜 2-2.5 倍，对 90% 的任务质量相当。例如，重构 100 个文件：Sonnet 分析和规划，Haiku 并行编辑，Sonnet 验证——节省 80-90% 成本。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#multi-agent-orchestration-pattern"
+
+  - id: "04-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "代理的输出格式部分应包含什么？"
+    options:
+      a: "仅代码示例"
+      b: "结构化交付物，如带章节、严重级别和建议的报告"
+      c: "纯文本输出"
+      d: "仅 JSON"
+    correct: "b"
+    explanation: |
+      代理的输出格式应指定结构化交付物。例如，代码审查代理输出：摘要、严重问题（必须修复）带 file:line 引用、警告（应该修复）、建议（有则更好）和正面备注。清晰的输出格式确保所有调用都产生一致、可操作的结果。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.5 代理示例"
+      anchor: "#example-1-code-reviewer-agent"
+
+  - id: "04-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "代理 frontmatter 中 'disallowedTools' 字段的用途是什么？"
+    options:
+      a: "列出代理必须使用的工具"
+      b: "阻止代理使用特定工具"
+      c: "禁用代理"
+      d: "列出已弃用工具"
+    correct: "b"
+    explanation: |
+      disallowedTools 字段阻止代理使用特定工具。例如，代码审查代理可能有 `disallowedTools: [WebSearch]`，以确保它专注于实际代码而不是搜索网页。这为每个代理提供了安全边界，使其专注于核心目的。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.2 创建自定义代理"
+      anchor: "#agent-file-structure"
+
+  - id: "04-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是'拆分角色子代理'模式？"
+    options:
+      a: "将一个代理拆分成多个文件"
+      b: "使用具有不同专家角色的并行代理进行多视角分析"
+      c: "将代码审查分成多个阶段"
+      d: "将代理分配给不同团队成员"
+    correct: "b"
+    explanation: |
+      拆分角色子代理并行提供多视角分析。流程：1）激活计划模式（Opus 4.5 默认启用 thinking），2）询问"哪些专家角色会分析这个？"，3）选择角色（例如安全专家、高级开发、代码审查员），4）从每个视角并行分析，5）将报告合并为建议。非常适合全面的代码和 UX 审查。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#split-role-sub-agents"
+
+  - id: "04-015"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么时候应该避免并行执行代理？"
+    options:
+      a: "当任务是只读时"
+      b: "当任务是破坏性的（写操作）且相互依赖时"
+      c: "当使用 haiku 模型时"
+      d: "当涉及超过 3 个代理时"
+    correct: "b"
+    explanation: |
+      避免对相互依赖的破坏性（写）操作进行并行执行。决策矩阵：独立 + 非破坏性 = 并行（最大效率）；独立 + 破坏性 = 先使用计划模式再顺序执行；依赖操作 = 顺序执行（顺序很重要）。如果文件共享导入/导出，并行写入可能导致冲突。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.6 高级代理模式"
+      anchor: "#parallelization-decision-matrix"
+
+  - id: "04-016"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "调试器代理的方法论通常包括什么？"
+    options:
+      a: "仅修复代码"
+      b: "复现、隔离、分析、假设、测试、修复、验证"
+      c: "仅运行测试"
+      d: "删除有问题的代码"
+    correct: "b"
+    explanation: |
+      系统的调试器代理遵循：1）复现——确认问题存在，2）隔离——缩小到最小可复现案例，3）分析——阅读代码、检查日志、追踪执行，4）假设——形成原因理论，5）测试——用最小变更验证假设，6）修复——实施解决方案，7）验证——确认修复有效且不破坏其他东西。切勿猜测——始终验证。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.5 代理示例"
+      anchor: "#example-2-debugger-agent"
+
+  - id: "04-017"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "糟糕的代理描述示例是什么？"
+    options:
+      a: "'Use when designing APIs, reviewing database schemas, or optimizing backend performance'"
+      b: "'Backend stuff'"
+      c: "'Security code reviewer - use PROACTIVELY when reviewing auth code'"
+      d: "'Use when encountering errors, test failures, or unexpected behavior'"
+    correct: "b"
+    explanation: |
+      "Backend stuff" 是一个糟糕的描述——太模糊，无法帮助 Claude 知道何时激活该代理。好的描述很具体："Use when designing APIs, reviewing database schemas, or optimizing backend performance" 或 "Security code reviewer - use PROACTIVELY when reviewing auth code." 清晰的激活触发器可以提高代理利用率。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.4 最佳实践"
+      anchor: "#explicit-activation-triggers"
+
+  - id: "04-018"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "AGENTS.md（主动上下文）与 Skills（延迟调用）在调用可靠性方面有何区别？"
+    options:
+      a: "Skills 比 AGENTS.md 更可靠"
+      b: "两者都有 100% 可靠性"
+      c: "AGENTS.md：100% 可靠（始终加载）vs Skills：53-79% 自动调用"
+      d: "AGENTS.md 已弃用，被 Skills 取代"
+    correct: "c"
+    explanation: |
+      AGENTS.md 使用主动上下文加载——始终存在于 Claude 的上下文中，因此 100% 可靠激活。Skills 使用延迟调用——仅在 Claude 识别到需要时自动检测和调用，自动调用率为 53-79%。权衡：AGENTS.md 每个会话都要消耗上下文 tokens，Skills 节省 tokens 但可能错过激活。对关键行为使用 AGENTS.md，对可选能力使用 Skills。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "AGENTS.md 与技能评估"
+      anchor: "#agentsmd-vs-skills-evaluation"

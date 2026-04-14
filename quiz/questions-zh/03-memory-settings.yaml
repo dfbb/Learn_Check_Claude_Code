@@ -1,0 +1,429 @@
+category: "记忆与设置"
+category_id: 3
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "03-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "CLAUDE.md 文件的正确优先级顺序是什么（从高到低）？"
+    options:
+      a: "全局 > 项目 > 本地"
+      b: "本地 (.claude/CLAUDE.md) > 项目 (/project/CLAUDE.md) > 全局 (~/.claude/CLAUDE.md)"
+      c: "项目 > 本地 > 全局"
+      d: "所有 CLAUDE.md 文件优先级相同"
+    correct: "b"
+    explanation: |
+      优先级顺序为：本地 (.claude/CLAUDE.md) > 项目 (/project/CLAUDE.md) > 全局 (~/.claude/CLAUDE.md)。越具体的配置优先级越高。本地覆盖是个人化的（gitignored），项目设置是团队共享的（已提交），全局设置适用于所有项目。这种层级结构允许个人偏好在需要时覆盖团队约定。企业版说明：`managed-settings.d/` 提供了一个管理员控制的治理层，位于上述三个层级之上——部署在该目录下的策略无法被任何用户级别的 CLAUDE.md 覆盖。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.4 优先级规则"
+      anchor: "#claudemd-precedence"
+
+  - id: "03-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "团队约定应存储在哪里以便通过版本控制共享？"
+    options:
+      a: "~/.claude/CLAUDE.md"
+      b: "/project/.claude/CLAUDE.md"
+      c: "/project/CLAUDE.md"
+      d: "/project/.claude/settings.local.json"
+    correct: "c"
+    explanation: |
+      团队约定应存储在 `/project/CLAUDE.md`（项目根目录）。该文件会提交到 git 并与团队共享。本地覆盖放在 `/project/.claude/CLAUDE.md`（gitignored），个人全局偏好放在 `~/.claude/CLAUDE.md`。这种分离确保了团队标准的执行，同时允许个人自定义。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.1 记忆文件（CLAUDE.md）"
+      anchor: "#level-2-project-projectclaudemd"
+
+  - id: "03-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "settings.local.json 的用途是什么？"
+    options:
+      a: "存储团队钩子配置"
+      b: "定义项目级设置"
+      c: "个人权限覆盖（gitignored）"
+      d: "为团队配置 MCP 服务器"
+    correct: "c"
+    explanation: |
+      settings.local.json 存储个人权限覆盖，且被 gitignored。它允许你自定义哪些工具自动允许、拒绝或需要询问，以适应个人工作流，而不会影响团队设置。例如，你可以允许所有 git 命令，而团队可能对某些操作需要确认。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#settingslocaljson-personal-permissions"
+
+  - id: "03-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个文件夹包含自定义代理、命令、钩子和技能？"
+    options:
+      a: "~/.claude/"
+      b: "/project/CLAUDE.md"
+      c: "/project/.claude/"
+      d: "/project/config/"
+    correct: "c"
+    explanation: |
+      项目中的 `.claude/` 文件夹包含：agents/（自定义代理定义）、commands/（自定义斜杠命令）、hooks/（事件驱动脚本）、skills/（知识模块）、rules/（自动加载的约定）和设置文件。这是项目的 Claude Code 配置目录，用于所有扩展。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.2 .claude/ 文件夹结构"
+      anchor: "#full-structure"
+
+  - id: "03-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "被列入 'deny' 类别的工具权限行为是什么？"
+    options:
+      a: "每次询问确认"
+      b: "自动批准，无需询问"
+      c: "完全阻止"
+      d: "记录但允许"
+    correct: "c"
+    explanation: |
+      'deny' 类别中的工具被完全阻止——Claude 根本无法使用它们。三种权限行为分别是：'allow'（自动批准，无需询问）、'deny'（完全阻止）和 'ask'（提示确认）。例如，拒绝 "Bash(rm -rf *)" 可防止意外的破坏性操作。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#permission-behavior"
+
+  - id: "03-006"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "多工具 AI 设置中的'单一事实来源模式'是什么？"
+    options:
+      a: "每个项目只使用一个 AI 工具"
+      b: "将约定存储在 docs/conventions/ 中，并从所有 AI 工具配置中引用"
+      c: "将相同的规则复制到每个 AI 工具的配置中"
+      d: "让每个 AI 工具定义自己的规则"
+    correct: "b"
+    explanation: |
+      单一事实来源模式将约定存储在 `/docs/conventions/` 中（coding-standards.md、architecture.md、testing.md 等），并从 CLAUDE.md、CodeRabbit 和其他工具中引用。这可以防止一个工具批准而另一个工具标记的冲突。所有工具都从一个来源执行相同的标准。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.1 记忆文件（CLAUDE.md）"
+      anchor: "#single-source-of-truth-pattern"
+
+  - id: "03-007"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "项目级 CLAUDE.md 文件应包含什么内容？"
+    options:
+      a: "仅个人偏好"
+      b: "技术栈、代码约定、架构模式和常用命令"
+      c: "API 密钥和机密"
+      d: "Git 历史"
+    correct: "b"
+    explanation: |
+      项目 CLAUDE.md 应包含：技术栈（框架、版本）、代码约定（命名、模式）、架构（文件夹结构、分层）和常用命令（开发、测试、lint）。这为 Claude 提供项目上下文。切勿包含 API 密钥或机密。保持简洁并附带示例，并在约定变更时更新。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.1 记忆文件（CLAUDE.md）"
+      anchor: "#level-2-project-projectclaudemd"
+
+  - id: "03-008"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "权限模式 'Bash(git *)' 匹配什么？"
+    options:
+      a: "仅精确命令 'git'"
+      b: "任何 git 命令"
+      c: "以星号开头的 git 命令"
+      d: "带 glob 模式的 git 命令"
+    correct: "b"
+    explanation: |
+      模式 'Bash(git *)' 匹配任何 git 命令。权限模式使用通配符：'Bash(git *)' 匹配任何 git 命令，'Bash(pnpm *)' 匹配任何 pnpm 命令，'mcp__serena__*' 匹配所有 Serena MCP 工具。你也可以使用特定模式如 'Bash(git status *)' 仅匹配 git status。注意：旧版 ':*' 后缀语法已弃用，请使用空格代替（例如 'Bash(git *)' 而非 'Bash(git:*)'）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#permission-patterns"
+
+  - id: "03-009"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是'动态记忆'（配置文件切换）？"
+    options:
+      a: "Claude 跨会话记忆的能力"
+      b: "为特定任务临时修改 CLAUDE.md，然后恢复"
+      c: "自动记忆压缩"
+      d: "在设备间同步记忆"
+    correct: "b"
+    explanation: |
+      动态记忆是指为特定任务临时修改 CLAUDE.md 然后恢复。技术包括：git stash（暂存原始文件、修改、恢复）、配置文件库（在 ~/.claude/profiles/ 中保存如 security-audit.md、debugging.md 等配置文件）或并行实例（在不同 worktree 中使用不同的 CLAUDE.md）。用脚本切换配置文件：`claude-profile security-audit`。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#dynamic-memory-profile-switching"
+
+  - id: "03-010"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: ".claude/rules/ 目录中的文件会发生什么？"
+    options:
+      a: "必须手动导入"
+      b: "自动加载并合并"
+      c: "覆盖 CLAUDE.md"
+      d: "除非被引用，否则被忽略"
+    correct: "b"
+    explanation: |
+      `.claude/rules/` 中的文件会自动加载并合并。你可以创建多个文件，如 code-conventions.md、git-workflow.md 和 architecture.md——所有文件都会自动加载，无需手动导入。这允许以模块化方式组织项目约定，Claude 会遵循它们。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.4 优先级规则"
+      anchor: "#rules-auto-loading"
+
+  - id: "03-011"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "以下哪些应该被 gitignored？"
+    options:
+      a: "/project/CLAUDE.md"
+      b: ".claude/agents/"
+      c: ".claude/settings.local.json 和 .claude/CLAUDE.md"
+      d: ".claude/hooks/"
+    correct: "c"
+    explanation: |
+      应该被 gitignored 的文件有：.claude/CLAUDE.md（本地个人说明）和 .claude/settings.local.json（个人权限）。应该提交的文件包括：agents/、commands/、hooks/、skills/、rules/ 和 settings.json。这种分离允许个人自定义，同时共享团队配置。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.2 .claude/ 文件夹结构"
+      anchor: "#what-goes-where"
+
+  - id: "03-012"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "allowedTools 配置与权限类别有何不同？"
+    options:
+      a: "没有区别，它们是一样的"
+      b: "在 ~/.claude/settings.json 中通过工具特定模式提供细粒度控制"
+      c: "仅对 MCP 工具有效"
+      d: "需要管理员权限"
+    correct: "b"
+    explanation: |
+      ~/.claude/settings.json 中的 allowedTools 配置通过特定模式提供细粒度控制。例如：'Read' 允许所有读取，'Bash(git status *)' 仅允许 git status，'Bash(pnpm *)' 允许 pnpm 命令。你可以从初学者（非常受限）到高级设置渐进式权限级别。切勿使用 --dangerously-skip-permissions。注意：对于"所有用途"，使用不带括号的工具名称（例如 'Read' 而非 'Read(*)'）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#allowedtools-configuration-alternative"
+
+  - id: "03-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "macOS/Linux 上的全局配置路径是什么？"
+    options:
+      a: "/etc/claude/"
+      b: "~/.claude/"
+      c: "/usr/local/claude/"
+      d: "~/.config/claude/"
+    correct: "b"
+    explanation: |
+      在 macOS/Linux 上，全局配置路径是 ~/.claude/。在 Windows 上，它是 %USERPROFILE%\.claude\ 或 C:\Users\YourName\.claude\。该目录包含你的全局 CLAUDE.md、设置，还可以包含用于动态记忆切换的 profiles/ 子目录。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.1 安装"
+      anchor: "#platform-specific-paths"
+
+  - id: "03-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "allowedTools 的三个渐进式权限级别是什么？"
+    options:
+      a: "管理员、用户、访客"
+      b: "初学者（非常受限）、中级、高级"
+      c: "读取、写入、执行"
+      d: "低、中、高"
+    correct: "b"
+    explanation: |
+      三个渐进式权限级别是：初学者（非常受限——仅 Read、Grep、Glob）、中级（增加 Bash git/pnpm、TodoRead/Write）和高级（增加 Edit、Write、WebFetch、Task）。从受限开始，随着信心增加逐步扩展。这可以在学习过程中防止意外。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#progressive-permission-levels"
+
+  - id: "03-015"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "为什么你永远不应该使用 --dangerously-skip-permissions？"
+    options:
+      a: "它已弃用"
+      b: "它可能导致 rm -rf、强制推送到 main 或 DROP TABLE 等破坏性操作"
+      c: "它成本更高"
+      d: "它更慢"
+    correct: "b"
+    explanation: |
+      切勿使用 --dangerously-skip-permissions，因为它可能导致破坏性操作。恐怖案例包括：`rm -rf node_modules` 后接 `rm -rf .`（路径错误）、意外对 main 执行 `git push --force`、在生成不当的迁移中执行 `DROP TABLE users`，以及删除包含凭据的 .env 文件。始终优先使用细粒度的 allowedTools。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#-warning-never-use---dangerously-skip-permissions"
+
+  - id: "03-016"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "全局 CLAUDE.md 应该包含什么？"
+    options:
+      a: "项目特定的代码约定"
+      b: "适用于所有项目的个人偏好（沟通风格、首选工具、安全规则）"
+      c: "团队成员联系信息"
+      d: "Git 提交历史"
+    correct: "b"
+    explanation: |
+      全局 CLAUDE.md（~/.claude/CLAUDE.md）应包含适用于所有项目的个人偏好：沟通风格（简洁、使用代码示例）、首选工具（TypeScript 优于 JavaScript、pnpm 优于 npm）和安全规则（始终运行测试、从不强制推送）。项目特定设置放在项目 CLAUDE.md 中。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.1 记忆文件（CLAUDE.md）"
+      anchor: "#level-1-global-claudeclaudemd"
+
+  - id: "03-017"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "settings.json（不是 settings.local.json）中存储什么？"
+    options:
+      a: "个人权限"
+      b: "提交到仓库的钩子配置"
+      c: "API 密钥"
+      d: "成本跟踪数据"
+    correct: "b"
+    explanation: |
+      settings.json 存储钩子配置，并提交到仓库以供团队共享。它定义了 PreToolUse、PostToolUse、UserPromptSubmit 事件的钩子——指定匹配器和钩子脚本。个人权限覆盖放在 settings.local.json（gitignored）中。这种分离允许团队自动化，同时尊重个人偏好。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#settingsjson-team-configuration"
+
+  - id: "03-018"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你想让 Claude 在每次编辑文件后自动运行 lint，应该怎么配置？"
+    options:
+      a: "在 CLAUDE.md 里写\"每次编辑后运行 lint\""
+      b: "在 settings.json 的 hooks 里配置 PostToolUse 钩子，matcher 为 Edit，执行 npm run lint"
+      c: "每次手动提醒 Claude 运行 lint"
+      d: "在 .claude/commands/ 里创建一个 lint 命令"
+    correct: "b"
+    explanation: |
+      自动化行为需要通过 settings.json 的 hooks 配置，而不是写在 CLAUDE.md 里。PostToolUse 钩子在工具执行后触发，matcher 指定触发条件（如 Edit），command 指定要执行的命令。这样每次 Claude 编辑文件后都会自动运行 lint，无需手动提醒。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.3 设置与权限"
+      anchor: "#settingsjson-team-configuration"
+
+  - id: "03-019"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "什么是'新鲜上下文模式'，应该在什么时候使用？"
+    options:
+      a: "测试前清除浏览器缓存"
+      b: "在实施阶段后启动一个干净上下文的新会话，以避免累积噪音"
+      c: "将 git 重置为干净状态"
+      d: "删除 .claude 文件夹以重新开始"
+    correct: "b"
+    explanation: |
+      新鲜上下文模式意味着在探索阶段和实施阶段之间启动一个新的 Claude Code 会话。在探索过程中，上下文会积累噪音（死胡同、被拒绝的方法、调试输出）。一个新鲜的会话为 Claude 提供了纯粹专注于实施的干净上下文，从而提高输出质量。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "新鲜上下文模式"
+      anchor: "#fresh-context-pattern"
+
+  - id: "03-020"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "Claude Code 代理记忆系统的三个作用域是什么？"
+    options:
+      a: "本地、远程、云端"
+      b: "用户（全局）、项目（仓库级）、本地（每台机器 gitignored）"
+      c: "会话、持久、归档"
+      d: "只读、一次性写入、仅追加"
+    correct: "b"
+    explanation: |
+      代理记忆有 3 个作用域：（1）用户——~/.claude/ 中的全局记忆，适用于所有项目，个人偏好和跨项目知识。（2）项目——.claude/ 中的仓库级记忆，提交到 git，与团队共享。（3）本地——.claude/memory/（本地）中的每台机器 gitignored 记忆，用于不应共享的特定机器状态。理解作用域可以防止意外提交个人笔记或遗漏团队级上下文。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "代理记忆作用域"
+      anchor: "#agent-memory-scopes"
+
+  - id: "03-021"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "managed-settings.d/ 是什么，它解决了什么治理问题？"
+    options:
+      a: "存储 settings.json 备份副本的目录"
+      b: "企业治理层，管理员将配置片段放入其中，与项目设置合并并覆盖团队级设置"
+      c: "版本控制设置历史记录的目录"
+      d: "在应用前需要审批的设置变更暂存区"
+    correct: "b"
+    explanation: |
+      managed-settings.d/ 是一种企业治理机制：管理员将 JSON 配置片段放入该目录，Claude Code 将其与项目级 settings.json 合并（并覆盖）。这解决了在不修改每个团队仓库的情况下执行组织范围安全策略（禁止工具、必需钩子、阻止路径）的问题。IT/安全团队控制托管层；开发团队控制项目层；托管层在冲突中始终获胜。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "managed-settings.d/"
+      anchor: "#managed-settingsd"
+
+  - id: "03-022"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你创建了一个技能，想让它在会话之间记住用户的偏好设置。应该把数据存在哪里？"
+    options:
+      a: "/tmp 目录"
+      b: "项目的 .claude/ 目录"
+      c: "${CLAUDE_PLUGIN_DATA} 持久存储路径"
+      d: "直接写入 CLAUDE.md"
+    correct: "c"
+    explanation: |
+      ${CLAUDE_PLUGIN_DATA} 是技能专用的持久存储路径，跨会话不会被清除。/tmp 是临时的，会话结束就消失；写入项目 .claude/ 会污染仓库；写入 CLAUDE.md 会混入指令。用 ${CLAUDE_PLUGIN_DATA} 存储学习到的偏好、缓存结果等需要跨会话保留的数据。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "技能持久存储"
+      anchor: "#skill-persistent-storage"
+
+  - id: "03-023"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你发现 Claude 在新会话中忘记了上次讨论的项目约定。最好的解决方法是？"
+    options:
+      a: "每次开始新会话时手动重新说明约定"
+      b: "把约定写入项目根目录的 CLAUDE.md，Claude 会自动加载"
+      c: "用 /compact 保留上下文"
+      d: "始终用 claude -c 继续上次会话"
+    correct: "b"
+    explanation: |
+      CLAUDE.md 是跨会话持久化项目约定的正确方式。把技术栈、代码规范、架构模式、常用命令等写入项目根目录的 CLAUDE.md，Claude 每次启动都会自动加载。这比每次手动说明或依赖会话恢复更可靠。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.1 记忆文件（CLAUDE.md）"
+      anchor: "#level-2-project-projectclaudemd"
+
+  - id: "03-024"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "技能 frontmatter 中的 `effort` 字段有什么作用？"
+    options:
+      a: "设置技能执行的最大 token 预算"
+      b: "向用户提示预期的认知/时间投入：○ 低、◐ 中、● 高"
+      c: "控制技能在失败前尝试的重试次数"
+      d: "指定运行技能所需的最低模型层级"
+    correct: "b"
+    explanation: |
+      `effort` frontmatter 字段是向用户发出的 UX 信号：○ = 低投入（快速，<1 分钟）、◐ = 中等投入（适中，几分钟）、● = 高投入（大量，可能需要很多分钟或需要审查）。它显示在斜杠命令选择器中，让用户在触发技能前预估投入。不影响执行——纯粹是信息性的。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "技能 Frontmatter"
+      anchor: "#skill-frontmatter"
+
+  - id: "03-025"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你的 CLAUDE.md 越来越长，Claude 似乎没有遵循其中的所有规则。最好的处理方式是？"
+    options:
+      a: "把所有内容都放在一个大的 CLAUDE.md 里"
+      b: "把规则拆分到 .claude/rules/ 目录下的多个文件，Claude 会自动加载并合并"
+      c: "删除不重要的规则，保持 CLAUDE.md 简短"
+      d: "用 @引用 在每次对话开始时手动加载规则"
+    correct: "b"
+    explanation: |
+      .claude/rules/ 目录下的文件会自动加载并合并，无需手动导入。可以按主题拆分：code-conventions.md、git-workflow.md、architecture.md 等。这样既保持每个文件简洁易维护，又确保所有规则都被加载，比一个臃肿的 CLAUDE.md 更可靠。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "3.4 优先级规则"
+      anchor: "#rules-auto-loading"

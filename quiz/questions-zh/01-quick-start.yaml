@@ -1,0 +1,259 @@
+category: "快速入门"
+category_id: 1
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "01-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "安装 Claude Code 的推荐通用方法是什么？"
+    options:
+      a: "brew install claude-code"
+      b: "npm install -g @anthropic-ai/claude-code"
+      c: "pip install claude-code"
+      d: "curl -fsSL https://claude.ai/install.sh | sh"
+    correct: "b"
+    explanation: |
+      适用于所有平台（Windows、macOS、Linux）的通用安装方法是 `npm install -g @anthropic-ai/claude-code`。虽然特定平台有 shell 脚本和 Homebrew 可用，但 npm 是推荐的跨平台方式，可确保无论操作系统如何都能一致安装。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.1 安装"
+      anchor: "#11-installation"
+
+  - id: "01-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude 提出代码修改后，审查差异时有哪些选项？"
+    options:
+      a: "只能接受 (y) 或拒绝 (n)"
+      b: "接受 (y)、拒绝 (n) 或编辑 (e)"
+      c: "接受 (y)、跳过 (s) 或延迟 (d)"
+      d: "提交 (c)、拒绝 (r) 或审查 (v)"
+    correct: "b"
+    explanation: |
+      当 Claude 提出修改时，你有三个选项：按 'y' 接受修改，按 'n' 拒绝并要求替代方案，或按 'e' 手动编辑修改。这让你完全掌控应用到代码库的内容。接受前务必审查差异——这是你的安全网。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.2 第一个工作流"
+      anchor: "#12-first-workflow"
+
+  - id: "01-003"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "哪个命令可以显示所有可用的 Claude Code 命令？"
+    options:
+      a: "/commands"
+      b: "/list"
+      c: "/help"
+      d: "/menu"
+    correct: "c"
+    explanation: |
+      `/help` 命令显示所有可用的 Claude Code 命令。当你迷失方向或想发现可用功能时，这是首选命令。它是涵盖日常使用 90% 场景的 7 个核心命令之一。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#13-essential-commands"
+
+  - id: "01-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 Claude Code 中，`!` 前缀的作用是什么？"
+    options:
+      a: "将命令标记为紧急"
+      b: "直接运行 shell 命令而不询问 Claude"
+      c: "转义特殊字符"
+      d: "删除上一条命令"
+    correct: "b"
+    explanation: |
+      `!` 前缀可以立即执行 shell 命令，无需让 Claude 来执行。例如，`!git status` 直接运行该命令。当你确切知道需要什么命令时，用于快速状态检查、查看命令等，比询问 Claude 更快。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#shell-commands-with-"
+
+  - id: "01-005"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在提示词中使用 `@` 符号有什么作用？"
+    options:
+      a: "提及另一个用户"
+      b: "引用特定文件以进行精准操作"
+      c: "将消息标记为重要"
+      d: "激活一个代理"
+    correct: "b"
+    explanation: |
+      `@` 符号在提示词中引用特定文件以进行精准操作。例如，`Review @src/auth/login.tsx for security issues` 提示 Claude 读取该文件。这提供了精准性（定位确切文件）、速度（跳过文件发现）和清晰度（明确你的意图）。Claude 通过工具按需读取文件。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#file-references-with-"
+
+  - id: "01-006"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你想让 Claude 修改 src/api/auth.ts 中的认证逻辑，最有效的提示方式是？"
+    options:
+      a: "\"修改认证逻辑\""
+      b: "\"@src/api/auth.ts 将 JWT 过期时间从硬编码改为读取环境变量\""
+      c: "\"帮我改一下认证，谢谢\""
+      d: "先用 /plan 模式，再描述需求"
+    correct: "b"
+    explanation: |
+      用 @文件路径 直接引用目标文件，加上具体的修改描述（从什么改成什么），是最高效的方式。Claude 会直接读取该文件并执行精确操作，无需猜测你的意图。模糊提示会导致 Claude 先花时间探索代码库，甚至修改错误的文件。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#file-references-with-"
+
+  - id: "01-007"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在计划模式（Plan Mode）中，Claude 被允许做什么？"
+    options:
+      a: "编辑文件、运行命令并提交"
+      b: "只能读取和分析——不允许任何修改"
+      c: "运行命令但不能编辑文件"
+      d: "创建新文件但不能编辑现有文件"
+    correct: "b"
+    explanation: |
+      计划模式是 Claude Code 的"只看不动"模式。它允许读取文件、搜索代码库、分析架构和提出方案。它阻止编辑文件、运行状态修改命令、创建新文件和提交。非常适合在做出修改前进行安全探索。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.4 权限模式"
+      anchor: "#plan-mode"
+
+  - id: "01-008"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个标志可以继续最近的 Claude Code 对话？"
+    options:
+      a: "--last"
+      b: "--continue 或 -c"
+      c: "--resume-last"
+      d: "--restore"
+    correct: "b"
+    explanation: |
+      使用 `claude --continue` 或 `claude -c` 可以自动恢复最近的对话。这在终端会话之间保持完整的上下文和对话历史。要通过 ID 恢复特定会话，使用 `claude --resume <id>` 或 `claude -r <id>`。这对于多天的功能开发或被中断时特别有用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#session-continuation-and-resume"
+
+  - id: "01-009"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "接受 Claude 的代码修改前，你应该始终做什么？"
+    options:
+      a: "运行测试套件"
+      b: "创建文件备份"
+      c: "仔细阅读差异"
+      d: "询问 Claude 的置信度"
+    correct: "c"
+    explanation: |
+      接受修改前务必阅读差异——这是你的安全网。指南强调这一点至关重要："接受修改前务必审查差异。"虽然运行测试是好习惯，但审查差异是任何接受操作前的即时必要步骤。你需要了解提议的修改内容。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.2 第一个工作流"
+      anchor: "#step-3-review-the-diff"
+
+  - id: "01-010"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 Claude Code 中，哪个键盘快捷键可以取消当前操作？"
+    options:
+      a: "Ctrl+Z"
+      b: "Ctrl+C"
+      c: "Esc"
+      d: "Ctrl+Q"
+    correct: "c"
+    explanation: |
+      Esc 键可以取消（停止）Claude Code 中的当前操作。按一次 Esc 停止 Claude 的操作，双击 Esc（Esc+Esc）打开回退菜单。Ctrl+C 是标准终端中断键，但 Esc 是应用内停止操作的主要快捷键。了解这些快捷键有助于在工作流中保持控制。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#quick-actions--shortcuts"
+
+  - id: "01-011"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么时候应该在 Claude Code 中使用自动接受模式？"
+    options:
+      a: "所有操作都用，以节省时间"
+      b: "只用于定义明确、可逆的可信操作"
+      c: "处理生产代码时"
+      d: "进行复杂重构任务时"
+    correct: "b"
+    explanation: |
+      自动接受模式只应用于定义明确、可逆的操作。指南警告："只对定义明确、可逆的操作使用自动接受。"对于复杂或有风险的修改，这很危险。默认模式（请求权限）是最安全的，尤其是在学习和生产工作中。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.4 权限模式"
+      anchor: "#auto-accept-mode"
+
+  - id: "01-012"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你正在调试一个复杂 bug，已经探索了很多死胡同，上下文很乱。最佳做法是？"
+    options:
+      a: "继续在同一会话中调试，保留所有历史"
+      b: "用 /compact 压缩后继续"
+      c: "开一个新会话，只带入关键信息（文件路径、错误信息、已排除的原因）"
+      d: "用 /rewind 撤销所有探索"
+    correct: "c"
+    explanation: |
+      探索阶段积累的噪音（死胡同、被拒绝的方案、调试输出）会干扰 Claude 的推理。开新会话，只带入精炼的上下文（具体文件、错误信息、已排除的原因），能让 Claude 以更清晰的视角重新分析问题，往往比在污染的上下文中继续更有效。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "新鲜上下文模式"
+      anchor: "#fresh-context-pattern"
+
+  - id: "01-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "你有一张 UI 设计稿截图，想让 Claude Code 帮你实现对应的组件，应该怎么做？"
+    options:
+      a: "用文字详细描述截图中的每个元素"
+      b: "直接在终端粘贴截图（Cmd+V/Ctrl+V），然后说明要实现的组件"
+      c: "先把截图转成文字描述再提问"
+      d: "Claude Code 不支持图片输入"
+    correct: "b"
+    explanation: |
+      Claude Code 支持直接粘贴图片（Cmd+V/Ctrl+V）、拖放或路径引用。对于 UI 实现，直接粘贴设计稿是最高效的方式——Claude 能直接看到布局、颜色、间距等视觉细节，比文字描述更准确。同样适用于调试视觉 bug、分析错误截图等场景。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#working-with-images-and-screenshots"
+
+  - id: "01-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "昨天你在开发一个功能，今天想继续。应该用哪个命令恢复昨天的会话？"
+    options:
+      a: "重新启动 claude，重新描述任务"
+      b: "claude -c（继续最近的会话）或 claude -r <id>（恢复指定会话）"
+      c: "claude --restore-last"
+      d: "用 /status 查看后手动恢复"
+    correct: "b"
+    explanation: |
+      `claude -c` 自动恢复最近的会话，`claude -r <id>` 恢复指定会话。恢复后，Claude 保留完整对话历史、之前读取/编辑的文件和项目设置，可以无缝继续多天的功能开发，无需重新解释背景。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.3 核心命令"
+      anchor: "#session-continuation-and-resume"
+
+  - id: "01-015"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "应该使用哪个命令来验证 Claude Code 的安装？"
+    options:
+      a: "claude check"
+      b: "claude --verify"
+      c: "claude --version"
+      d: "claude test"
+    correct: "c"
+    explanation: |
+      使用 `claude --version` 验证安装并显示当前版本。这在报告 bug 前也很有用。安装后，还可以使用 `claude doctor` 验证自动更新器健康状态，使用 `claude update` 检查可用更新。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "1.1 安装"
+      anchor: "#verify-installation"

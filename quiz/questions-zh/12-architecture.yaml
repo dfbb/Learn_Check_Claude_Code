@@ -1,0 +1,344 @@
+category: "架构"
+category_id: 12
+source_file: "guide/architecture.md"
+
+questions:
+  - id: "12-001"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "Claude Code 的核心架构模式是什么？"
+    options:
+      a: "一个带任务规划的 DAG 编排器"
+      b: "一个简单的 while(tool_call) 循环，没有分类器"
+      c: "一个带 embeddings 的 RAG 流水线"
+      d: "一个带意图路由器的多 agent 系统"
+    correct: "b"
+    explanation: |
+      Claude Code 运行的是一个非常简单的 `while(tool_call)` 循环。它没有意图分类器、任务路由器、RAG/embedding 流水线、DAG 编排器，也没有规划/执行拆分。模型本身决定何时调用工具、调用哪些工具以及何时完成。这就是“agentic loop”模式。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "The Master Loop"
+      anchor: "#1-the-master-loop"
+
+  - id: "12-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 的核心工具集包含哪些？"
+    options:
+      a: "只有 Bash 和 Read"
+      b: "Bash、Read、Edit、Write、Grep、Glob、Task（子 agents）"
+      c: "只有文件操作工具，没有 Bash"
+      d: "工具集由用户自定义，没有固定核心工具"
+    correct: "b"
+    explanation: |
+      Claude Code 的核心工具包括：Bash（执行命令）、Read（读取文件）、Edit（修改文件）、Write（创建/覆盖文件）、Grep（搜索内容）、Glob（查找文件）、Task（启动子 agents）。理解这些工具有助于你更好地引导 Claude——比如明确告诉它"读取这个文件"或"搜索这个模式"，而不是让它自己决定用什么工具。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "The Tool Arsenal"
+      anchor: "#2-the-tool-arsenal"
+
+  - id: "12-003"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "哪个工具被描述为 Claude 的“瑞士军刀”和“通用适配器”？"
+    options:
+      a: "Read"
+      b: "Grep"
+      c: "Bash"
+      d: "Task"
+    correct: "c"
+    explanation: |
+      Bash 是 Claude 的瑞士军刀。它可以运行任何 CLI ���具（git、npm、docker、curl...），执行脚本，使用管道链式命令，并访问系统状态。模型在大量 shell 数据上训练过，因此它作为通用适配器非常高效。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "The Bash Universal Adapter"
+      anchor: "#the-bash-universal-adapter"
+
+  - id: "12-004"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "Claude Code 的上下文预算大约是多少（例如 Sonnet 4.6）？"
+    options:
+      a: "约 32K tokens"
+      b: "约 100K tokens"
+      c: "约 200K tokens"
+      d: "约 500K tokens"
+    correct: "c"
+    explanation: |
+      Claude Code 在约 200K token 的上下文窗口内运行。该窗口由以下部分共享：系统提示（约 5-15K）、CLAUDE.md 文件（约 1-10K）、对话历史（可变）、工具结果（可变）和预留响应缓冲（约 40-45K）。可用空间大约是 140-150K tokens。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Context Budget Breakdown"
+      anchor: "#context-budget-breakdown"
+
+  - id: "12-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude Code 自动压缩（auto-compaction）的阈值报告是什么？"
+    options:
+      a: "50-60%"
+      b: "75-92%（来源报告不一致）"
+      c: "95-99%"
+      d: "不存在自动压缩"
+    correct: "b"
+    explanation: |
+      自动压缩阈值因来源而异：PromptLayer 分析报告为 92%，社区观察报告为 75-80%。触发时，较早的对话轮次会被总结，工具结果会被压缩，近期上下文会被保留。使用 /compact 可以手动触发总结。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Auto-Compaction"
+      anchor: "#auto-compaction"
+
+  - id: "12-006"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "通过 Task 工具生成的子 agent 的最大深度是多少？"
+    options:
+      a: "无限深度"
+      b: "深度 = 3"
+      c: "深度 = 1（不能生成子子 agents）"
+      d: "深度 = 2"
+    correct: "c"
+    explanation: |
+      子 agents 的深度限制为 1。它们不能生成子子 agents。这可以防止：递归爆炸（无限资源消耗）、上下文污染（上下文累积）、调试噩梦（多层链路）以及不可预测的成本（嵌套 token 使用）。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Why Depth = 1?"
+      anchor: "#why-depth--1"
+
+  - id: "12-007"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "子 agent 被 Task 工具生成时会收到什么？"
+    options:
+      a: "完整对话历史 + 所有文件读取"
+      b: "仅任务描述（隔离的新上下文）"
+      c: "对话的最近 10 条消息"
+      d: "系统提示 + CLAUDE.md 文件"
+    correct: "b"
+    explanation: |
+      子 agents 具有隔离上下文。它们只接收任务描述，拥有自己独立的新上下文窗口，访问相同工具（Task 除外），并且只返回摘要文本。这种隔离保持主上下文干净，防止上下文污染。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Isolation Model"
+      anchor: "#isolation-model"
+
+  - id: "12-008"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "Claude Code 安全模型的 4 个权限层是什么？"
+    options:
+      a: "User, Admin, System, Root"
+      b: "交互式提示、Allow/Deny 规则、Hooks、Sandbox"
+      c: "Read, Write, Execute, Delete"
+      d: "Local, Project, Global, Enterprise"
+    correct: "b"
+    explanation: |
+      Claude Code 具有 4 层安全机制：(1) 交互式提示（允许一次/始终允许/拒绝），(2) settings.json 中的 Allow/Deny 规则，(3) Hooks（执行前/后脚本），(4) Sandbox 模式（文件系统 + 网络隔离）。每一层都增加保护。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Permission & Security Model"
+      anchor: "#5-permission--security-model"
+
+  - id: "12-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "当精确匹配失败时，Edit 工具使用什么算法？"
+    options:
+      a: "立即返回错误"
+      b: "模糊匹配（空白规范化、行尾规范化、上下文扩展）"
+      c: "正则模式匹配"
+      d: "语义相似度搜索"
+    correct: "b"
+    explanation: |
+      当精确匹配失败时，Edit 会尝试模糊匹配：(1) 空白规范化（尾随空格、缩进），(2) 行尾规范化（CRLF vs LF），(3) 上下文扩展（周围行）。只有模糊匹配也失败时才会返回错误。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Fuzzy Matching Details"
+      anchor: "#fuzzy-matching-details"
+
+  - id: "12-010"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "MCP（Model Context Protocol）使用什么通信协议？"
+    options:
+      a: "REST API over HTTPS"
+      b: "GraphQL"
+      c: "JSON-RPC 2.0 over stdio 或 HTTP"
+      d: "gRPC with Protocol Buffers"
+    correct: "c"
+    explanation: |
+      MCP 使用 JSON-RPC 2.0，通过 stdio 或 HTTP 传输。MCP 工具遵循命名约定 `mcp__<server>__<tool>`。servers 在首次使用时启动，并在会话期间保持存活。它们与原生工具使用相同的权限系统。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "MCP Integration"
+      anchor: "#6-mcp-integration"
+
+  - id: "12-011"
+    difficulty: "senior"
+    profiles: ["power"]
+    question: "Anthropic 所述的 Claude Code 设计哲学是什么？"
+    options:
+      a: "更多脚手架，更少模型——构建复杂编排"
+      b: "更少脚手架，更多模型——信任 Claude 的推理"
+      c: "最大化控制——为每种情况编写显式规则"
+      d: "混合方法——RAG + 分类器 + 模型"
+    correct: "b"
+    explanation: |
+      Claude Code 的哲学是“更少脚手架，更多模型”——信任 Claude 的推理，而不是构建复杂的编排系统。这意味着：单模型决策（无分类器/路由器）、Grep+Glob（无 RAG）、简单 while 循环（无 DAG）、用对话作为状态（无状态机）。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Philosophy: Less Scaffolding, More Model"
+      anchor: "#9-philosophy-less-scaffolding-more-model"
+
+  - id: "12-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude Code 中可用的 4 种专用子 agent 类型是什么？"
+    options:
+      a: "Reader, Writer, Searcher, Executor"
+      b: "Explore, Plan, Bash, general-purpose"
+      c: "Junior, Senior, Expert, Architect"
+      d: "Fast, Balanced, Thorough, Complete"
+    correct: "b"
+    explanation: |
+      Claude Code 提供 4 种子 agent 类型：Explore（代码库探索，只读工具）、Plan（架构规划，无 Edit/Write）、Bash（命令执行，仅 Bash）和 general-purpose（复杂多步骤任务，所有工具）。每种类型的工具访问权限不同。
+    doc_reference:
+      file: "guide/architecture.md"
+      section: "Sub-Agent Types"
+      anchor: "#sub-agent-types"
+
+  - id: "12-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 Claude Code v2.1.16+ 中，哪个工具替代了 TodoWrite 来做任务管理？"
+    options:
+      a: "ProjectManager API"
+      b: "Kanban tool"
+      c: "Tasks API（TaskCreate、TaskGet、TaskList、TaskUpdate）"
+      d: "AgendaWrite tool"
+    correct: "c"
+    explanation: |
+      Tasks API（v2.1.16+）用 4 个工具替代了 TodoWrite：TaskCreate（创建带描述的任务）、TaskGet（获取完整任务详情）、TaskList（列出所有任务及状态）、TaskUpdate（更新状态、依赖、元数据）。关键改进：通过 blockedBy/blocks 字段支持任务依赖。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Tasks API"
+      anchor: "#tasks-api"
+
+  - id: "12-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "通过 Tasks API 获取 50 个任务完整详情的 API 成本开销是多少？"
+    options:
+      a: "10 倍开销（10 次 API 调用）"
+      b: "25 倍开销（25 次 API 调用）"
+      c: "51 倍开销（需要 1 次 TaskList + 50 次 TaskGet 调用）"
+      d: "100 倍开销（100 次 API 调用）"
+    correct: "c"
+    explanation: |
+      Tasks API 的限制：TaskList 只返回摘要字段（id、subject、status、owner、blockedBy）。要获取完整详情（description、metadata），需要单独调用 TaskGet。对于 50 个任务：1 次 TaskList + 50 次 TaskGet = 51 次 API 调用。与 TodoWrite 一次调用返回全部内容相比，这种 N+1 模式是已知限制。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Tasks API Limitations"
+      anchor: "#tasks-api-limitations"
+
+  - id: "12-015"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是 TeammateTool，它目前处于什么状态？"
+    options:
+      a: "生产就绪的多 agent 框架"
+      b: "实验性多 agent 协调（spawnTeam、discoverTeams、requestJoin、approveJoin）—不稳定、无官方支持"
+      c: "Anthropic 官方团队协作工具"
+      d: "已弃用功能，由 Tasks API 替代"
+    correct: "b"
+    explanation: |
+      TeammateTool 是一个实验性的多 agent 协调工具，包含 4 个操作：spawnTeam、discoverTeams、requestJoin、approveJoin。状态：不稳定，Anthropic 未官方支持。它允许 Claude 实例组队并协作，但 API 可能在无通知情况下变更。不建议用于生产环境。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "TeammateTool"
+      anchor: "#teammatetool"
+
+  - id: "12-016"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么是“Context Rot”，为什么它是结构性的而不是偶然的？"
+    options:
+      a: "由上下文窗口中注释太多导致的渐进式质量下降"
+      b: "n² 注意力成本：随着上下文增长，每个新 token 都要关注所有旧 token，导致指数级变慢和质量下降，不受内容质量影响"
+      c: "由上下文中的未用变量和死代码导致的衰败"
+      d: "当上下文过大时 API 限流导致响应退化"
+    correct: "b"
+    explanation: |
+      Context Rot 是结构性的，不是偶然的：Transformer 注意力是 O(n²)——每个新 token 都要关注所有之前的 token。随着上下文增长，每个 token 的有效注意力被稀释，早期上下文权重被低估，近期 token 比例失衡地占主导。这种现象即使在高质量上下文内容下也会发生。解决方案：/compact（裁剪）、上下文链（用精炼摘要开新会话）、或 JIT 检索（不预加载，按需获取）。你无法仅通过“清理提示词”修复结构性衰败。
+    doc_reference:
+      file: "guide/core/architecture.md"
+      section: "Context Rot"
+      anchor: "#context-rot"
+
+  - id: "12-017"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 Claude Code 子 agent 场景中，JIT（Just-In-Time）检索与 RAG 的关键区别是什么？"
+    options:
+      a: "JIT 使用向量数据库，而 RAG 使用关键词搜索"
+      b: "JIT 从不预加载上下文——子 agent 只在需要时获取所需内容；RAG 预先索引和嵌入文档用于语义检索"
+      c: "JIT 更快但不够准确；RAG 更慢但更精确"
+      d: "JIT 仅用于代码检索；RAG 处理文档检索"
+    correct: "b"
+    explanation: |
+      子 agent 中的 JIT 检索意味着：从不预加载上下文——agent 识别所需内容（WHY/WHAT 模式），只获取这些内容，处理后丢弃。这样每个 agent 的上下文窗口保持较小。RAG 则预先索引和嵌入语料库，在查询时进行语义相似度检索。对于 Claude Code 子 agents：JIT 更适合定向检索任务（无需 embedding 配置、无索引过期问题）；RAG 适合跨多会话反复查询的知识库。
+    doc_reference:
+      file: "guide/core/architecture.md"
+      section: "JIT vs RAG Retrieval"
+      anchor: "#jit-vs-rag-retrieval"
+
+  - id: "12-018"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "MMD（Maximum Mean Discrepancy）在上下文漂移检测中用于什么？"
+    options:
+      a: "测量会话崩溃前可漂移的最大 token 数"
+      b: "比较近期 token embedding 分布与基线分布的统计检验，用于检测进行中对话的语义漂移"
+      c: "跟踪两个相关 CLAUDE.md 文件间的最大内存距离"
+      d: "一种最小化上下文摘要平均偏差的压缩算法"
+    correct: "b"
+    explanation: |
+      MMD（Maximum Mean Discrepancy）是一种基于核函数的统计检验，可在不假设参数形式的情况下比较两个分布。在上下文漂移检测中：你对基线窗口和近期窗口的 tokens/messages 做 embedding，然后计算两者分布的 MMD。较高的 MMD 分数表示对话在语义上偏离了原始主题——这就是触发 /compact 或开启新会话的信号。阈值：MMD > 0.3 通常值得干预。它比余弦距离更能稳健处理多模态漂移。
+    doc_reference:
+      file: "guide/core/architecture.md"
+      section: "Context Drift Detection"
+      anchor: "#context-drift-detection"
+
+  - id: "12-019"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "CLAUDE.md 项目规则中的“Goldilocks altitude problem”是什么？"
+    options:
+      a: "为 CLAUDE.md 找到合适文件大小——不能太大（浪费上下文）也不能太小（指导不足）"
+      b: "在合适抽象层级写规则：过高层（被忽略/误用）vs 过低层（脆弱、过度具体）"
+      c: "在 monorepo 中为嵌套 CLAUDE.md 选择合适目录深度"
+      d: "平衡规则严格性——太严导致 Claude 拒绝有效任务，太松又没有指导"
+    correct: "b"
+    explanation: |
+      Goldilocks altitude problem 指的是：规则写得太高层（如“写好代码”）过于抽象，无法稳定应用；规则写得太低层（如“函数声明后总加空行”）又过于脆弱——会与上下文冲突或过时。最佳点是中等高度：足够具体可执行，又足够抽象可泛化到相似场景。一个合适高度的例子："数据转换优先函数式风格；仅在需要有状态生命周期管理时使用类。"
+    doc_reference:
+      file: "guide/core/architecture.md"
+      section: "Goldilocks Altitude"
+      anchor: "#goldilocks-altitude"
+
+  - id: "12-020"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "为避免上下文开销，推荐的 MCP server 和工具数量上限是什么？"
+    options:
+      a: "最多 50 个 servers，最多 500 个 tools"
+      b: "最多 10 个 servers，所有 servers 合计最多 80 个 tools"
+      c: "无上限——Claude 能高效处理任意数量 MCP tools"
+      d: "最多 3 个 servers，最多 20 个 tools"
+    correct: "b"
+    explanation: |
+      推荐上限：少于 10 个 MCP servers，且所有 servers 合计少于 80 个 tools。每个 MCP server 的工具会在会话开始时被声明，并在整个会话中永久占用上下文窗口空间。超过约 80 个 tools，工具声明的开销会显著挤占实际工作可用上下文。超过 10 个 servers，初始化延迟和跨 server 协调复杂度会叠加。请审计你的 MCP 栈：在 settings.json 中禁用未使用 servers，并按项目类型使用作用域配置。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "MCP Tool Count Limits"
+      anchor: "#mcp-tool-count-limits"

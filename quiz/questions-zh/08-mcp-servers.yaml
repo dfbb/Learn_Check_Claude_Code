@@ -1,0 +1,474 @@
+category: "MCP 服务器"
+category_id: 8
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "08-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 Claude Code 语境中，MCP 代表什么？"
+    options:
+      a: "Model Compute Protocol"
+      b: "Model Context Protocol"
+      c: "Multi-Channel Processing"
+      d: "Module Configuration Protocol"
+    correct: "b"
+    explanation: |
+      MCP 代表 Model Context Protocol。
+
+      它是一个将 AI 模型连接到外部工具和数据源的标准。
+      MCP 使 Claude Code 能够通过连接以下能力扩展内置工具之外的能力：
+      - 语义代码分析（Serena）
+      - 文档查询（Context7）
+      - 数据库查询（Postgres）
+      - 浏览器自动化（Playwright）
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.1 什么是 MCP"
+      anchor: "#81-what-is-mcp"
+
+  - id: "08-002"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "要在整个代码库中查找某个函数的所有用法，应使用哪个 MCP 服务器？"
+    options:
+      a: "Context7"
+      b: "Sequential Thinking"
+      c: "Serena"
+      d: "Postgres"
+    correct: "c"
+    explanation: |
+      Serena 提供语义代码分析，具备 `find_referencing_symbols` 等工具。
+
+      Serena 工具包括：
+      - `find_symbol` - 按名称查找函数、类、方法
+      - `get_symbols_overview` - 获取文件结构概览
+      - `find_referencing_symbols` - 查找符号的所有用法
+      - `search_for_pattern` - 跨代码库进行正则搜索
+
+      使用 Serena 可进行深度代码理解和符号级分析。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.2 可用服务器"
+      anchor: "#serena-semantic-code-analysis"
+
+  - id: "08-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "查阅官方库文档最适合使用哪个 MCP 服务器？"
+    options:
+      a: "Serena"
+      b: "Context7"
+      c: "Sequential Thinking"
+      d: "mgrep"
+    correct: "b"
+    explanation: |
+      Context7 专为访问官方库文档而设计。
+
+      在以下场景使用 Context7：
+      - 学习新库
+      - 查找正确的 API 用法
+      - 查看官方模式
+
+      例如，"How does React useEffect work?" 应使用 Context7
+      获取官方文档，而不是通用知识。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.4 服务器选择指南"
+      anchor: "#server-comparison"
+
+  - id: "08-004"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "哪个 MCP 服务器提供跨会话的持久记忆？"
+    options:
+      a: "Context7"
+      b: "Postgres"
+      c: "Serena"
+      d: "Sequential Thinking"
+    correct: "c"
+    explanation: |
+      Serena 提供可跨对话持久化的会话记忆。
+
+      Serena 记忆工具：
+      - `write_memory` - 保存上下文供未来会话使用
+      - `read_memory` - 读取已保存上下文
+      - `list_memories` - 列出所有存储记忆
+
+      记忆存储在 `.serena/memories/` 中，并在 Claude Code 会话之间保留。
+      这对维护长期项目上下文至关重要。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.2 可用服务器"
+      anchor: "#session-memory-workflow"
+
+  - id: "08-005"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "用户范围的 MCP 配置存储在哪里？"
+    options:
+      a: "~/.mcp/config.json"
+      b: "~/.claude.json"
+      c: "/etc/claude/mcp.json"
+      d: "~/.config/claude/mcp.json"
+    correct: "b"
+    explanation: |
+      MCP 服务器配置在 `~/.claude.json` 的 `"mcpServers"` 字段下。
+
+      配置位置：
+      - `~/.claude.json`（字段 `"mcpServers"`）- 用户/本地范围
+      - 项目根目录 `.mcp.json` - 项目范围（可通过 VCS 共享）
+
+      配置指定要运行的服务器及其设置。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.3 配置"
+      anchor: "#mcp-configuration-location"
+
+  - id: "08-006"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "复杂调试场景推荐使用哪个 MCP 服务器？"
+    options:
+      a: "Context7"
+      b: "Serena"
+      c: "Sequential Thinking"
+      d: "Postgres"
+    correct: "c"
+    explanation: |
+      Sequential Thinking 专为多步骤分析与显式推理设计。
+
+      在以下场景使用 Sequential Thinking：
+      - 复杂调试场景
+      - 架构分析
+      - 系统设计决策
+
+      `sequentialthinking` 工具提供逐步推理，
+      非常适合需要系统性调查的问题。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.4 服务器选择指南"
+      anchor: "#decision-tree"
+
+  - id: "08-007"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "MCP 服务器如何高效协同工作？"
+    options:
+      a: "不能——一次只能用一个服务器"
+      b: "Context7 查模式 -> Serena 查代码 -> Sequential 做分析 -> Playwright 做测试"
+      c: "所有服务器必须配置相同"
+      d: "服务器必须按字母顺序串联"
+    correct: "b"
+    explanation: |
+      MCP 服务器可组合形成强大的工作流：
+
+      1. **Context7** - 获取官方认证模式
+      2. **Serena** - 在代码库中查找现有认证代码
+      3. **Sequential** - 分析如何集成
+      4. **Playwright** - 测试实现
+
+      这种组合利用每个服务器的优势来支持全面开发。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.4 服务器选择指南"
+      anchor: "#combining-servers"
+
+  - id: "08-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 在 MCP 配置中使用哪种环境变量替换语法？"
+    options:
+      a: "${projectPath}"
+      b: "${workspaceFolder}"
+      c: "${VAR_NAME}"
+      d: "${PROJECT_DIR}"
+    correct: "c"
+    explanation: |
+      Claude Code 使用标准 shell 风格 `${VAR}` 语法进行环境变量展开。
+
+      MCP 配置中的变量替换：
+      - `${VAR}` - 环境变量值
+      - `${VAR:-default}` - 带回退值的环境变量
+
+      注意：`${workspaceFolder}` 和 `${env:VAR_NAME}` 是 VS Code 约定，不是 Claude Code。
+
+      示例：
+      ```json
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+      ```
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.3 配置"
+      anchor: "#variable-substitution"
+
+  - id: "08-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Serena 相比 Claude Code 内置工具的关键优势是什么？"
+    options:
+      a: "更快"
+      b: "它提供 Claude Code 缺乏的索引能力"
+      c: "占用更少内存"
+      d: "可离线工作"
+    correct: "b"
+    explanation: |
+      Serena 填补了一个关键空白：Claude Code 没有内置索引（不同于 Cursor）。
+
+      Serena 提供：
+      - **索引**：预先索引代码库以高效查找符号
+      - **项目记忆**：在会话间存储上下文
+      - **Onboarding**：首次运行自动分析项目结构
+
+      对大型代码库（>10k 行），Serena 的索引能力可显著提升性能。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.2 可用服务器"
+      anchor: "#serena-semantic-code-analysis"
+
+  - id: "08-010"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 Claude Code 中，Plugin 与 MCP Server 的区别是什么？"
+    options:
+      a: "插件更快"
+      b: "插件打包 Claude 特定工作流；MCP 服务器增加外部工具能力"
+      c: "它们完全相同"
+      d: "MCP 服务器面向初学者，插件面向专家"
+    correct: "b"
+    explanation: |
+      经验法则：
+      - **Plugin** = "Claude 如何思考"（新工作流、专门化代理）
+      - **MCP Server** = "Claude 能做什么"（新工具、外部系统）
+
+      插件将代理、技能和配置打包成可安装模块。
+      MCP 服务器增加数据库访问或浏览器自动化等外部能力。
+
+      安装方式也不同：
+      - 插件：`claude plugin install`
+      - MCP：添加到 `settings.json` 的 MCP 配置
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.5 插件系统"
+      anchor: "#plugin-vs-mcp-server"
+
+  - id: "08-011"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "哪个 MCP 服务器用于浏览器自动化和 E2E 测试？"
+    options:
+      a: "Serena"
+      b: "Context7"
+      c: "Playwright"
+      d: "Sequential Thinking"
+    correct: "c"
+    explanation: |
+      Playwright MCP 提供浏览器自动化能力。
+
+      Playwright 工具包括：
+      - `navigate` - 访问 URL
+      - `click` - 点击元素
+      - `fill` - 填写表单字段
+      - `screenshot` - 截图
+
+      在以下场景使用 Playwright：
+      - E2E 测试
+      - 视觉验证
+      - 浏览器调试
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.2 可用服务器"
+      anchor: "#playwright-browser-automation"
+
+  - id: "08-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "如何通过 CLI 添加带环境变量的 MCP 服务器？"
+    options:
+      a: "claude mcp add --env API_KEY=key server"
+      b: "claude mcp add -e API_KEY=key my-server -- npx @org/server"
+      c: "claude mcp install server --api-key key"
+      d: "claude add mcp server -k key"
+    correct: "b"
+    explanation: |
+      使用 `-e` 标志传递环境变量：
+
+      ```bash
+      claude mcp add -e API_KEY=your-key my-server -- npx @org/server
+      ```
+
+      多个环境变量：
+      ```bash
+      claude mcp add -e DATABASE_URL=postgres://... -e DEBUG=true postgres -- npx @prisma/postgres
+      ```
+
+      这比手动编辑 mcp.json 更快。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.3 配置"
+      anchor: "#cli-based-mcp-configuration"
+
+  - id: "08-013"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "与 Serena 相比，grepai 的关键差异化能力是什么？"
+    options:
+      a: "更快"
+      b: "按意图进行语义搜索并提供调用图分析"
+      c: "支持更多语言"
+      d: "文档更好"
+    correct: "b"
+    explanation: |
+      grepai 擅长基于自然语言意图的搜索，并提供
+      调用图分析来追踪函数依赖：
+
+      ```bash
+      # 语义搜索（按含义找代码，而非精确文本）
+      grepai search "user authentication flow"
+
+      # 谁调用这个函数？
+      grepai trace callers "createSession"
+      ```
+
+      Serena 专注于符号级分析，而 grepai 可以通过描述代码功能来查找，
+      并追踪调用者/被调用者关系。
+
+      在探索不熟悉代码库或理解依赖时使用 grepai。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.2 可用服务器"
+      anchor: "#grepai-recommended-semantic-search"
+
+  - id: "08-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个命令列出 Claude Code 中所有已安装插件？"
+    options:
+      a: "claude plugins list"
+      b: "claude plugin"
+      c: "/plugins"
+      d: "claude list plugins"
+    correct: "b"
+    explanation: |
+      运行 `claude plugin`（不带子命令）会列出所有已安装插件及其状态。
+
+      插件命令：
+      - `claude plugin` - 列出已安装插件
+      - `claude plugin install <name>` - 安装插件
+      - `claude plugin enable <name>` - 启用插件
+      - `claude plugin disable <name>` - 禁用插件
+      - `claude plugin uninstall <name>` - 删除插件
+      - `claude plugin validate <path>` - 校验插件清单
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "8.5 插件系统"
+      anchor: "#plugin-commands"
+
+  - id: "08-015"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "与截图相比，使用 Figma MCP 的主要优势是什么？"
+    options:
+      a: "更高图像质量"
+      b: "token 更少 3-10 倍：结构化数据 vs 图像分析"
+      c: "下载速度更快"
+      d: "可离线工作"
+    correct: "b"
+    explanation: |
+      Figma MCP 比截图少用 3-10 倍 token，因为它返回结构化数据（React+Tailwind 结构、设计 token），而不是依赖图像分析。其他优势：可直接访问 token、通过 Code Connect 进行组件映射、无需新截图即可迭代工作流。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.3 Figma MCP 集成"
+      anchor: "#figma-mcp-integration"
+
+  - id: "08-016"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个 Figma MCP 工具用于获取设计 token（颜色、间距、排版）？"
+    options:
+      a: "get_design_context"
+      b: "get_variable_defs"
+      c: "get_metadata"
+      d: "get_screenshot"
+    correct: "b"
+    explanation: |
+      `get_variable_defs` 用于获取设计 token，如颜色（--color-primary: #3B82F6）、间距（--spacing-md: 16px）和排版。推荐工作流：get_metadata → get_design_context → get_variable_defs（每个项目一次）→ get_screenshot（仅在需要视觉参考时）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.3 Figma MCP 集成"
+      anchor: "#available-tools-via-figma-mcp"
+
+  - id: "08-017"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "哪个命令用于添加远程访问的 Figma MCP 服务器？"
+    options:
+      a: "claude mcp install figma"
+      b: "claude mcp add --transport http figma https://mcp.figma.com/mcp"
+      c: "claude figma connect"
+      d: "npm install @figma/mcp"
+    correct: "b"
+    explanation: |
+      对于远程 MCP（所有 Figma 方案，任意机器）：`claude mcp add --transport http figma https://mcp.figma.com/mcp`。对于桌面 MCP（需要开启 Dev Mode 的 Figma 桌面应用）：`claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp`。官方 Figma MCP 于 2025 年发布。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "4.3 Figma MCP 集成"
+      anchor: "#setup-options"
+
+  - id: "08-018"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "MCP Apps 架构的 2 个核心原语是什么？"
+    options:
+      a: "Functions 和 Routes"
+      b: "Commands 和 Events"
+      c: "带 UI 元数据的工具和 UI 资源（ui:// 方案）"
+      d: "Plugins 和 Themes"
+    correct: "c"
+    explanation: |
+      MCP Apps（SEP-1865）引入了 2 个核心原语：
+
+      1. **带 UI 元数据的工具** - 带渲染提示（输入表单、输出展示）的标准 MCP 工具
+      2. **UI 资源（ui:// 方案）** - 返回 UI 组件而非数据的资源
+
+      二者结合使 MCP 服务器既能提供功能也能提供用户界面，从而实现更丰富的 agent-to-user 交互。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "MCP 应用"
+      anchor: "#mcp-apps"
+
+  - id: "08-019"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "MCP 工具配置中的 `auto:N` 阈值控制什么？"
+    options:
+      a: "MCP 最大并发连接数"
+      b: "工具结果缓存大小"
+      c: "惰性加载——仅当描述匹配用户意图时加载工具，N = 最大自动加载工具数"
+      d: "失败工具调用的重试次数"
+    correct: "c"
+    explanation: |
+      `auto:N` 阈值为 MCP 工具启用惰性加载。不是在会话开始时加载所有工具（会浪费上下文），而是仅在工具描述匹配用户意图时加载。N 控制每次意图匹配可自动加载的最大工具数量。这可减少包含大量工具的 MCP 服务器的上下文使用。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "MCP 配置"
+      anchor: "#mcp-configuration"
+
+  - id: "08-020"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "在生产生态评估中，哪个 MCP 服务器得分最高（9.0/10）？"
+    options:
+      a: "Playwright MCP（8.8/10）"
+      b: "Context7 MCP（8.5/10）"
+      c: "Semgrep MCP - SAST、密钥与供应链分析"
+      d: "Kubernetes MCP（8.4/10）"
+    correct: "c"
+    explanation: |
+      Semgrep MCP 在生产 MCP 生态评估中得分 9.0/10。它提供静态应用安全测试（SAST）、密钥检测和供应链分析。最高分：Semgrep（9.0）、Playwright（8.8）、Context7（8.5）、Kubernetes（8.4）。评估标准：可靠性、token 效率、生产就绪度。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "MCP 服务器生态系统"
+      anchor: "#mcp-servers-ecosystem"

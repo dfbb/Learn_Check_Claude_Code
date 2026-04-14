@@ -1,0 +1,1207 @@
+category: "高级模式"
+category_id: 9
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "09-001"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "'三位一体'（The Trinity）模式的三个组成部分是什么？"
+    options:
+      a: "Git, VSCode, Terminal"
+      b: "Plan Mode, Extended Thinking, Sequential Thinking"
+      c: "Serena, Context7, Playwright"
+      d: "Agent, Skill, Command"
+    correct: "b"
+    explanation: |
+      三位一体（The Trinity）是 Claude Code 最强大的模式，结合了：
+
+      1. **Plan Mode** - 安全探索，不做任何更改
+      2. **Extended Thinking** - 深度分析（在 Opus 4.5 中默认启用）
+      3. **Sequential Thinking (MCP)** - 结构化的多步推理
+
+      结合使用时，可以在采取行动前获得最大程度的理解。
+      适用于架构决策、复杂调试和遗留系统现代化。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.1 The Trinity"
+      anchor: "#91-the-trinity"
+
+  - id: "09-002"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "如何在 Claude Code（Opus 4.5+）中切换 thinking 模式？"
+    options:
+      a: "在提示中使用 'ultrathink' 关键词"
+      b: "Alt+T（在 macOS 上是 Option+T）"
+      c: "--think CLI 标志"
+      d: "/thinking 命令"
+    correct: "b"
+    explanation: |
+      在 Opus 4.5（v2.0.67+）中，thinking 模式默认以最大预算启用。
+
+      **控制 Thinking 模式：**
+      | 方法 | 操作 | 持久性 |
+      |--------|--------|-------------|
+      | **Alt+T** | 开启/关闭切换 | 会话级 |
+      | **/config** | 全局启用/禁用 | 永久 |
+
+      **注意**：像 "ultrathink" 这样的关键词现在只是装饰性的——它们不再控制 thinking 行为。
+
+      对于简单任务，使用 Alt+T 禁用 thinking（更快、更便宜）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.1 Extended Thinking"
+      anchor: "#extended-thinking-opus-45"
+
+  - id: "09-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你想在 CI/CD 流水线中用 Claude Code 自动分析测试失败，应该用哪个命令？"
+    options:
+      a: "claude --headless \"分析测试失败\""
+      b: "npm test 2>&1 | claude -p '总结测试失败原因'"
+      c: "claude --ci \"分析测试失败\""
+      d: "claude --auto \"分析测试失败\""
+    correct: "b"
+    explanation: |
+      `-p` 标志是非交互模式，适合 CI/CD。通过 Unix 管道把测试输出传给 Claude，再用 `-p` 指定分析任务，是最简洁的集成方式。可以结合 `--output-format json` 获取结构化输出，或 `--max-turns 3` 限制轮次。`--headless` 不是有效的 Claude Code 标志。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.3 CI/CD Integration"
+      anchor: "#unix-piping-workflows"
+
+  - id: "09-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "如何将内容通过管道传递给 Claude Code 并附带提示？"
+    options:
+      a: "claude | cat file.txt -p 'analyze'"
+      b: "cat file.txt | claude -p 'analyze this code'"
+      c: "claude < file.txt --prompt 'analyze'"
+      d: "file.txt > claude -p 'analyze'"
+    correct: "b"
+    explanation: |
+      使用标准 Unix 管道配合 `-p` 标志：
+
+      ```bash
+      cat file.txt | claude -p 'analyze this code'
+      git diff | claude -p 'explain these changes'
+      npm test 2>&1 | claude -p 'summarize test failures'
+      ```
+
+      这为自动化代码分析提供了强大的 shell 集成能力。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.3 CI/CD Integration"
+      anchor: "#unix-piping-workflows"
+
+  - id: "09-005"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "'Rev the Engine' 模式是什么？"
+    options:
+      a: "并行运行测试"
+      b: "多轮编写-批评-改进循环"
+      c: "在任务之间重启 Claude Code"
+      d: "使用更高计算量的模型"
+    correct: "b"
+    explanation: |
+      "Rev the Engine" 模式通过多轮批评来保证质量：
+
+      ```
+      第1轮: [初始实现]
+      批评: [有什么问题]
+      改进: [更好的版本]
+
+      第2轮: [改进后的实现]
+      批评: [还有什么问题]
+      改进: [更好的版本]
+
+      第3轮: [最终实现]
+      最终检查: [验证]
+      ```
+
+      通常建议进行 3 轮循环来保证工作质量。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.2 Composition Patterns"
+      anchor: "#the-rev-the-engine-pattern"
+
+  - id: "09-006"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪个输出格式标志可以让 Claude 返回结构化的 JSON，以便用于脚本？"
+    options:
+      a: "--format json"
+      b: "--output-format json"
+      c: "--json"
+      d: "--structured"
+    correct: "b"
+    explanation: |
+      使用 `--output-format` 来控制响应格式：
+
+      | 格式 | 使用场景 |
+      |--------|----------|
+      | `text` | 人类可读的输出（默认） |
+      | `json` | 机器可解析的结构化数据 |
+      | `stream-json` | 大输出量的实时流式传输 |
+
+      示例：
+      ```bash
+      git log --oneline -10 | claude -p 'Categorize commits' --output-format json
+      ```
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.3 CI/CD Integration"
+      anchor: "#output-format-control"
+
+  - id: "09-007"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "根据指南，'Vibe Coding' 是什么？"
+    options:
+      a: "边听音乐边写代码"
+      b: "在确定实现方案之前，通过自然对话进行快速原型设计"
+      c: "使用 AI 生成随机代码"
+      d: "在轻松的环境中写代码"
+    correct: "b"
+    explanation: |
+      Vibe Coding 是通过自然对话进行快速原型设计。
+
+      何时进行 vibe code：
+      - 早期探索：测试某种方法是否可行
+      - 概念验证：在全面实施前进行快速验证
+      - 学习：理解一个新库或模式
+
+      规则：
+      - 不能用于生产代码——仅限探索
+      - 可以随意丢弃
+      - 专注于学习
+      - 明确说明："这是 vibe code，不用于生产"
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.8 Vibe Coding & Skeleton Projects"
+      anchor: "#vibe-coding"
+
+  - id: "09-008"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在创建 PR 之前，Verify Gate Pattern 是什么？"
+    options:
+      a: "只运行测试"
+      b: "构建 -> 检查 -> 测试 -> 类型检查 -> 然后创建 PR"
+      c: "先创建 PR，再修复问题"
+      d: "仅手动审查"
+    correct: "b"
+    explanation: |
+      Verify Gate Pattern 确保所有检查在创建 PR 之前通过：
+
+      ```
+      Build -> Lint -> Test -> Type-check -> THEN create PR
+      ```
+
+      如果任何一步失败：
+      - 立即停止
+      - 报告失败的内容和原因
+      - 建议修复方案
+      - 不要继续创建 PR
+
+      这可以避免浪费 CI 周期和审查时间。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.3 CI/CD Integration"
+      anchor: "#verify-gate-pattern"
+
+  - id: "09-009"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "'Todo as Instruction Mirrors' 的关键洞察是什么？"
+    options:
+      a: "Todos 仅用于跟踪"
+      b: "你写的 todo 会成为 Claude 的指令"
+      c: "Todos 应该模糊以保持灵活性"
+      d: "总是使用项目符号"
+    correct: "b"
+    explanation: |
+      镜像原则：你写的 todo 会成为 Claude 的指令。
+
+      差的（模糊的 todo -> 模糊的执行）：
+      "修复 bug"
+
+      好的（具体的 todo -> 精确的执行）：
+      "修复 getUserById 中用户未找到时的空指针问题——返回 null 而不是抛出异常"
+
+      精心编写的 todo 可以精确地引导 Claude 的执行。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.6 Todo as Instruction Mirrors"
+      anchor: "#the-mirror-principle"
+
+  - id: "09-010"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "根据'持续改进心态'，每次手动干预后应该问什么？"
+    options:
+      a: "这是我的错吗？"
+      b: "如何改进流程，以便下次避免这个错误或手动修复？"
+      c: "谁对此负责？"
+      d: "我应该换用不同的 AI 吗？"
+    correct: "b"
+    explanation: |
+      每次手动干预后，问自己：
+      "如何改进流程，以便下次避免这个错误或手动修复？"
+
+      改进流程：
+      1. 能否通过 linting 规则捕获？-> 添加 lint 规则
+      2. 能否放入规范/文档？-> 添加到 CLAUDE.md 或 ADR
+      3. 都不行？-> 接受为边界情况
+
+      元技能：不是修复代码，而是修复产生代码的系统。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.10 Continuous Improvement Mindset"
+      anchor: "#the-key-question"
+
+  - id: "09-011"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "什么是 Skeleton Project？"
+    options:
+      a: "一个没有代码的项目"
+      b: "一个在完整实现之前建立模式的最小可运行模板"
+      c: "一个已弃用的项目"
+      d: "一个项目大纲文档"
+    correct: "b"
+    explanation: |
+      Skeleton project 是一个建立模式的最小可运行模板。
+
+      Skeleton 原则：
+      1. **必须能运行**：`pnpm dev` 从第一天就能工作
+      2. **一个完整的垂直切片**：一个功能的完整栈
+      3. **模式，而非功能**：展示 HOW，不是 WHAT
+      4. **最小依赖**：只保留必要的
+
+      演进路径：Skeleton（第1天）-> MVP（第1周）-> 完整版（第1个月）
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.8 Vibe Coding & Skeleton Projects"
+      anchor: "#skeleton-projects"
+
+  - id: "09-012"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么是 OpusPlan 模式？"
+    options:
+      a: "对所有事情都只用 Opus"
+      b: "Opus 负责规划，Sonnet 负责执行"
+      c: "一种特殊的调试模式"
+      d: "不使用 AI 进行规划"
+    correct: "b"
+    explanation: |
+      OpusPlan 模式结合了不同模型的优势：
+      - **规划**：Opus 进行高层思考
+      - **执行**：Sonnet 进行实现
+
+      这提供了战略性思考 + 成本效益的执行。
+
+      ```bash
+      /model opusplan
+      Shift+Tab x 2  # 进入 Plan Mode (Opus)
+      # 设计架构...
+      Shift+Tab      # 退出 Plan Mode (Sonnet)
+      # 执行计划...
+      ```
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.13 Cost Optimization Strategies"
+      anchor: "#model-selection-matrix"
+
+  - id: "09-013"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么时候不应该使用 --dangerously-skip-permissions？"
+    options:
+      a: "在 CI/CD 流水线中"
+      b: "在生产系统或敏感代码库上"
+      c: "用于自动化测试"
+      d: "在 Docker 容器中"
+    correct: "b"
+    explanation: |
+      切勿在生产系统或敏感代码库上使用 `--dangerously-skip-permissions`。
+
+      安全使用场景：
+      - 隔离环境中的 CI/CD 流水线
+      - 范围有限的自动化测试
+      - 开发容器
+
+      不安全使用场景：
+      - 生产系统
+      - 包含密钥的代码库
+      - 包含敏感数据的环境
+
+      该标志会绕过所有权限提示，造成安全风险。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.11 Common Pitfalls & Best Practices"
+      anchor: "#security-pitfalls"
+
+  - id: "09-014"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "指南推荐的有效请求提示格式是什么？"
+    options:
+      a: "简单的自然语言"
+      b: "WHAT, WHERE, HOW, VERIFY"
+      c: "Subject, Body, Footer"
+      d: "Title, Description, Acceptance Criteria"
+    correct: "b"
+    explanation: |
+      推荐的提示格式：
+
+      - **WHAT**：具体的可交付成果
+      - **WHERE**：文件路径/位置
+      - **HOW**：约束/方法
+      - **VERIFY**：成功标准
+
+      示例：
+      ```
+      WHAT: 为登录表单添加输入验证
+      WHERE: src/components/LoginForm.tsx, src/schemas/auth.ts
+      HOW: 使用 Zod 模式验证，内联显示错误
+      VERIFY: 空邮箱显示错误，无效格式显示错误
+      ```
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.11 Common Pitfalls & Best Practices"
+      anchor: "#effective-prompt-format"
+
+  - id: "09-015"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 推荐的学习路径是什么？"
+    options:
+      a: "一次性学会所有内容"
+      b: "从高级功能开始"
+      c: "第1周：基本命令 -> 第2周：CLAUDE.md -> 第3周：Agents -> 第2个月+：MCP servers"
+      d: "立即跳到 MCP servers"
+    correct: "c"
+    explanation: |
+      指南推荐渐进式学习：
+
+      1. **第1周**：基本命令、上下文管理
+      2. **第2周**：CLAUDE.md、权限
+      3. **第3周**：Agents 和 commands
+      4. **第2个月+**：MCP servers、高级模式
+
+      从简单、低风险的任务开始，逐步增加复杂度。
+      这样可以避免 overwhelmed，并打下坚实的基础。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.11 Common Pitfalls & Best Practices"
+      anchor: "#learning--adoption-pitfalls"
+
+  - id: "09-016"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "哪种 git 工作流可以让你在多个功能上同时工作并保持独立的上下文？"
+    options:
+      a: "Git stash"
+      b: "Git worktrees"
+      c: "仅 Git branches"
+      d: "Git submodules"
+    correct: "b"
+    explanation: |
+      Git worktrees 可以从同一个仓库创建多个工作目录。
+
+      好处：
+      - 同时在多个功能上工作
+      - 每个 worktree 都有独立的 Claude Code 上下文
+      - 不需要 stash/switch 操作
+      - 开发的同时可以进行并行测试
+
+      ```bash
+      git worktree add ../myproject-hotfix hotfix
+      git worktree add ../myproject-feature-a feature-a
+      ```
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.12 Git Best Practices & Workflows"
+      anchor: "#git-worktrees-for-parallel-development"
+
+  - id: "09-017"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "什么是 SDD（Spec-Driven Development），其核心主张是什么？"
+    options:
+      a: "Speed-based Development - 最快的方法"
+      b: "Spec-Driven Development - 一次结构良好的迭代等于 8 次无结构的迭代"
+      c: "Standard Driven Development - 遵循行业标准"
+      d: "Sequential Driven Development - 线性工作流"
+    correct: "b"
+    explanation: |
+      SDD（Spec-Driven Development）意味着在写代码之前先有规范。核心主张：一次结构良好的迭代等于 8 次无结构的迭代。CLAUDE.md 就是你的规范文件。最适合 API 和契约。高 Claude 适配度（⭐⭐⭐）。
+    doc_reference:
+      file: "guide/methodologies.md"
+      section: "Tier 2: Specification & Architecture"
+      anchor: "#tier-2-specification--architecture"
+
+  - id: "09-018"
+    difficulty: "intermediate"
+    profiles: ["senior", "power"]
+    question: "BDD（Behavior-Driven Development）使用什么格式来描述测试场景？"
+    options:
+      a: "Arrange-Act-Assert"
+      b: "Given-When-Then (Gherkin)"
+      c: "Setup-Execute-Verify"
+      d: "Input-Process-Output"
+    correct: "b"
+    explanation: |
+      BDD 使用 Given-When-Then 格式（Gherkin）。BDD 不仅仅是测试——它是一个协作过程：(1) 与开发/业务人员进行发现，(2) 用示例进行表述，(3) 通过 Cucumber 自动化。示例：Given 库存为 0 的产品 → When 客户尝试购买 → Then 系统拒绝。
+    doc_reference:
+      file: "guide/methodologies.md"
+      section: "Tier 3: Behavior & Acceptance"
+      anchor: "#tier-3-behavior--acceptance"
+
+  - id: "09-019"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "TDD 循环的三个步骤是什么？"
+    options:
+      a: "Plan-Develop-Test"
+      b: "Red-Green-Refactor"
+      c: "Write-Run-Fix"
+      d: "Design-Code-Review"
+    correct: "b"
+    explanation: |
+      经典 TDD 循环：(1) Red - 编写失败的测试，(2) Green - 编写最小代码使其通过，(3) Refactor - 在测试保持绿色的情况下清理代码。与 Claude 一起使用时，要明确说明"编写目前还不存在的 FAILING 测试。"TDD 是核心工作流（⭐⭐⭐）。
+    doc_reference:
+      file: "guide/methodologies.md"
+      section: "Tier 5: Implementation"
+      anchor: "#tier-5-implementation"
+
+  - id: "09-020"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你想用 Claude Code 实现一个新功能，但不确定最佳方案。最好的工作流是？"
+    options:
+      a: "直接让 Claude 写代码，边写边调整"
+      b: "先用 /plan 模式探索方案，确认后再用 /execute 实施"
+      c: "先写详细的技术文档，再让 Claude 实现"
+      d: "用 OpusPlan：/model opusplan → Shift+Tab×2 规划 → Shift+Tab 执行"
+    correct: "d"
+    explanation: |
+      OpusPlan 是处理不确定性的最佳工作流：用 Opus 的深度推理能力规划方案（Shift+Tab×2 进入计划模式），确认方案后切换到 Sonnet 执行（Shift+Tab 退出计划模式）。这比直接写代码更可靠，比写文档更高效，兼顾了规划质量和执行成本。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.13 Cost Optimization Strategies"
+      anchor: "#model-selection-matrix"
+
+  - id: "09-021"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "作为一种方法论，'Context Engineering' 是什么？"
+    options:
+      a: "工程团队的上下文"
+      b: "将上下文视为一流设计元素：渐进式披露、内存管理、动态刷新"
+      c: "构建上下文菜单"
+      d: "管理环境变量"
+    correct: "b"
+    explanation: |
+      Context Engineering 将上下文视为设计元素。核心概念：渐进式披露（让 agent 逐步发现）、内存管理（对话内存 vs 持久内存）、动态刷新（在响应前重写 TODO 列表）。高 Claude 适配度（⭐⭐⭐），适用于长会话。
+    doc_reference:
+      file: "guide/methodologies.md"
+      section: "Tier 4: Feature Delivery"
+      anchor: "#tier-4-feature-delivery"
+
+  - id: "09-022"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "'Mechanic Stacking' 的 5 个层次是什么？"
+    options:
+      a: "Plan Mode, Extended Thinking, Rev the Engine, Split-Role, Permutation"
+      b: "Plan Mode, Sequential Thinking, Context7, Serena, Playwright"
+      c: "CLAUDE.md, Plan Mode, Extended Thinking, MCP Servers, Hooks"
+      d: "Plan Mode, Extended Thinking, Rev the Engine, Multi-Agent, Hooks"
+    correct: "a"
+    explanation: |
+      Mechanic Stacking 叠加 5 种技术以发挥 Claude Code 的最大威力：
+
+      1. **Plan Mode** - 安全探索，不做更改
+      2. **Extended Thinking** - 深度内部推理
+      3. **Rev the Engine** - 渐进式热身提示
+      4. **Split-Role** - 分离架构师/实现者/审查者
+      5. **Permutation** - 系统性变体测试
+
+      每一层都会放大前一层的效果。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Mechanic Stacking"
+      anchor: "#mechanic-stacking"
+
+  - id: "09-023"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Claude Code 中的 'Permutation Framework' 是什么？"
+    options:
+      a: "UI 变体的 A/B 测试"
+      b: "由 CLAUDE.md 驱动的系统性变体测试：定义维度、生成变体、实现、评估"
+      c: "用于基准测试的随机代码生成"
+      d: "自动回归测试套件"
+    correct: "b"
+    explanation: |
+      Permutation Framework 使用 CLAUDE.md 驱动系统性变体测试。工作流：定义变体维度（例如，算法选择、数据结构、缓存策略），生成所有组合，实现每个变体，用指标评估。这确保你系统地探索解决方案空间，而不是只选择第一种方法。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Permutation Frameworks"
+      anchor: "#permutation-frameworks"
+
+  - id: "09-024"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "哪种心智模型将开发者描述为 Claude 实例的编排者？"
+    options:
+      a: "Pipeline Manager"
+      b: "Agent Supervisor"
+      c: "You Are the Main Thread - CPU 调度器类比，开发者将任务分派给 agents"
+      d: "Task Router"
+    correct: "c"
+    explanation: |
+      "You Are the Main Thread" 使用 CPU 调度器类比：开发者是主线程，将工作分派给 Claude 实例（工作线程）。你管理优先级、上下文切换和同步。关键洞察：你不是在写代码——你是在管理写代码的 agents。这将技能从编码转移到编排。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "You Are the Main Thread"
+      anchor: "#you-are-the-main-thread"
+
+  - id: "09-025"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "当任务列表项与实际完成的工作持续出现偏差时，指南推荐怎么做？"
+    options:
+      a: "删除任务列表并重新开始"
+      b: "为每个任务添加更细粒度的细节"
+      c: "将偏差模式用作诊断：太宽泛 = 拆分，太狭窄 = 退一步，优先级错误 = 与目标重新对齐"
+      d: "忽略偏差并继续"
+    correct: "c"
+    explanation: |
+      任务列表偏差是诊断信号，不是失败。模式揭示了问题：
+
+      - **太宽泛**的任务 → 拆分成更小的部分
+      - **太狭窄**的任务 → 退一步，想得更大
+      - **优先级错误** → 将任务与实际目标重新对齐
+      - **持续漂移** → 你对问题的思维模型是错误的
+
+      将偏差视为信号，而不是噪音。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Task Management Patterns"
+      anchor: "#task-management-patterns"
+
+  - id: "09-026"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Claude 在代码审查中说某个模式是'已建立的约定'，你应该怎么验证？"
+    options:
+      a: "相信 Claude，它读过整个代码库"
+      b: "用 grep/Grep 工具搜索该模式，自己数出现次数再判断"
+      c: "问 Claude '你确定吗？'"
+      d: "查看 git log 看这个模式是否被提交过"
+    correct: "b"
+    explanation: |
+      Claude 可能从少数几个例子中幻觉出"已建立的约定"。正确做法是自己用 grep 搜索验证：出现次数多才是真正建立的模式，少数几次只是偶发用法。这是防止 Claude 幻觉的关键习惯——对任何关于"代码库约定"的声明都要亲自验证。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "代码审查反幻觉"
+      anchor: "#anti-hallucination"
+      section: "Anti-Hallucination Safeguards"
+      anchor: "#anti-hallucination-safeguards"
+
+  - id: "09-027"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "多 agent 代码审查中的 3 个专门化 agent 是什么？"
+    options:
+      a: "Security Reviewer, Performance Analyst, UX Reviewer"
+      b: "Linter, Type Checker, Test Runner"
+      c: "Consistency Auditor, SOLID Analyst, Defensive Code Auditor"
+      d: "Junior Reviewer, Senior Reviewer, Architect Reviewer"
+    correct: "c"
+    explanation: |
+      多 agent PR 审查使用 3 个专门化 agent：
+
+      1. **Consistency Auditor** - 检查命名约定、导入模式、代码风格遵循情况
+      2. **SOLID Analyst** - 审查架构原则、依赖注入、单一职责
+      3. **Defensive Code Auditor** - 验证错误处理、输入验证、边界情况
+
+      每个 agent 都有反幻觉保护措施（occurrence rule、文件范围内的声明）。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Multi-Agent PR Review"
+      anchor: "#multi-agent-pr-review"
+
+  - id: "09-028"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "根据 Addy Osmani 的 '80% Problem'，'comprehension debt' 是什么？"
+    options:
+      a: "文档债务 - 缺少文档"
+      b: "你已经发布但尚未完全理解的代码——与技术债务不同"
+      c: "审查债务 - 未审查的 PR"
+      d: "设计债务 - 跳过了设计阶段"
+    correct: "b"
+    explanation: |
+      Comprehension debt 是你已经发布但尚未完全理解的代码。它不同于 technical debt（你了解但知道是次优的代码）。随着 AI 生成代码的增长，comprehension debt 会悄然增加：你在没有深入理解的情况下接受了建议。解决办法：始终能够解释 WHY，而不仅仅是 WHAT。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Practitioner Insights"
+      anchor: "#practitioner-insights"
+
+  - id: "09-029"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Boris Cherny 将 CLAUDE.md 视为复利记忆的 '4 步循环' 是什么？"
+    options:
+      a: "Write, Test, Deploy, Monitor"
+      b: "Plan, Execute, Review, Commit"
+      c: "Error, Rule, Read, Never repeated"
+      d: "Ask, Implement, Validate, Ship"
+    correct: "c"
+    explanation: |
+      Boris Cherny 关于 CLAUDE.md 作为复利记忆的心智模型：
+
+      1. **Error** - Claude 犯了错误
+      2. **Rule** - 你在 CLAUDE.md 中添加规则以防止它再次发生
+      3. **Read** - Claude 在每次会话开始时读取 CLAUDE.md
+      4. **Never repeated** - 同样的错误再也不会发生
+
+      目标：永远不要为同一个错误纠正 Claude 两次。CLAUDE.md 会随着时间的推移而复利增长。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Boris Cherny Mental Models"
+      anchor: "#boris-cherny-mental-models"
+
+  - id: "09-030"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "如何在 Claude Code v2.1.32+ 中启用 agent teams？"
+    options:
+      a: "使用 /agent-teams 命令"
+      b: "设置 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 或添加到 settings.json"
+      c: "从 skills.sh 安装 agent-teams 插件"
+      d: "使用 --teams CLI 标志"
+    correct: "b"
+    explanation: |
+      Agent teams 需要实验性功能标志。两种方法：
+
+      1. **环境变量**：`export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+      2. **设置文件**：在 ~/.claude/settings.json 中添加 `{"experimental": {"agentTeams": true}}`
+
+      还需要最低 Opus 4.6 模型。该功能是实验性的（研究预览版）。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Setup & Configuration"
+      anchor: "#3-setup--configuration"
+
+  - id: "09-031"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么时候应该使用 Agent Teams 而不是 Multi-Instance 工作流？"
+    options:
+      a: "总是——agent teams 更优越"
+      b: "当任务需要在共享代码库上协调时（以读取为主的分析）"
+      c: "当任务完全独立时（不同项目）"
+      d: "当预算紧张时（agent teams 更便宜）"
+    correct: "b"
+    explanation: |
+      **Agent Teams** = 在共享代码库上的自动协调（基于 git）
+      最适合：读取密集型任务（代码审查、bug 追踪、分析）
+
+      **Multi-Instance** = 手动编排，独立任务
+      最适合：不同项目，没有共享状态，不需要协调
+
+      关键：需要协调时使用 Teams，只需要并行化而不需要协调时使用 Multi-Instance。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.20 Agent Teams"
+      anchor: "#920-agent-teams-multi-agent-coordination"
+
+  - id: "09-032"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "agent teams 的主要限制是什么？"
+    options:
+      a: "不能生成超过 2 个 agent"
+      b: "读取密集型任务表现良好，写入密集型任务有合并冲突风险"
+      c: "仅在 macOS 上可用"
+      d: "需要昂贵的硬件"
+    correct: "b"
+    explanation: |
+      **关键限制**：读取密集型 > 写入密集型 的权衡
+
+      良好：代码审查（agents 读取、分析、报告）
+      良好：Bug 追踪（agents 读取日志、追踪执行）
+      有风险：重构共享类型（合并冲突）
+      不好：多个 agents 修改同一个文件
+
+      缓解措施：分配不重叠的文件集，使用 interface-first 方法。
+      Token 成本也相当高（3 倍以上）。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Limitations & Gotchas"
+      anchor: "#6-limitations--gotchas"
+
+  - id: "09-033"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "agent teams 所需的最低 Claude 模型是什么？"
+    options:
+      a: "Haiku"
+      b: "Sonnet 4.5"
+      c: "Opus 4.5"
+      d: "Opus 4.6"
+    correct: "d"
+    explanation: |
+      Agent teams 需要 **最低 Opus 4.6**（2026 年 2 月随 v2.1.32 发布）。
+
+      原因是：
+      - 每个 agent 需要 1M token 上下文窗口
+      - 基于 git 的协调需要高级推理能力
+      - Team lead 必须综合多个 teammate 的发现
+
+      较低模型（Sonnet、Haiku）无法生成 agent teams。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Prerequisites"
+      anchor: "#prerequisites"
+
+  - id: "09-034"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 agent teams 架构中，'team lead' 的角色是什么？"
+    options:
+      a: "执行所有任务，而 teammates 只观察"
+      b: "拆分任务、生成 teammates、综合发现"
+      c: "监控成本并防止 token 过度使用"
+      d: "手动解决合并冲突"
+    correct: "b"
+    explanation: |
+      **Team lead**（主会话）职责：
+
+      1. **拆分任务**为子任务
+      2. **生成 teammate 会话**（每个都有 1M token 上下文）
+      3. **综合所有 agents 的发现**
+
+      **Teammates** 独立处理分配的任务，向 team lead 汇报。
+      导航：使用 Shift+Up/Down 在 agents 之间切换。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Architecture Deep-Dive"
+      anchor: "#2-architecture-deep-dive"
+
+  - id: "09-035"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你想用 agent teams 加速代码审查流程。哪种任务类型最适合 agent teams，为什么？"
+    options:
+      a: "重构共享类型——多个 agents 同时修改同一文件效率最高"
+      b: "读取密集型任务（代码审查、bug 追踪）——agents 并行分析，无写入冲突"
+      c: "数据库迁移——agent teams 擅长处理有状态操作"
+      d: "UI 组件开发——视觉任务最适合多 agent 协作"
+    correct: "b"
+    explanation: |
+      Agent teams 在**读取密集型任务**上表现最好：
+
+      - 代码审查：多个 agents 并行分析不同模块，无合并冲突
+      - Bug 追踪：agents 同时读取日志、追踪执行路径
+      - 安全审计：agents 分别检查不同安全维度
+
+      写入密集型任务（重构共享类型、修改同一文件）有合并冲突风险。
+      缓解措施：为每个 agent 分配不重叠的文件集。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Production Use Cases"
+      anchor: "#4-production-use-cases"
+
+  - id: "09-036"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你的团队考虑用 agent teams 做代码审查，但担心成本。什么情况下 agent teams 的成本是合理的？"
+    options:
+      a: "任何情况——agent teams 总是比单个 agent 更便宜"
+      b: "当节省的时间价值 > 增加的 token 成本时（生产问题、关键分析）"
+      c: "只有在使用 Haiku 模型时才划算"
+      d: "当团队超过 10 人时规模效益才显现"
+    correct: "b"
+    explanation: |
+      Agent teams 的成本权衡：每个 agent 独立运行模型推理，3 个 agents 意味着显著更高的 token 消耗。
+
+      **值得用的场景**：
+      - 生产事故调查（时间紧迫，成本次要）
+      - 关键安全审计（质量优先）
+      - 大型代码库的并行分析
+
+      **不值得用的场景**：
+      - 简单的单文件修改
+      - 预算受限的项目
+      - 可以顺序完成的任务
+
+      规则：当并行节省的时间价值超过额外 token 成本时才使用。
+    doc_reference:
+      file: "guide/workflows/agent-teams.md"
+      section: "Cost Trade-offs"
+      anchor: "#cost-trade-offs"
+
+  - id: "09-037"
+    difficulty: "intermediate"
+    profiles: ["intermediate", "senior", "power"]
+    question: "你需要在 50 个文件中重命名一个函数。哪个模型和努力级别最合适？"
+    options:
+      a: "Opus, effort: max — 大规模重命名需要深度推理"
+      b: "Sonnet, effort: high — 大范围需要仔细分析"
+      c: "Haiku, effort: low — 机械式的查找替换，无需设计决策"
+      d: "Sonnet, effort: medium — 任何多文件操作的安全默认值"
+    correct: "c"
+    explanation: |
+      **Haiku + low effort** 是跨文件重命名等机械任务的正确选择。
+
+      关键问题：这个任务需要推理、设计决策或判断吗？
+      - 重命名 = 查找替换。模式已知，方法已确定。
+      - 不需要分析边界情况。
+      - Haiku 的输入 token 成本比 Opus 低 60 倍。
+
+      在这里使用 Opus 会浪费 token 在不会增加价值的推理上。
+      将 Opus 留给其深度能改变结果的任务。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Model Selection & Thinking Guide"
+      anchor: "#25-model-selection--thinking-guide"
+
+  - id: "09-038"
+    difficulty: "intermediate"
+    profiles: ["intermediate", "senior", "power"]
+    question: "agent YAML frontmatter 中的 `model: haiku` 有什么作用？"
+    options:
+      a: "将 agent 的沟通风格设置为更简洁"
+      b: "强制 agent 对所有子 agent 生成使用 Haiku"
+      c: "配置该 agent 在 Haiku 模型上运行，而不是会话默认值"
+      d: "启用减少工具调用的省钱模式"
+    correct: "c"
+    explanation: |
+      agent frontmatter 中的 `model: haiku` 设置了**该特定 agent 使用的模型**，覆盖会话默认值。
+
+      这就是你实现 planner/implementer 模式的方式：
+      ```yaml
+      # planner.md
+      model: opus    # 用于策略的深度推理
+
+      # implementer.md
+      model: haiku   # 用于机械执行的成本效益
+      ```
+
+      每个 agent 都使用其配置的模型独立运行。
+      会话模型（你的默认 Sonnet）不受影响。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Model per Agent Patterns"
+      anchor: "#model-per-agent-patterns"
+
+  - id: "09-039"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 Opus 4.6 中，`effort` 参数实际上控制什么？"
+    options:
+      a: "仅 thinking token 预算（用于扩展推理的 token 数量）"
+      b: "整体计算预算：thinking、工具调用、文本冗长程度和分析深度"
+      c: "每次响应的最大工具调用次数"
+      d: "过滤低置信度输出的质量门"
+    correct: "b"
+    explanation: |
+      `effort` 控制**整体计算预算**——不仅仅是 thinking。
+
+      在 `effort: low` 时：
+      - 更少的工具调用（尽可能合并操作）
+      - 操作前没有解释性序言
+      - 简洁的响应
+
+      在 `effort: high` 时：
+      - 更多带有详细解释的工具调用
+      - 执行前描述计划
+      - 全面的分析和总结
+
+      这意味着即使 thinking 被禁用（Alt+T 关闭），`effort` 也会影响行为。
+      它是一个整体的效率调节器，而不是 thinking 的开关。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Effort Levels"
+      anchor: "#effort-levels"
+
+  - id: "09-040"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "`effort: low` 对工具使用的可观察影响是什么？"
+    options:
+      a: "Claude 拒绝使用任何工具，仅根据记忆响应"
+      b: "Claude 合并工具操作以减少调用次数，并跳过解释性序言"
+      c: "Claude 每次响应最多限制为 3 个工具调用"
+      d: "Claude 只使用 Read 工具，不使用 Write 或 Edit 工具"
+    correct: "b"
+    explanation: |
+      在 `effort: low` 时，Claude 优化效率：
+
+      **工具使用**：合并通常需要单独调用的操作。
+      不再 Read → Analyze → Read → Analyze，而是可能只进行一次有针对性的 Read。
+
+      **无序言**：跳过"我现在要读取文件以了解..."这样的引言。
+      操作直接发生，没有旁白。
+
+      **结果**：对于不需要透明度的任务，执行更快、更便宜。
+      最适合自动化流水线中的子 agent、分类任务、查找任务。
+
+      适合 `low` 的示例任务：`"将 src/ 中的 getUserById 重命名为 findUserById"`
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Effort Levels"
+      anchor: "#effort-levels"
+
+  - id: "09-041"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "在 planner/implementer agent 模式中，每个角色应该使用哪个模型？"
+    options:
+      a: "Planner: Sonnet, Implementer: Haiku"
+      b: "Planner: Opus, Implementer: Sonnet"
+      c: "Planner: Opus, Implementer: Haiku"
+      d: "Both: Sonnet（一致性比成本更重要）"
+    correct: "c"
+    explanation: |
+      **Planner: Opus** — 策略需要深度推理。
+      规划错误会在所有实现步骤中复合放大。
+      在规划阶段发现并修正错误 = 几分钟。
+      在实现后才发现同样的错误 = 几天。
+
+      **Implementer: Haiku** — 机械执行。
+      方法已经由 planner 决定。
+      不需要设计决策 = 不需要深度推理。
+      Haiku 的输入 token 成本比 Opus 低 60 倍。
+
+      **Haiku 不够用的情况**：如果实现需要判断性决策，
+      implementer 应该停止并报告，而不是自己做决定——或者改用 Sonnet。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Model per Agent Patterns"
+      anchor: "#model-per-agent-patterns"
+
+  - id: "09-042"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Opus 4.6 中的 Adaptive Thinking 是什么，它与 Opus 4.5 的 thinking 有何不同？"
+    options:
+      a: "Adaptive Thinking 让模型根据复杂度选择响应语言"
+      b: "模型根据查询复杂度动态分配推理深度，取代了固定的 budget_tokens 参数"
+      c: "Thinking 现在拆分到多个 API 调用中以实现更长的推理链"
+      d: "Adaptive Thinking 始终处于最大深度开启状态，与 Opus 4.5 v2.0.67+ 相同"
+    correct: "b"
+    explanation: |
+      **Opus 4.6 Adaptive Thinking** 取代了固定的 `budget_tokens` 方法。
+
+      | 版本 | Thinking 控制 |
+      |---------|-----------------|
+      | Opus 4.5（v2.0.67 之前） | 关键词触发，固定预算（4K/10K/32K） |
+      | Opus 4.5（v2.0.67+） | 始终以最大预算开启，用 Alt+T 切换 |
+      | **Opus 4.6** | 通过 `effort` 参数动态调整深度 |
+
+      使用 Adaptive Thinking，模型自行决定查询需要多少推理：
+      - 简单查找 → 最小推理深度
+      - 多系统架构分析 → 最大深度
+
+      `budget_tokens` 在 Opus 4.6 上**已弃用**，使用会返回错误。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Effort Levels"
+      anchor: "#effort-levels"
+
+  - id: "09-043"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么时候应该使用 `effort: max`，如果在 Sonnet 上使用会发生什么？"
+    options:
+      a: "用于任何复杂任务；Sonnet 会静默降级到 `effort: high`"
+      b: "仅用于 Opus 4.6 上的跨系统推理；在其他模型上会返回 API 错误"
+      c: "当你想要最大 thinking token 时；适用于所有模型但成本更高"
+      d: "用于批处理操作；Sonnet 用它来并行化工具调用"
+    correct: "b"
+    explanation: |
+      **`effort: max` 是 Opus 4.6 独占的。**
+
+      用于需要以下能力的任务：
+      - 跨系统竞态条件分析
+      - 多服务依赖追踪
+      - 昂贵或不可逆转的决策
+      - 跨整个代码库的对抗性安全推理
+
+      示例：
+      ```
+      "分析 order-service、inventory-service 和 notification-service
+       之间的微服务事件管道中的竞态条件"
+      ```
+
+      **在任何其他模型上**（Sonnet、Haiku、Opus 4.5）：API 会返回错误。
+      它不会静默降级。你必须显式使用不同的 effort 级别。
+
+      `effort: high` 是默认值，适用于支持该参数的模型。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 Effort Levels"
+      anchor: "#effort-levels"
+
+  - id: "09-044"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 agent team 工作流中，MAX_ITERATIONS=8 控制什么，达到限制时会发生什么？"
+    options:
+      a: "agent 可以读取的最大文件数 — agent 停止读取并使用可用上下文继续"
+      b: "任何失败任务的最大重试次数 — agent 停止并向 team lead 报告，而不是继续重试"
+      c: "最大 teammate agent 数量 — team lead 停止生成并顺序工作"
+      d: "每个 agent 的最大 token 预算 — agent 切换到 low-effort 模式以节省 token"
+    correct: "b"
+    explanation: |
+      Loop Guardrails 防止 agents 陷入无效的重试循环。MAX_ITERATIONS 为任何单个失败任务设置了重试次数的硬上限。达到限制时，agent 停止并向 team lead 报告，而不是继续重试。每次重试前会运行一个反思提示（"具体失败的是什么？一个改变就能修复它吗？"），迫使 agent 改变方法，而不是重复相同的失败操作。如果没有迭代限制，agents 可能会消耗掉整个 token 预算来重试一个被阻塞的任务，而其余的工作队列则会停滞。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.9 Multi-Agent Teams"
+      anchor: "#loop-guardrails"
+
+  - id: "09-045"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 Dedicated Reviewer Teammate 模式中，推荐的比例是多少，为什么 reviewer 必须是只读的？"
+    options:
+      a: "每 10 个 builders 配 1 个 reviewer — 比例过低 reviewer 会成为瓶颈；只读可防止上下文过载"
+      b: "每 3-4 个 builders 配 1 个 reviewer — builder 太少 reviewer 会成为瓶颈，太多会导致队列积压；只读可防止合并冲突"
+      c: "每个 builder 配 1 个 reviewer — 对等比例最大化审查覆盖率；只读是可选的"
+      d: "每个 builder 配 2 个 reviewers — 双重审查能发现更多 bug；只读是 API 要求的"
+    correct: "b"
+    explanation: |
+      Dedicated Reviewer Teammate 添加了一个只读 agent，在每个 TaskCompleted 事件时进行审查。比例：每 3-4 个 builders 配 1 个 reviewer。低于这个范围 reviewer 会成为瓶颈。高于这个范围，审查队列会积压，发现的问题来得太晚，无法干净地处理。只读是至关重要的：一个有写权限的 reviewer 会开始自己修复问题，造成合并冲突，并破坏并行隔离的目的。reviewer 的工作是生成结构化的发现（阻塞性 vs 非阻塞性），而不是应用修复。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.9 Multi-Agent Teams"
+      anchor: "#dedicated-reviewer-teammate"
+
+  - id: "09-046"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "子 agent 的 Iterative Retrieval 模式中的 WHY/WHAT 结构是什么，最大检索循环次数是多少？"
+    options:
+      a: "WHY = 任务描述，WHAT = 输出格式 — 最多 5 个循环"
+      b: "WHY = 要解决的问题，WHAT = 具体任务 — 最多 3 个循环"
+      c: "WHY = 生成 agent 的原因，WHAT = 要读取的文件 — 最多 2 个循环"
+      d: "WHY = 业务原理，WHAT = 架构决策 — 最多 1 个循环"
+    correct: "b"
+    explanation: |
+      Iterative Retrieval 为子 agents 提供有限的上下文预算。WHY = 要解决的问题或要满足的约束（给 agent 决策上下文）。WHAT = 要执行的具体任务。一个只知道 WHAT 的 agent 缺乏防止错误选择的业务约束。WHY 可以在不需要额外纠正循环的情况下引导实现。最多 3 个循环：循环 1 使用初始上下文，循环 2 是有针对性的特定请求，循环 3 是最终的有针对性请求，agent 必须在仍有不确定性的情况下产出结果。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.9 Multi-Agent Teams"
+      anchor: "#iterative-retrieval-for-sub-agents"
+
+  - id: "09-047"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "Claude Code 如何构建其缓存前缀层次结构，哪些层几乎总是缓存命中？"
+    options:
+      a: "messages > system > tools — messages 层总是命中，tools 层总是未命中"
+      b: "system > tools > messages — 只有 system prompt 可靠命中"
+      c: "tools > system > messages — tools 和 system 层几乎总是命中，messages 层变化较大"
+      d: "tools > messages > system — 所有三层命中频率相同"
+    correct: "c"
+    explanation: |
+      每个 API 调用都按固定顺序组织内容：tools 然后 system 然后 messages。缓存匹配始终从这个前缀的开头开始。Tools（工具列表）和 system（CLAUDE.md）在大多数回合中是稳定的。这意味着前两层几乎总是缓存命中，只有新的 message 回合需要重新计算。将最稳定的内容放在前面，可以最大化每个请求中从缓存提供的比例，成本为基础成本的 0.1 倍。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Cost Optimization"
+      anchor: "#how-claude-code-handles-caching-automatically"
+
+  - id: "09-048"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你发现长会话后期 Claude 的响应质量下降，成本也变高。最可能的原因和解决办法是什么？"
+    options:
+      a: "模型过热——重启 Claude Code 进程"
+      b: "长会话中早期对话块超出缓存回溯窗口，导致缓存命中率下降；用 /compact 压缩对话历史"
+      c: "上下文窗口已满——必须开始新会话"
+      d: "网络延迟——切换到更快的网络"
+    correct: "b"
+    explanation: |
+      缓存匹配使用有界回溯窗口。在包含大量工具调用的长会话中，早期对话块会超出这个窗口，即使内容没变也变成缓存未命中，导致成本上升。
+
+      解决办法：`/compact`
+      - 将对话历史压缩成单个总结块
+      - 重置回溯窗口
+      - 恢复后续回合的高缓存命中率
+
+      养成习惯：当会话变长时主动用 `/compact`，而不是等到出问题再处理。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Cost Optimization"
+      anchor: "#how-claude-code-handles-caching-automatically"
+
+  - id: "09-049"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在 RPI 工作流（Research > Plan > Implement）中，每个阶段产出什么产物，Gate 1 会发生什么？"
+    options:
+      a: "Research 产出 NOTES.md，Plan 产出 SPEC.md，Implement 产出代码 — Gate 1 是代码审查"
+      b: "Research 产出 RESEARCH.md，Plan 产出 PLAN.md，Implement 产出代码 — Gate 1 是人类在开始任何规划前的 GO/NO-GO 决策"
+      c: "Research 产出提示，Plan 产出任务列表，Implement 产出 diff — Gate 1 是自动测试通过"
+      d: "所有阶段共享 PROGRESS.md — gates 由 Claude 自动执行"
+    correct: "b"
+    explanation: |
+      RPI 将功能开发结构化为三个锁定阶段。阶段 1（Research）：产出 RESEARCH.md，涵盖可行性、风险、决策点和工作量估算。Gate 1：人类标记 GO 或 NO-GO。阶段 2（Plan）：产出 PLAN.md，包含架构决策和顺序实现步骤。Gate 2：人类在编写任何代码前批准。阶段 3（Implement）：产出带有每步测试门的工作代码。Gate 1 是最重要的：NO-GO 可以节省需要丢弃的完整实现成本。
+    doc_reference:
+      file: "guide/workflows/rpi.md"
+      section: "RPI Workflow"
+      anchor: "#rpi-workflow"
+
+  - id: "09-050"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你在用 Opus 4.6，CLAUDE.md 文件很短（约 500 tokens）。为什么每次会话成本比预期高？"
+    options:
+      a: "Opus 4.6 不支持 prompt caching"
+      b: "短 CLAUDE.md 未达到 Opus 4.6 的缓存最低 token 阈值，每次都重新计算全价"
+      c: "CLAUDE.md 需要放在特定目录才能被缓存"
+      d: "缓存只对 messages 层有效，system prompt 不被缓存"
+    correct: "b"
+    explanation: |
+      Prompt caching 有最低 token 阈值要求，不同模型不同：
+      - **Opus 4.6 / Opus 4.5 / Haiku 4.5**：需要 4,096 tokens
+      - **Sonnet 4.6**：需要 2,048 tokens
+
+      低于阈值的内容无论多稳定都不会被缓存。
+
+      解决办法：
+      - 扩充 CLAUDE.md（添加更多项目规范、约定）
+      - 或改用 Sonnet（阈值更低）
+      - 用 `/status` 监控实际缓存命中情况
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Cost Optimization"
+      anchor: "#how-claude-code-handles-caching-automatically"
+
+  - id: "09-051"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "在多会话工作流中，Context Chaining 与 Ralph Loop 有何不同？"
+    options:
+      a: "Context Chaining 用于单会话工作；Ralph Loop 跨多个会话"
+      b: "Context Chaining 使用精心策划的会话间摘要来捕获关键决策；Ralph Loop 重新输入完整的先前会话记录"
+      c: "Context Chaining 依赖 MCP servers 进行持久化；Ralph Loop 使用 CLAUDE.md 文件"
+      d: "没有功能差异；它们是同一模式的两个名称"
+    correct: "b"
+    explanation: |
+      Context Chaining 和 Ralph Loop 都保持跨会话的连续性，但它们在向前传递的内容上根本不同。Context Chaining 在会话结束时生成一个精心策划的摘要，捕获已做出的决策、当前状态和剩余工作，然后在下一个会话开始时只注入该摘要。Ralph Loop 重新输入完整的先前会话记录，以上下文膨胀为代价保留原始细节。当你想要刻意的、精简的连续性时，优先使用 Context Chaining。Ralph Loop 适用于确实需要完整历史的情况。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "9.5 Tight Feedback Loops"
+      anchor: "#context-chaining"

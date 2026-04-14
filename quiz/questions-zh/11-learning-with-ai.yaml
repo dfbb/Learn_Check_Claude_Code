@@ -1,0 +1,360 @@
+category: "与 AI 一起学习"
+category_id: 11
+source_file: "guide/learning-with-ai.md"
+
+questions:
+  - id: "11-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "根据《与 AI 一起学习》指南，使用 AI 时有哪三种开发者模式？"
+    options:
+      a: "初学者、中级、专家"
+      b: "依赖型、回避型、增强型"
+      c: "被动型、主动型、 proactive 型"
+      d: "消费者、生产者、创造者"
+    correct: "b"
+    explanation: |
+      三种模式是：依赖型（不理解就复制粘贴，无法调试 AI 代码）、回避型（原则上拒绝使用 AI，比同龄人慢）、增强型（批判性地使用 AI，理解一切）。目标是成为增强型——在保持深度理解的同时利用 AI 获得杠杆效应。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "The Three Patterns"
+      anchor: "#the-three-patterns"
+
+  - id: "11-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "在 AI 学习协议中，UVAL 代表什么？"
+    options:
+      a: "Use, Validate, Apply, Learn"
+      b: "Understand, Verify, Apply, Learn"
+      c: "Understand, Validate, Analyze, Learn"
+      d: "Use, Verify, Analyze, Log"
+    correct: "b"
+    explanation: |
+      UVAL 代表：Understand First（15 分钟规则）、Verify（确保你确实学会了）、Apply（通过修改将知识转化为技能）、Learn（捕获洞察以实现长期保留）。这个协议确保你在学习，而不仅仅是复制。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "The UVAL Protocol"
+      anchor: "#the-uval-protocol"
+
+  - id: "11-003"
+    difficulty: "junior"
+    profiles: ["junior", "senior"]
+    question: "你接受了 Claude 生成的代码，但无法向同事解释它为什么这样工作。这说明什么？"
+    options:
+      a: "代码太复杂，这很正常"
+      b: "你处于 AI 依赖风险中——需要先理解再使用"
+      c: "需要让 Claude 添加更多注释"
+      d: "应该换用更简单的实现方案"
+    correct: "b"
+    explanation: |
+      无法解释代码是 AI 依赖的警告信号。增强型开发者的标准是：能解释 AI 生成的代码、知道解决方案为什么有效、能在没有 AI 的情况下调试。如果做不到，应该先让 Claude 解释代码，理解后再接受，而不是盲目复制粘贴。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Quick Self-Check"
+      anchor: "#quick-self-check-start-here"
+
+  - id: "11-004"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "UVAL 协议'先理解'步骤中的'15 分钟规则'是什么？"
+    options:
+      a: "每天限制 AI 使用在 15 分钟以内"
+      b: "一个 4 步协议：陈述问题、头脑风暴方法、找出知识空白，然后再问 AI"
+      c: "获得 AI 响应后等待 15 分钟再使用"
+      d: "花 15 分钟向同事解释 AI 代码"
+    correct: "b"
+    explanation: |
+      15 分钟规则是一个具体的协议：(1) 用一句话陈述问题（2 分钟），(2) 头脑风暴 3 种可能的方法（5 分钟），(3) 找出你的知识空白（3 分钟），(4) 然后用一个更好的问题去问 AI（5 分钟）。这迫使你在提问前先思考，从而产生更好的问题和更快的学习。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "U — Understand First"
+      anchor: "#u--understand-first-the-15-minute-rule"
+
+  - id: "11-005"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "UVAL 协议验证步骤中的'Explain It Back'技巧是什么？"
+    options:
+      a: "让 AI 解释它自己的代码"
+      b: "为代码编写文档"
+      c: "如果你不能向同事解释代码，你就没有学会它"
+      d: "录下自己的解释并稍后回顾"
+    correct: "c"
+    explanation: |
+      规则很简单：如果你不能向同事解释代码，你就不理解它。这是验证步骤——你必须能够阐明解决方案为什么有效，而不仅仅是它有效。指南推荐使用 /explain-back 斜杠命令，要求你解释 AI 生成的代码。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "V — Verify"
+      anchor: "#v--verify-explain-it-back"
+
+  - id: "11-006"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "刚开始学习 Claude Code 时，为什么建议先不用 AI 完成一些任务？"
+    options:
+      a: "AI 在初学阶段不够准确"
+      b: "先建立核心技能，才能批判性地评估 AI 的输出，避免依赖"
+      c: "节省 API 费用"
+      d: "AI 会干扰学习过程"
+    correct: "b"
+    explanation: |
+      增强型开发者的基础是能够评估 AI 的输出。如果你自己不会做某件事，就无法判断 AI 做得对不对。先不用 AI 完成任务，建立核心技能，再引入 AI 作为加速器——这样才能真正"增强"而不是"依赖"。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "30-Day Progression Plan"
+      anchor: "#30-day-progression-plan"
+
+  - id: "11-007"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "成为'增强型开发者'的核心标准是什么？"
+    options:
+      a: "尽可能多地使用 AI，提高生产效率"
+      b: "快速且理解一切——既有 AI 带来的速度，又保持对代码的深度理解"
+      c: "只在简单任务上用 AI，复杂任务自己写"
+      d: "每天用 AI 的时间不超过一定比例"
+    correct: "b"
+    explanation: |
+      增强型开发者的标准是"又快又理解"：用 AI 获得速度优势，同时保持对每行代码的理解能力。这与依赖型（快但不理解）和回避型（理解但慢）都不同。UVAL 协议（理解、验证、应用、学习）是实现这个目标的方法。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "30-Day Progression Plan"
+      anchor: "#30-day-progression-plan"
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "30-Day Progression Plan"
+      anchor: "#week-4-augmented"
+
+  - id: "11-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "根据指南，AI 在开发中的比喻是什么？"
+    options:
+      a: "AI 是你的副驾驶"
+      b: "AI 是你的 GPS"
+      c: "AI 是你的助手"
+      d: "AI 是你的老师"
+    correct: "b"
+    explanation: |
+      AI 被比作 GPS：对于快速到达目的地很有帮助，但如果你失去了没有它也能导航的能力，就会很危险；当你既理解地图又使用 GPS 时，才真正有用。一个只会复制粘贴 AI 输出的开发者就像一个不会看地图的司机——在 GPS 失效或有人问路时就束手无策。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "The Problem in 60 Seconds"
+      anchor: "#the-problem-in-60-seconds"
+
+  - id: "11-009"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "根据检查清单，AI 依赖的'红旗'信号是什么？"
+    options:
+      a: "使用 AI 处理复杂算法"
+      b: "没有 AI 就无法开始写代码"
+      c: "使用 AI 进行代码审查"
+      d: "让 AI 解释概念"
+    correct: "b"
+    explanation: |
+      "没有 AI 就无法开始"是一个红旗，表明你已经将问题分解外包了。其他红旗：不理解 AI 的代码、无法调试 AI 错误、没有 AI 就焦虑、面试被拒、总是问"怎么做"从不问"为什么"、每个解决方案看起来都一样。立即行动：每天不用 AI 写代码 30 分钟。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Red Flags Checklist"
+      anchor: "#red-flags-checklist"
+
+  - id: "11-010"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "UVAL 协议中'应用'步骤的核心原则是什么？"
+    options:
+      a: "直接将代码应用到生产环境"
+      b: "通过修改而非复制，将知识转化为技能"
+      c: "对所有 AI 生成的代码应用代码审查"
+      d: "应用单元测试来验证正确性"
+    correct: "b"
+    explanation: |
+      Apply 步骤要求修改，而不是复制粘贴。你必须至少改变一个元素（变量名、结构、边界情况处理）。为什么？修改迫使理解。复制是被动的；修改要求你与代码互动并理解它的工作原理。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "A — Apply"
+      anchor: "#a--apply-transform-dont-copy"
+
+  - id: "11-011"
+    difficulty: "senior"
+    profiles: ["junior", "senior", "power"]
+    question: "什么 CLAUDE.md 配置可以启用 Claude Code 的'学习模式'？"
+    options:
+      a: "## Learning Mode - Ask me questions before generating code"
+      b: "## Strict Mode - Never generate code directly"
+      c: "## Teaching Mode - Always explain before showing"
+      d: "## Quiz Mode - Test before implementing"
+    correct: "a"
+    explanation: |
+      CLAUDE.md 中的学习模式会提示 Claude 在生成代码前先提问："我考虑过哪些方法？"、"我具体卡在哪里？"、"我期望的解决方案是什么样的？"。这直接将 UVAL 协议的理解步骤实现到你的工作流中。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Claude Code for Learning"
+      anchor: "#claude-code-for-learning-not-just-producing"
+
+  - id: "11-012"
+    difficulty: "senior"
+    profiles: ["junior", "senior", "power"]
+    question: "捕获每日学习的推荐 hook 事件是什么？"
+    options:
+      a: "PreToolUse - 每个命令之前"
+      b: "PostToolUse - 每次编辑之后"
+      c: "Stop - 会话结束时"
+      d: "Notification - 收到警报时"
+    correct: "c"
+    explanation: |
+      learning-capture.sh hook 使用 Stop 事件（会话结束）来提示："今天你学到了一件事是什么？"这会自动记录到 ~/claude-learnings.md。它很轻量（只问一个问题），所以你真的会使用它，不像冗长的学习日记。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Hooks That Build Habits"
+      anchor: "#hooks-that-build-habits"
+
+  - id: "11-013"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "根据指南，'依赖型'模式的主要风险是什么？"
+    options:
+      a: "比同龄人慢"
+      b: "无法就业"
+      c: "被落下"
+      d: "过度劳累"
+    correct: "b"
+    explanation: |
+      依赖型模式的风险是变得无法就业。迹象：不理解就复制粘贴、无法调试 AI 代码、没有 AI 就焦虑。面试中：不能在白板上写基础代码、对"为什么用这种方法？"感到困难、要求查基础资料。你发布了无法解释的代码——当它出问题时，你就卡住了。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Pattern 1: Dependent"
+      anchor: "#pattern-1-dependent"
+
+  - id: "11-014"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "检测依赖性的每周自我审计问题是什么？"
+    options:
+      a: "我这周写了多少行代码？"
+      b: "我比上个月快了吗？我变得更聪明了吗？"
+      c: "我这周用了多少 AI？"
+      d: "我是否按时完成了所有截止日期？"
+    correct: "b"
+    explanation: |
+      关键问题是："我比上个月快了吗？我变得更聪明了吗？"如果你更快了但没有更聪明，你正在建立依赖性。其他每周问题：我学到了什么以前不知道的东西？没有 AI 我能做到吗？我理解我发布的所有内容吗？
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Weekly Self-Audit"
+      anchor: "#weekly-self-audit"
+
+  - id: "11-015"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "对于'回避型'开发者（模式 2），推荐的方法是什么？"
+    options:
+      a: "继续回避 AI 以保持纯粹"
+      b: "从 AI 审查你的代码开始，而不是 AI 生成的代码"
+      c: "立即切换到 100% AI 使用"
+      d: "等到 AI 工具更成熟"
+    correct: "b"
+    explanation: |
+      对于回避型开发者，指南推荐逐步采用：从 AI 审查你的代码开始（你保持控制），然后转向 AI 解释你实现的概念，再到 AI 辅助工作。这尊重你对理解的直觉，同时获得 AI 的好处。完全回避意味着更慢而没有更聪明。
+    doc_reference:
+      file: "guide/learning-with-ai.md"
+      section: "Embracing AI Tools"
+      anchor: "#embracing-ai-tools"
+
+  - id: "11-016"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "Addy Osmani 的'80% 问题'中，agentic coding 的 3 种失败模式是什么？"
+    options:
+      a: "上下文丢失、token 溢出、幻觉"
+      b: "过度工程、假设传播、谄媚式同意"
+      c: "响应缓慢、语言错误、遗漏测试"
+      d: "内存泄漏、竞态条件、死锁"
+    correct: "b"
+    explanation: |
+      Addy Osmani 的"80% 问题"指出了 3 种失败模式：
+
+      1. **过度工程** - AI 添加不必要的复杂性（抽象层、过早优化）
+      2. **假设传播** - 一个错误的假设会在整个代码库中级联扩散
+      3. **谄媚式同意** - AI 同意坏主意，而不是提出反对
+
+      80% 指的是 AI 能带你完成 80% 的路程，最后 20% 需要深厚的人类理解。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Practitioner Insights"
+      anchor: "#practitioner-insights"
+
+  - id: "11-017"
+    difficulty: "intermediate"
+    profiles: ["junior", "senior", "power"]
+    question: "vibe coding '上下文过载'的 3 个症状是什么？"
+    options:
+      a: "内存泄漏、启动缓慢、API 速率限制"
+      b: "大爆炸式上下文倾倒、5000+ 行提示、性能下降"
+      c: "文件丢失、导入损坏、缺少测试"
+      d: "过度提交、合并冲突、分支激增"
+    correct: "b"
+    explanation: |
+      vibe coding 中上下文过载的症状：
+
+      1. **大爆炸式上下文倾倒** - 将整个代码库粘贴到提示中
+      2. **5000+ 行提示** - 超出有效上下文窗口使用
+      3. **性能下降** - 随着上下文增长，Claude 的质量下降
+
+      解决办法：渐进式披露（逐步提供上下文）、使用 CLAUDE.md 进行持久化上下文、在不同阶段之间开启新会话。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "Vibe Coding Anti-Patterns"
+      anchor: "#vibe-coding-anti-patterns"
+
+  - id: "11-018"
+    difficulty: "senior"
+    profiles: ["senior", "power", "pm"]
+    question: "AI 增强工程的两个团队级引导指标层级是什么？"
+    options:
+      a: "Level 1 = 个人生产力；Level 2 = 团队生产力"
+      b: "Level 1 = DORA 交付健康（部署频率 + 交付前置时间）；Level 2 = AI 采用质量（按代码来源划分的变更失败率、审查时间对比）"
+      c: "Level 1 = 代码质量；Level 2 = 业务成果"
+      d: "Level 1 = token 使用量；Level 2 = 每个功能的成本"
+    correct: "b"
+    explanation: |
+      团队级引导指标在两个层级运作。Level 1 追踪 DORA 交付健康：部署频率和变更交付前置时间，衡量 AI 是否真正加速了交付。Level 2 深入 AI 采用质量：按代码来源（AI 生成 vs 人工编写）细分的变更失败率，以及两者之间的审查时间对比。Level 2 指标可以捕获速度陷阱——在 DORA 上看起来很快但正在积累隐藏风险的团队。
+    doc_reference:
+      file: "guide/roles/learning-with-ai.md"
+      section: "Team-Level Steering Metrics"
+      anchor: "#team-level-steering-metrics"
+
+  - id: "11-019"
+    difficulty: "senior"
+    profiles: ["senior", "power", "pm"]
+    question: "AI 增强团队中的速度陷阱是什么，为什么 DORA 部署频率'高'不足以证明健康？"
+    options:
+      a: "因为 AI 增加了开销，团队部署太慢"
+      b: "高部署频率可能与倦怠、技能萎缩和浅层审查共存——DORA 衡量的是速度，而非可持续性或质量"
+      c: "DORA 指标仅适用于 10 人以上的工程师团队"
+      d: "部署频率会导致 AI 生成分支过多时的合并冲突"
+    correct: "b"
+    explanation: |
+      速度陷阱：一个团队在 DORA 部署频率上被评为高，但同时可能经历倦怠（工程师机械地批准 AI 输出）、技能萎缩（工程师失去独立推理代码的能力）和浅层审查（速度压力阻碍了深度检查）。DORA 衡量的是交付速度，而不是团队是否理解它正在发布的内容。这就是 Level 2 指标（按代码来源划分的 CFR、审查时间）存在的原因——揭示隐藏在快速数字背后的质量退化。
+    doc_reference:
+      file: "guide/roles/learning-with-ai.md"
+      section: "Team-Level Steering Metrics"
+      anchor: "#team-level-steering-metrics"
+
+  - id: "11-020"
+    difficulty: "intermediate"
+    profiles: ["senior", "power", "pm"]
+    question: "技术负责人的'3 个指标，5 分钟周一仪式'是什么，它能防范什么？"
+    options:
+      a: "一种替代 sprint 回顾的每日站会形式"
+      b: "每周检查部署频率、交付前置时间和测试覆盖率以满足合规要求"
+      c: "每周花不到五分钟回顾三个引导指标，及早发现偏差，在速度陷阱模式固化成团队习惯之前抓住信号"
+      d: "一种自动从 git 历史生成周报的工具"
+    correct: "c"
+    explanation: |
+      周一仪式是技术负责人的一个轻量级每周习惯：花五分钟回顾三个引导指标（通常是部署频率、按代码来源划分的 CFR 和审查时间差异）。目标是及早发现偏差。速度陷阱、技能萎缩和审查捷径是逐渐发展的——每周检查可以在它们变成难以逆转的文化模式之前捕获信号。五分钟是故意设计得很短：仪式应该几乎没有摩擦，这样它才会真正发生。
+    doc_reference:
+      file: "guide/roles/learning-with-ai.md"
+      section: "Team-Level Steering Metrics"
+      anchor: "#team-level-steering-metrics"

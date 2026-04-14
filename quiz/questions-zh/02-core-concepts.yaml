@@ -1,0 +1,310 @@
+category: "核心概念"
+category_id: 2
+source_file: "guide/ultimate-guide.md"
+
+questions:
+  - id: "02-001"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power", "pm"]
+    question: "应该在上下文使用率达到多少时使用 /compact？"
+    options:
+      a: "0-50%"
+      b: "50-70%"
+      c: "70-90%"
+      d: "只在 100% 时"
+    correct: "c"
+    explanation: |
+      当上下文达到 70-90%（红色区域）时使用 /compact。上下文区域：绿色（0-50%）自由工作；黄色（50-75%）开始有选择性；红色（75-90%）使用 /compact；危急（90%+）必须 /clear 否则会出错。在 70% 时使用 /compact 可将使用量减少约 50%，同时保留关键上下文。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-zones"
+
+  - id: "02-002"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude 开始给出越来越短的回复，并且忘记了你之前说过的内容。最可能的原因和解决方法是？"
+    options:
+      a: "网络问题，重启终端"
+      b: "上下文快满了，用 /compact 压缩或 /clear 重置"
+      c: "需要切换到更强的模型"
+      d: "CLAUDE.md 配置有问题"
+    correct: "b"
+    explanation: |
+      回复变短、忘记指令是上下文接近上限的典型症状。用 /compact 可以压缩对话同时保留关键信息；如果已经很严重，用 /clear 重新开始。用 /status 可以查看当前上下文使用率。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-depletion-symptoms"
+
+  - id: "02-003"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "状态栏中 'Ctx(u): 45%' 表示什么？"
+    options:
+      a: "剩余 45% 的预算"
+      b: "已使用 45% 的上下文"
+      c: "45% 的文件已加载"
+      d: "Claude 有 45% 的置信度"
+    correct: "b"
+    explanation: |
+      状态栏指标 'Ctx(u): 45%' 表示你已使用了 45% 的上下文窗口。完整状态栏格式为：`Claude Code | Ctx(u): 45% | Cost: $0.23 | Session: 1h 23m`。监控此指标有助于在出现上下文相关问题前知道何时使用 /compact 或 /clear。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#reading-the-statusline"
+
+  - id: "02-004"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "/compact 和 /clear 有什么区别？"
+    options:
+      a: "/compact 更快，/clear 更彻底"
+      b: "/compact 压缩上下文（保留关键信息），/clear 完全重新开始（丢失所有上下文）"
+      c: "/compact 清除文件，/clear 清除对话"
+      d: "它们做同样的事情"
+    correct: "b"
+    explanation: |
+      /compact 压缩对话，保留关键上下文同时将使用量减少约 50%。在上下文不足时使用。/clear 完全重新开始，丢失所有上下文——在切换话题或上下文严重膨胀时使用。根据是否需要保持连续性来选择。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-recovery-strategies"
+
+  - id: "02-005"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你要让 Claude 分析一个大型函数的性能问题，怎样提问最节省上下文？"
+    options:
+      a: "让 Claude 读取整个文件"
+      b: "\"读取 calculateTotal 函数，分析性能瓶颈\"（指定函数名而非整个文件）"
+      c: "把整个文件内容粘贴到对话里"
+      d: "先用 /compact 再提问"
+    correct: "b"
+    explanation: |
+      指定具体的函数名或代码段，而不是让 Claude 读取整个文件，可以大幅减少上下文消耗。Claude 会用符号引用精确定位目标代码。这种"精准提问"的习惯在处理大型代码库时尤为重要。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#what-consumes-context"
+
+  - id: "02-006"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "你正在做一个复杂功能，快完成时上下文快满了。最佳策略是？"
+    options:
+      a: "立即 /clear 重新开始"
+      b: "忽略，继续工作直到出错"
+      c: "预留上下文缓冲：先提交已完成部分，用 /compact 压缩，再完成剩余工作"
+      d: "切换到 Haiku 模型节省上下文"
+    correct: "c"
+    explanation: |
+      在上下文耗尽前预留缓冲：先提交已完成的代码（git commit），用 /compact 压缩对话，再继续完成剩余工作。这样即使需要 /clear，已完成的工作也不会丢失，且 /compact 后的新鲜上下文能让 Claude 更好地完成收尾工作。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-inspection"
+
+  - id: "02-007"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: '什么是"上下文污染"（也称为上下文渗漏）？'
+    options:
+      a: "上下文使用率达到 100% 时"
+      b: "一个任务的信息污染另一个任务时"
+      c: "Claude 忘记你的指令时"
+      d: "文件损坏时"
+    correct: "b"
+    explanation: |
+      上下文污染发生在一个任务的信息污染另一个任务时。例如：样式渗漏（蓝色按钮样式应用到不相关的表单）、指令污染（冲突规则导致混乱）和时间混淆（Claude 使用过时的文件名）。使用明确的任务边界并澄清优先级来防止。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-poisoning-bleeding"
+
+  - id: "02-008"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "Claude Code 的 7 步交互循环是什么？"
+    options:
+      a: "计划、编码、测试、部署、监控、修复、重复"
+      b: "描述、分析、提议、审查、决定、验证、提交"
+      c: "读取、写入、编辑、运行、调试、测试、推送"
+      d: "询问、等待、接受、运行、检查、修复、完成"
+    correct: "b"
+    explanation: |
+      交互循环是：1) 描述——解释你需要什么，2) 分析——Claude 探索代码库，3) 提议——Claude 建议修改（差异），4) 审查——你阅读和评估，5) 决定——接受/拒绝/修改，6) 验证——运行测试、检查行为，7) 提交——保存修改（可选）。关键洞察：你始终保持控制。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.1 交互循环"
+      anchor: "#21-the-interaction-loop"
+
+  - id: "02-009"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "如何退出计划模式开始进行修改？"
+    options:
+      a: "/edit"
+      b: "/execute"
+      c: "/start"
+      d: "/exit-plan"
+    correct: "b"
+    explanation: |
+      使用 /execute 退出计划模式并开始实施修改。在计划模式中，Claude 只能读取和分析——不允许任何修改。你也可以回应 Claude 的提示"准备好实施这个计划了吗？"来过渡。这种分阶段方法确保你在执行前理解计划。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.3 计划模式"
+      anchor: "#exiting-plan-mode"
+
+  - id: "02-010"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是 OpusPlan 模式？"
+    options:
+      a: "高级订阅层级"
+      b: "使用 Opus 进行规划（卓越推理）并使用 Sonnet 进行实施（成本效益）"
+      c: "调试模式"
+      d: "不使用 Claude 进行规划的方式"
+    correct: "b"
+    explanation: |
+      OpusPlan 使用 Opus 进行规划（具有卓越推理能力），并自动切换到 Sonnet 进行实施（更具成本效益）。通过 `/model opusplan` 启用。这在通过 Sonnet 速度执行节省 token 的同时提供 Opus 质量的规划。对于 Opus token 有限的 Pro 订阅者特别有价值。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.3 计划模式"
+      anchor: "#opusplan-mode"
+
+  - id: "02-011"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "上下文耗尽的症状是什么？"
+    options:
+      a: "Claude 打字变慢"
+      b: "回复变短、忘记 CLAUDE.md 指令、与早期对话不一致"
+      c: "出现错误消息"
+      d: "成本急剧增加"
+    correct: "b"
+    explanation: |
+      上下文耗尽症状包括：回复比平时短（警告）、忘记 CLAUDE.md 指令（严重）、与早期对话不一致（危急）、对已讨论代码出错（危急）以及对已读文件说"无法访问该文件"（危急）。出现危急症状时，立即开始新会话。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#context-depletion-symptoms"
+
+  - id: "02-012"
+    difficulty: "junior"
+    profiles: ["junior", "senior", "power"]
+    question: "/rewind 能做什么？"
+    options:
+      a: "撤销 git 提交"
+      b: "在当前会话中撤销 Claude 的文件修改"
+      c: "回到对话历史"
+      d: "从磁盘恢复已删除的文件"
+    correct: "b"
+    explanation: |
+      /rewind 撤销 Claude 所做的文件修改。它可以跨多个文件工作，但只针对 Claude 的修改（不是手动编辑），只在当前会话内有效，且不会自动撤销 git 提交。对于有风险的操作，先创建 git 检查点："在尝试这个实验性方法之前，让我们先提交现有内容。"
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.4 回退"
+      anchor: "#24-rewind"
+
+  - id: "02-013"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "关于你的项目，Claude 无法访问什么？"
+    options:
+      a: "文件结构和代码内容"
+      b: "Git 状态和分支"
+      c: "运行时状态、外部服务和隐藏文件"
+      d: "CLAUDE.md 中的项目规则"
+    correct: "c"
+    explanation: |
+      Claude 知道：文件结构、代码内容、git 状态和项目规则（CLAUDE.md）。Claude 不知道：运行时状态（无法看到运行中的进程）、外部服务（无法直接访问数据库）、你的意图（需要明确指令）和隐藏文件（默认遵守 .gitignore）。理解这个心智模型有助于有效沟通。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 心智模型"
+      anchor: "#what-claude-doesnt-know"
+
+  - id: "02-014"
+    difficulty: "power"
+    profiles: ["power"]
+    question: '"理智检查技术"的目的是什么？'
+    options:
+      a: "验证代码是否正确编译"
+      b: "验证 Claude 是否正确加载了你的 CLAUDE.md 配置"
+      c: "检查内存泄漏"
+      d: "验证测试覆盖率"
+    correct: "b"
+    explanation: |
+      理智检查技术验证 Claude 是否加载了你的配置。在 CLAUDE.md 中添加可识别信息（如你的名字、项目名称、技术栈），然后问 Claude"我叫什么名字？我在做什么项目？"正确回答确认配置已加载。对于高级检查，在长 CLAUDE.md 文件中添加多个检查点。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#sanity-check-technique"
+
+  - id: "02-015"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "什么时候应该使用 XML 结构化提示词？"
+    options:
+      a: "无论复杂度如何，所有提示词都用"
+      b: "用于多步骤功能、带上下文的 bug 调查和有特定标准的代码审查"
+      c: "只用于简单的单行请求"
+      d: "只在使用 API 时"
+    correct: "b"
+    explanation: |
+      当请求有 3 个以上不同方面（指令+上下文+约束）、歧义导致误解、创建可重用模板或复杂层次结构时，使用 XML 结构化提示词。不要用于简单的单行请求或快速拼写修正——开销超过收益。<instruction>、<context>、<constraints> 等标签帮助 Claude 理解不同方面。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.6 使用 XML 标签的结构化提示"
+      anchor: "#when-to-use-xml-structured-prompts"
+
+  - id: "02-016"
+    difficulty: "power"
+    profiles: ["power"]
+    question: '"会话交接模式"用于什么？'
+    options:
+      a: "在团队成员之间转移会话"
+      b: "记录状态、决策和后续步骤以保持会话间的连续性"
+      c: "备份代码"
+      d: "导出对话历史"
+    correct: "b"
+    explanation: |
+      会话交接模式创建一个文档来弥合会话间的差距。包括：完成了什么、当前状态、做出的决策、后续步骤和下一个会话的上下文。在工作日结束、上下文限制前、切换焦点区域或中断时创建交接文档。存储在 `claudedocs/handoffs/handoff-YYYY-MM-DD.md`。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.2 上下文管理"
+      anchor: "#session-handoff-pattern"
+
+  - id: "02-017"
+    difficulty: "senior"
+    profiles: ["senior", "power"]
+    question: "你需要做一个涉及架构决策的复杂重构，应该选择哪个模型？"
+    options:
+      a: "Haiku——速度最快"
+      b: "Sonnet——大多数任务的默认选择"
+      c: "Opus——架构设计和复杂推理的最佳选择"
+      d: "随便选，模型差异不大"
+    correct: "c"
+    explanation: |
+      Opus 适合架构设计、复杂调试和安全审计等需要深度推理的任务。Sonnet 适合日常功能开发和重构（70-80% 的任务）。Haiku 适合简单修复和验证。在任务边界处切换模型（不要中途切换），用 /model 命令切换。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.5 模型选择"
+      anchor: "#25-model-selection--thinking-guide"
+
+  - id: "02-018"
+    difficulty: "power"
+    profiles: ["power"]
+    question: "什么是自动计划模式，如何启用它？"
+    options:
+      a: "默认始终开启的自动规划"
+      b: "强制 Claude 在执行任何工具前呈现计划并等待批准的配置"
+      c: "自动生成项目计划的模式"
+      d: "企业用户的高级功能"
+    correct: "b"
+    explanation: |
+      自动计划模式使 Claude 在执行任何工具前呈现计划并等待明确的用户批准。通过 `~/.claude/auto-plan-mode.txt` 配置，并使用 `claude --append-system-prompt "$(cat ~/.claude/auto-plan-mode.txt)"` 启动。由于计划在执行前经过验证，token 减少 76% 且结果更好。
+    doc_reference:
+      file: "guide/ultimate-guide.md"
+      section: "2.3 计划模式"
+      anchor: "#auto-plan-mode"
