@@ -73,7 +73,7 @@ Claude Code 参考文档：
 | 文件 | 说明 |
 |------|------|
 | `ClaudeCode_CheatSheet.md` | Claude Code 常用命令速查表 |
-| `ClaudeCode_Ultimate_Guide.zh-CN.md` | Claude Code 完整中文使用指南 |
+| `ClaudeCode_Ultimate_Guide.md` | Claude Code 完整中文使用指南 |
 | `ClaudeCode_BestPractise.md` | Claude Code 最佳实践 |
 
 ---
