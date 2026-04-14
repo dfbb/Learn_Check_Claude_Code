@@ -36,7 +36,7 @@ version: 3.38.12
 
 **你不会在这里找到：**
 
-- 明确答案（工具太新了）
+-  definitive 答案（工具太新了）
 - 经过基准测试的性能声明
 - 任何技术对你一定有效的保证
 
@@ -83,9 +83,11 @@ Ctrl+C                    # 取消操作
 ### 记忆层级
 
 ```
-~/.claude/CLAUDE.md       → 全局（所有项目）
-/project/CLAUDE.md        → 项目级（已提交到版本控制）
-/project/.claude/         → 个人级（未提交）
+[组织策略]  /etc/claude-code/CLAUDE.md          → 托管策略（IT 部署，不可覆盖）
+[全局]      ~/.claude/CLAUDE.md                  → 全局（所有项目）
+[项目]      /project/CLAUDE.md                   → 项目级（已提交到版本控制）
+[本地]      /project/CLAUDE.local.md             → 本地覆盖（.gitignored，个人专属）
+[规则]      /project/.claude/rules/*.md          → 路径作用域规则（自动加载）
 ```
 
 ### 强力功能
@@ -268,18 +270,21 @@ _快速跳转：_[安装](#11-installation) · [第一个工作流](#12-first-wo
 
 ```C
 /*──────────────────────────────────────────────────────────────*/
-/* 通用方式                */ npm install -g @anthropic-ai/claude-code
+/* 推荐方式（自动更新）    */ curl -fsSL https://claude.ai/install.sh | bash
 /*──────────────────────────────────────────────────────────────*/
 /* Windows (CMD)          */ npm install -g @anthropic-ai/claude-code
 /* Windows (PowerShell)   */ irm https://claude.ai/install.ps1 | iex
+/* Windows (WinGet)       */ winget install Anthropic.ClaudeCode
 /*──────────────────────────────────────────────────────────────*/
+/* macOS (Shell Script)   */ curl -fsSL https://claude.ai/install.sh | bash
+/* macOS (Homebrew cask)  */ brew install --cask claude-code
 /* macOS (npm)            */ npm install -g @anthropic-ai/claude-code
-/* macOS (Homebrew)       */ brew install claude-code
-/* macOS (Shell Script)   */ curl -fsSL https://claude.ai/install.sh | sh
 /*──────────────────────────────────────────────────────────────*/
+/* Linux (Shell Script)   */ curl -fsSL https://claude.ai/install.sh | bash
 /* Linux (npm)            */ npm install -g @anthropic-ai/claude-code
-/* Linux (Shell Script)   */ curl -fsSL https://claude.ai/install.sh | sh
 ```
+
+> **注意**：Shell Script 方式（推荐）支持自动更新。Homebrew cask 和 WinGet 方式**不支持**自动更新，版本约落后 1 周。
 
 ### 验证安装
 
@@ -2416,7 +2421,7 @@ function claude-safe {
 }
 ```
 
-**执行工作流**：
+** resulting 工作流**：
 
 ```
 User: "给 User 模型添加一个 email 字段"
@@ -2956,7 +2961,7 @@ effort: high
 | 架构审阅 | `high` | 设计决策，跨组件推理 |
 | 多智能体编排 | `high` | 协调 + 计划 |
 
-> **成本模型**：`low` effort 意味着更少工具调用、无前言、直接输出。`high` effort 意味着更多带解释的工具调用、详细总结、更深入探索。将 effort 匹配到分析能增加价值的地方——不要一律认为 "effort = quality"。
+> **成本模型**：`low` effort 意味着更少工具调用、无前言、直接输出。`high` effort 意味着更多带解释的工具调用、详细总结、更深入探索。将 effort 匹配到分析能增加价值的地方——不要 uniform 地认为 "effort = quality"。
 
 ---
 
@@ -3101,7 +3106,7 @@ tools: Read, Grep, Glob
 
 ### 从聊天机器人到上下文系统
 
-最常见的错误是把 Claude Code 当成聊天机器人——临时输入请求，希望有好输出。区分 日常使用和 生产工作流的关键，在于思维方式的转变：
+最常见的错误是把 Claude Code 当成聊天机器人——临时输入请求，希望有好输出。区分 casual 使用和 production 工作流的关键，在于思维方式的转变：
 
 > **聊天机器人模式**：你写好提示词。**上下文系统**：你构建结构化上下文，让每个提示词都更好。
 >
@@ -4356,12 +4361,14 @@ _快速跳转：_[记忆文件（CLAUDE.md）](#31-memory-files-claudemd) · [.c
 **记忆层级**（最重要的概念）：
 
 ```
-~/.claude/CLAUDE.md          → 全局（所有项目）
-/project/CLAUDE.md           → 项目级（团队，提交到 git）
-/project/.claude/            → 本地覆盖（个人，不提交）
+[托管策略] /etc/claude-code/CLAUDE.md  → 组织级（IT 部署，不可覆盖）
+[全局]     ~/.claude/CLAUDE.md          → 全局（所有项目）
+[项目]     /project/CLAUDE.md           → 项目级（团队，提交到 git）
+[本地]     /project/CLAUDE.local.md     → 本地覆盖（个人，.gitignored）
+[规则]     /project/.claude/rules/*.md  → 路径作用域规则
 ```
 
-**规则**：越具体越优先（本地 > 项目 > 全局）
+**规则**：越具体越优先（本地 > 项目 > 全局 > 托管策略不可覆盖）
 
 **快速行动**：
 
@@ -4382,33 +4389,37 @@ _快速跳转：_[记忆文件（CLAUDE.md）](#31-memory-files-claudemd) · [.c
 
 CLAUDE.md 文件是持久化指令，Claude 在每个会话开始时都会读取。它们被称为"记忆"文件，因为它们赋予 Claude 对你的偏好、约定和项目上下文的长期记忆——跨越会话保留，而不是每次对话后就遗忘。
 
-### 三层记忆
+### 五层记忆
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    MEMORY HIERARCHY                     │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│   ~/.claude/CLAUDE.md          (Global - All projects)  │
+│   [托管策略] /etc/claude-code/CLAUDE.md                 │
+│        │     (组织级，IT 部署，不可被用户覆盖)           │
+│        ▼                                                │
+│   [全局]  ~/.claude/CLAUDE.md  (所有项目)               │
 │        │                                                │
 │        ▼                                                │
-│   /project/CLAUDE.md           (Project - This repo)    │
+│   [项目]  /project/CLAUDE.md   (团队，提交到 git)       │
 │        │                                                │
 │        ▼                                                │
-│   /project/.claude/CLAUDE.md   (Local - Personal prefs) │
+│   [本地]  /project/CLAUDE.local.md  (个人，.gitignored) │
+│        │                                                │
+│        ▼                                                │
+│   [规则]  /project/.claude/rules/*.md  (路径作用域)     │
 │                                                         │
-│   All files are merged additively.                      │
-│   On conflict: more specific file wins.                 │
+│   所有文件叠加合并。冲突时：越具体越优先。              │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
+**托管策略**：由 IT 部门通过 MDM 部署，用户无法排除。路径：macOS `/Library/Application Support/ClaudeCode/CLAUDE.md`，Linux `/etc/claude-code/CLAUDE.md`，Windows `C:\Program Files\ClaudeCode\CLAUDE.md`。
+
+**个人覆盖**：对于不想提交到 Git 的个人指令，使用 `/project/CLAUDE.local.md`（应加入 `.gitignore`）。
+
 **额外发现**：在 monorepo 中，父目录的 CLAUDE.md 文件会自动拉取，子目录的 CLAUDE.md 文件在 Claude 处理该目录中的文件时会按需加载。详见 [CLAUDE.md in Monorepos](#claudemd-in-monorepos)。
-
-**个人覆盖**：对于不想提交到 Git 的个人指令，你有两个选择：
-
-- `/project/.claude/CLAUDE.md`（加入 `.gitignore`）
-- `/project/CLAUDE.md.local`（按约定自动被 git 忽略）
 
 ### 最小可用 CLAUDE.md
 
@@ -4438,7 +4449,7 @@ CLAUDE.md 文件是持久化指令，Claude 在每个会话开始时都会读取
 - 与常见模式冲突的项目专属约定
 - 从代码中看不出来的架构决策
 
-**经验法则**：如果 Claude 因为缺少上下文而犯了两次同样的错误，就把那个上下文加到 CLAUDE.md 里。不要提前把所有东西都记下来——也不要让 Claude 帮你生成。自动生成的 CLAUDE.md 往往通用、臃肿，塞满了 Claude 自己就能检测到的东西。
+**经验法则**：如果 Claude 因为缺少上下文而犯了两次同样的错误，就把那个上下文加到 CLAUDE.md 里。不要 preemptively 把所有东西都记下来——也不要让 Claude 帮你生成。自动生成的 CLAUDE.md 往往通用、臃肿，塞满了 Claude 自己就能检测到的东西。
 
 > **研究笔记（2026 年 2 月）**：苏黎世联邦理工学院发表了首个针对智能体上下文文件的实证评估，覆盖 138 个基准和 12 个仓库。核心发现：开发者手写的文件能将任务成功率提升约 4%，但 LLM 生成的文件（`/init` 的输出）反而会*降低*约 3%。两者都会增加 20-23% 的推理成本。机制在于：智能体会遵循上下文文件中的每一条指令，包括与当前任务无关的指令——认知开销、更广泛的探索、更长的推理链。来源：[Gloaguen et al., arXiv 2602.11988](https://arxiv.org/abs/2602.11988)
 
@@ -5647,22 +5658,30 @@ claude
        │
        ▼
 ┌──────────────────────────────────┐
-│  settings.local.json             │  个人覆盖
+│  settings.local.json             │  个人覆盖（本地，.gitignored）
 └──────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────┐
-│  settings.json                   │  项目设置
+│  .claude/settings.json           │  项目设置（团队，提交到 git）
 └──────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────┐
-│  ~/.claude/settings.json         │  全局默认值
+│  ~/.claude/settings.json         │  全局默认值（用户级）
 └──────────────────────────────────┘
        │
        ▼
-最低优先级
+┌──────────────────────────────────┐
+│  managed-settings.json /         │  托管策略（IT 部署，最终权威）
+│  managed-settings.d/*.json       │  不可被用户覆盖
+└──────────────────────────────────┘
+       │
+       ▼
+最低优先级（但托管策略对安全设置具有最终权威）
 ```
+
+> **注意**：`managed-settings.d/` 目录（v2.1.83+）允许多团队各自部署独立的策略片段，按字母顺序合并。路径：`/etc/claude-code/managed-settings.d/`（Linux/macOS）。
 
 ### CLAUDE.md 优先级
 
@@ -5671,17 +5690,27 @@ claude
        │
        ▼
 ┌──────────────────────────────────┐
-│  .claude/CLAUDE.md               │  本地（个人）
+│  CLAUDE.local.md                 │  本地覆盖（个人，.gitignored）
 └──────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────┐
-│  /project/CLAUDE.md              │  项目（团队）
+│  .claude/CLAUDE.md               │  本地（个人，.gitignored）
+└──────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────┐
+│  /project/CLAUDE.md              │  项目（团队，提交到 git）
 └──────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────┐
 │  ~/.claude/CLAUDE.md             │  全局（个人）
+└──────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────┐
+│  /etc/claude-code/CLAUDE.md      │  托管策略（IT 部署，不可排除）
 └──────────────────────────────────┘
        │
        ▼
@@ -11952,137 +11981,137 @@ ast-grep 是一个**社区扩展**，用于 grep 的正则方法不够用的专�
 - 端到端测试
 - 视觉验证
 - 浏览器调试
-### agent-browser (Vercel Labs) — AI-Native Browser Automation
+### agent-browser（Vercel Labs）—— 为 AI 而生的浏览器自动化
 
-> **Status**: Active development — v0.15.0 (Feb 2026). 12,100+ stars. Rapid release cycle.
+> **状态**：活跃开发中 —— v0.15.0（2026 年 2 月）。GitHub 12,100+ stars，发布节奏很快。
 
-**Purpose**: Headless browser CLI built for AI agents. Uses Playwright/CDP under the hood but optimizes all output for LLM consumption. Written in Rust for sub-millisecond startup.
+**用途**：一款专为 AI 智能体设计的 Headless 浏览器 CLI。底层基于 Playwright/CDP，但所有输出都针对 LLM 消费做了优化。Rust 编写，启动时间低于 1 毫秒。
 
-**Why it matters for agentic workflows**: Playwright MCP is verbose — every DOM snapshot adds tokens. agent-browser returns only actionable elements via stable short references (`@e1`, `@e2`), cutting token usage by ~82.5% on identical scenarios (Pulumi benchmark, 2026-03-03).
+**为什么它对智能体工作流重要**：Playwright MCP 的输出非常冗长 —— 每次 DOM 快照都会吃掉大量 Token。agent-browser 只返回可操作元素，并用稳定的短引用（`@e1`、`@e2`）来标识，在相同场景下 Token 用量比 Playwright MCP 低约 82.5%（Pulumi 基准测试，2026-03-03）。
 
-**Install**:
+**安装**：
 
 ```bash
 # Homebrew
 brew install vercel-labs/tap/agent-browser
 
-# Or npm
+# 或 npm
 npm install -g @vercel-labs/agent-browser
 ```
 
-**Capabilities**:
+**功能一览**：
 
-| Feature | Details |
+| 特性 | 说明 |
 |---------|---------|
-| Navigation + interaction | Click, type, scroll, fill forms |
-| Accessibility tree | LLM-optimized snapshots (actionable elements only) |
-| Visual diffs | Pixel-level comparison against baselines |
-| Session persistence | Save/restore auth state (AES-256-GCM) |
-| Multi-session | Isolated instances, separate cookies/storage |
-| Security (v0.15.0) | Auth vaults, domain allowlists, action policies |
-| Browser streaming | Live WebSocket preview for human+agent "pair browsing" |
+| 导航与交互 | 点击、输入、滚动、填写表单 |
+| 无障碍树 | 为 LLM 优化的快照（仅可操作元素） |
+| 视觉对比 | 与基线进行像素级对比 |
+| 会话持久化 | 保存/恢复登录状态（AES-256-GCM 加密） |
+| 多会话 | 隔离实例，独立的 Cookie/存储 |
+| 安全（v0.15.0） | 认证保险库、域名白名单、操作策略 |
+| 浏览器流 | 通过 WebSocket 实时预览，支持人与智能体“协同浏览” |
 
-**agent-browser vs Playwright MCP**:
+**agent-browser 与 Playwright MCP 对比**：
 
-| Dimension | Playwright MCP | agent-browser |
+| 维度 | Playwright MCP | agent-browser |
 |-----------|---------------|---------------|
-| Primary audience | Developers (test suites) | AI agents |
-| Token usage | Baseline | **-82.5%** |
-| Element references | XPath/CSS selectors | `@e1`, `@e2` (stable, compact) |
-| Implementation | Node.js | Rust (sub-ms startup) |
-| Session persistence | No | Yes |
-| Security controls | None | Auth vaults, domain allowlists |
-| Self-verifying agents | Awkward | Native pattern |
+| 主要受众 | 开发者（测试套件） | AI 智能体 |
+| Token 用量 | 基准 | **-82.5%** |
+| 元素引用 | XPath/CSS 选择器 | `@e1`、`@e2`（稳定、紧凑） |
+| 实现语言 | Node.js | Rust（亚毫秒级启动） |
+| 会话持久化 | 不支持 | 支持 |
+| 安全控制 | 无 | 认证保险库、域名白名单 |
+| 自验证智能体 | 较别扭 | 原生模式 |
 
-**The Ralph Wiggum Loop** — self-verifying agent pattern:
+**The Ralph Wiggum Loop** —— 自验证智能体模式：
 
 ```
-1. Agent codes the feature
-2. Deploys (Vercel, any target)
-3. agent-browser navigates to deployed URL autonomously
-4. Tests scenarios, reads accessibility snapshots
-5. On failure: agent reads output, fixes code, re-deploys
-6. Loop until all scenarios pass — no human in the loop
+1. 智能体编写功能代码
+2. 部署（Vercel 或任意目标平台）
+3. agent-browser 自动导航到部署后的 URL
+4. 测试各种场景，读取无障碍快照
+5. 失败时：智能体读取输出，修复代码，重新部署
+6. 循环直到所有场景通过 —— 无需人工介入
 ```
 
-Documented in production at Pulumi (2026-03-03) across 6 test scenarios on a real app.
+Pulumi 已在生产环境中采用该模式（2026-03-03），在真实应用上覆盖了 6 个测试场景。
 
-**Use when**:
+**适用场景**：
 
-- Agent must verify its own deployed output (self-verifying loops)
-- Token cost of browser context is a constraint
-- Multi-session testing (parallel isolated browser instances)
-- Visual regression in agentic CI/CD pipelines
+- 智能体需要验证自己的部署输出（自验证循环）
+- 浏览器上下文的 Token 成本是瓶颈
+- 多会话测试（并行的隔离浏览器实例）
+- 智能体化 CI/CD 流水线中的视觉回归测试
 
-**Don't use when**:
+**不适用场景**：
 
-- You have existing Playwright test suites — not a drop-in replacement for test runners
-- Scraping anti-bot protected sites — IP/behavior detection unchanged (Browserbase-type services still needed)
+- 已有 Playwright 测试套件 —— 它不是测试运行器的平替
+- 爬取有反 bot 保护的网站 —— IP/行为检测层面没有特殊处理（仍需 Browserbase 类服务）
 
-**Resources**:
+**资源**：
 
 - [GitHub: vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
-- [Case study: Ralph Wiggum Loop at Pulumi](https://www.pulumi.com/blog/self-verifying-ai-agents-vercels-agent-browser-in-the-ralph-wiggum-loop/)
+- [案例研究：Pulumi 的 Ralph Wiggum Loop](https://www.pulumi.com/blog/self-verifying-ai-agents-vercels-agent-browser-in-the-ralph-wiggum-loop/)
 
-### doobidoo Memory Service (Semantic Memory)
+### doobidoo Memory Service（语义记忆）
 
-> **⚠️ Status: Under Testing** - This MCP server is being evaluated. The documentation below is based on the official repository but hasn't been fully validated in production workflows yet. Feedback welcome!
+> **⚠️ 状态：测试中** —— 该 MCP 服务器正在评估中。以下文档基于官方仓库，尚未在生产工作流中完全验证。欢迎反馈！
 
-**Purpose**: Persistent semantic memory with cross-session search and multi-client support.
+**用途**：持久化语义记忆，支持跨会话搜索和多客户端共享。
 
-**Why doobidoo complements Serena**:
+**doobidoo 如何与 Serena 互补**：
 
-- Serena: Key-value memory (`write_memory("key", "value")`) - requires knowing the key
-- doobidoo: Semantic search (`retrieve_memory("what did we decide about auth?")`) - finds by meaning
+- Serena：键值记忆（`write_memory("key", "value")`）—— 你需要知道 key
+- doobidoo：语义搜索（`retrieve_memory("what did we decide about auth?")`）—— 按含义查找
 
-| Feature | Serena | doobidoo |
+| 特性 | Serena | doobidoo |
 |---------|--------|----------|
-| Memory storage | Key-value | Semantic embeddings |
-| Search by meaning | No | Yes |
-| Multi-client | Claude only | 13+ apps |
-| Dashboard | No | Knowledge Graph |
-| Symbol indexation | Yes | No |
+| 记忆存储 | 键值对 | 语义嵌入 |
+| 按含义搜索 | 不支持 | 支持 |
+| 多客户端 | 仅 Claude | 13+ 款应用 |
+| 仪表盘 | 无 | 知识图谱 |
+| 符号索引 | 支持 | 不支持 |
 
-**Storage Backends**:
+**存储后端**：
 
-| Backend | Usage | Performance |
+| 后端 | 用途 | 性能 |
 |---------|-------|-------------|
-| `sqlite_vec` (default) | Local, lightweight | <10ms queries |
-| `cloudflare` | Cloud, multi-device sync | Edge performance |
-| `hybrid` | Local fast + cloud background sync | 5ms local |
+| `sqlite_vec`（默认） | 本地、轻量 | 查询 <10ms |
+| `cloudflare` | 云端、多设备同步 | 边缘性能 |
+| `hybrid` | 本地快速 + 云端后台同步 | 本地 5ms |
 
-**Data Location**: `~/.mcp-memory-service/memories.db` (SQLite with vector embeddings)
+**数据位置**：`~/.mcp-memory-service/memories.db`（带向量嵌入的 SQLite）
 
-**MCP Tools Available** (12 unified tools):
+**可用的 MCP 工具**（12 个统一工具）：
 
-| Tool | Description |
+| 工具 | 说明 |
 |------|-------------|
-| `store_memory` | Store with tags, type, metadata |
-| `retrieve_memory` | Semantic search (top-N by similarity) |
-| `search_by_tag` | Exact tag matching (OR/AND logic) |
-| `delete_memory` | Delete by content_hash |
-| `list_memories` | Paginated browsing with filters |
-| `check_database_health` | Stats, backend status, sync info |
-| `get_cache_stats` | Server performance metrics |
-| `memory_graph:connected` | Find connected memories |
-| `memory_graph:path` | Shortest path between memories |
-| `memory_graph:subgraph` | Subgraph around a memory |
+| `store_memory` | 存储记忆，支持标签、类型、元数据 |
+| `retrieve_memory` | 语义搜索（按相似度返回前 N 条） |
+| `search_by_tag` | 精确标签匹配（支持 OR/AND 逻辑） |
+| `delete_memory` | 按 content_hash 删除 |
+| `list_memories` | 分页浏览，支持过滤 |
+| `check_database_health` | 统计、后端状态、同步信息 |
+| `get_cache_stats` | 服务器性能指标 |
+| `memory_graph:connected` | 查找关联记忆 |
+| `memory_graph:path` | 记忆之间的最短路径 |
+| `memory_graph:subgraph` | 某条记忆周围的子图 |
 
-**Installation**:
+**安装**：
 
 ```bash
-# Quick install (local SQLite backend)
+# 快速安装（本地 SQLite 后端）
 pip install mcp-memory-service
 python -m mcp_memory_service.scripts.installation.install --quick
 
-# Team/Production install (more options)
+# 团队/生产安装（更多选项）
 git clone https://github.com/doobidoo/mcp-memory-service.git
 cd mcp-memory-service
 python scripts/installation/install.py
-# → Choose: cloudflare or hybrid for multi-device sync
+# → 选择 cloudflare 或 hybrid 以实现多设备同步
 ```
 
-**Configuration** (add to MCP config):
+**配置**（添加到 MCP 配置）：
 
 ```json
 {
@@ -12095,7 +12124,7 @@ python scripts/installation/install.py
 }
 ```
 
-**Configuration with environment variables** (for team/cloud sync):
+**带环境变量的配置**（用于团队/云端同步）：
 
 ```json
 {
@@ -12115,83 +12144,83 @@ python scripts/installation/install.py
 }
 ```
 
-**Key Environment Variables**:
+**关键环境变量**：
 
-| Variable | Default | Description |
+| 变量 | 默认值 | 说明 |
 |----------|---------|-------------|
-| `MCP_MEMORY_STORAGE_BACKEND` | `sqlite_vec` | Backend: sqlite_vec, cloudflare, hybrid |
-| `MCP_HTTP_ENABLED` | `true` | Enable dashboard server |
-| `MCP_HTTP_PORT` | `8000` | Dashboard port |
-| `MCP_OAUTH_ENABLED` | `false` | Enable OAuth for team auth |
-| `MCP_HYBRID_SYNC_INTERVAL` | `300` | Sync interval in seconds |
+| `MCP_MEMORY_STORAGE_BACKEND` | `sqlite_vec` | 后端：sqlite_vec、cloudflare、hybrid |
+| `MCP_HTTP_ENABLED` | `true` | 启用仪表盘服务器 |
+| `MCP_HTTP_PORT` | `8000` | 仪表盘端口 |
+| `MCP_OAUTH_ENABLED` | `false` | 为团队认证启用 OAuth |
+| `MCP_HYBRID_SYNC_INTERVAL` | `300` | 同步间隔（秒） |
 
-**Usage**:
+**用法示例**：
 
 ```
-# Store a decision with tags
+# 存储一个决策并打上标签
 store_memory("We decided to use FastAPI for the REST API", tags=["architecture", "api"])
 
-# Semantic search (finds by meaning, not exact match)
+# 语义搜索（按含义查找，而非精确匹配）
 retrieve_memory("what framework for API?")
-→ Returns: "We decided to use FastAPI..." with similarity score
+→ 返回："We decided to use FastAPI..." 及相似度分数
 
-# Search by tag
+# 按标签搜索
 search_by_tag(["architecture"])
 
-# Check health
+# 检查健康状态
 check_database_health()
 ```
 
-**Multi-Client Sync**:
+**多客户端同步**：
 
 ```
-# Same machine: all clients share ~/.mcp-memory-service/memories.db
+# 同一台机器：所有客户端共享 ~/.mcp-memory-service/memories.db
 Claude Code ──┐
-Cursor ───────┼──► Same SQLite file
+Cursor ───────┼──► 同一个 SQLite 文件
 VS Code ──────┘
 
-# Multi-device: use Cloudflare backend
+# 多设备：使用 Cloudflare 后端
 Device A ──┐
 Device B ──┼──► Cloudflare D1 + Vectorize
 Device C ──┘
 ```
 
-**When to use which**:
+**该用哪个**：
 
-- **Serena**: Symbol navigation, code indexation, key-value memory with known keys
-- **doobidoo**: Cross-session decisions, "what did we decide about X?", multi-IDE sharing
+- **Serena**：符号导航、代码索引、已知 key 的键值记忆
+- **doobidoo**：跨会话决策、“我们当时对 X 是怎么决定的？”、多 IDE 共享
 
-**Dashboard**: Access at http://localhost:8000 after starting the server.
+**仪表盘**：服务器启动后访问 http://localhost:8000。
 
-> **Source**: [doobidoo/mcp-memory-service GitHub](https://github.com/doobidoo/mcp-memory-service) (791 stars, v10.0.2)
+> **来源**：[doobidoo/mcp-memory-service GitHub](https://github.com/doobidoo/mcp-memory-service)（791 stars，v10.0.2）
 
-### Kairn: Knowledge Graph Memory with Biological Decay
+### Kairn：带生物衰减的知识图谱记忆
 
-> **⚠️ Status: Under Testing** - Evaluated Feb 2026. MIT licensed, Python 100%. Feedback welcome!
+> **⚠️ 状态：测试中** —— 2026 年 2 月评估。MIT 许可证，纯 Python。欢迎反馈！
 
-**Purpose**: Long-term project memory organized as a knowledge graph with automatic decay — stale information expires on its own, preventing context pollution.
+**用途**：以知识图谱形式组织的长期项目记忆，带有自动衰减机制 —— 陈旧信息会自动过期，防止上下文污染。
 
-**Key differentiators vs doobidoo/Serena**:
+**与 doobidoo/Serena 的核心差异**：
 
-- **Typed relationships**: `depends-on`, `resolves`, `causes` — captures causality, not just content
-- **Biological decay model**: solutions persist ~200 days, workarounds ~50 days — auto-pruning without `delete_memory` calls
-- **18 MCP tools**: graph ops, project tracking, experience management, intelligence layer (full-text search, confidence routing, cross-workspace patterns)
+- **类型化关系**：`depends-on`、`resolves`、`causes` —— 不仅记录内容，还捕捉因果关系
+- **生物衰减模型**：解决方案约保留 200 天，临时变通方案约 50 天 —— 无需手动调用 `delete_memory` 即可自动修剪
+- **18 个 MCP 工具**：图谱操作、项目跟踪、经验管理、智能层（全文搜索、置信度路由、跨工作区模式识别）
 
-| Feature | Serena | doobidoo | Kairn |
+| 特性 | Serena | doobidoo | Kairn |
 |---------|--------|----------|-------|
-| Storage model | Key-value | Semantic embeddings | Knowledge graph |
-| Memory decay / auto-expiry | No | No | Yes (biological) |
-| Typed relationships | No | Tags only | depends-on / resolves / causes |
-| Full-text search | No | Yes | Yes |
-| Auto-pruning stale info | No | No | Yes |
+| 存储模型 | 键值对 | 语义嵌入 | 知识图谱 |
+| 记忆衰减 / 自动过期 | 不支持 | 不支持 | 支持（生物衰减） |
+| 类型化关系 | 不支持 | 仅标签 | depends-on / resolves / causes |
+| 全文搜索 | 不支持 | 支持 | 支持 |
+| 自动修剪陈旧信息 | 不支持 | 不支持 | 支持 |
 
-**When Kairn makes sense**:
+**Kairn 适合的场景**：
 
-- Long-running projects where workarounds from months ago become noise
-- When causality matters: "this breaks *because* of that", "this fix *resolves* that bug"
-- Teams wanting automatic knowledge hygiene without manual cleanup
+- 长期项目里，几个月前的临时方案变成了噪音
+- 因果关系很重要时：“这个之所以坏，*是因为*那个”、“这个修复*解决了*那个 bug”
+- 团队希望自动维护知识卫生，无需手动清理
 
-**MCP Config**:
+**MCP 配置**：
 
 ```json
 "kairn": {
@@ -12201,190 +12230,190 @@ Device C ──┘
 }
 ```
 
-**Install**:
+**安装**：
 
 ```bash
 pip install kairn
-# or from source:
+# 或从源码安装：
 git clone https://github.com/kairn-ai/kairn && cd kairn && pip install -e .
 ```
 
-> **Source**: [kairn-ai/kairn GitHub](https://github.com/kairn-ai/kairn) (MIT, Python 100%)
+> **来源**：[kairn-ai/kairn GitHub](https://github.com/kairn-ai/kairn)（MIT，纯 Python）
 
-### ICM: Dual Memory Architecture (Rust Binary, Zero Dependencies)
+### ICM：双记忆架构（Rust 二进制，零依赖）
 
-> **⚠️ Status: Under Testing** — Evaluated March 2026. Source-Available license (free for individuals and teams ≤20). From the rtk-ai team (same authors as RTK). Benchmarks below are vendor-reported and unverified independently. Feedback welcome!
+> **⚠️ 状态：测试中** —— 2026 年 3 月评估。Source-Available 许可证（个人及 ≤20 人团队免费）。来自 rtk-ai 团队（RTK 同款作者）。以下基准数据为厂商自报，尚未独立验证。欢迎反馈！
 
-**Purpose**: Persistent memory for AI agents combining episodic decay (Memories) and permanent knowledge graph (Memoirs) in a single zero-dependency Rust binary.
+**用途**：为 AI 智能体提供持久记忆，将基于衰减的情景记忆（Memories）与永久知识图谱（Memoirs）融合在一个零依赖的 Rust 二进制文件中。
 
-**When ICM makes sense over Kairn/doobidoo**:
+**什么时候选 ICM 而非 Kairn/doobidoo**：
 
-- Python dependency management is a friction point (CI environments, sandboxed machines)
-- You want Homebrew install with no Python env setup
-- You need both decay-based episodic memory and a permanent knowledge graph in one tool
-- You use multiple editors (14 clients supported: Claude Code, Cursor, VS Code, Windsurf, Zed, Amp, Cline, Roo Code, OpenAI Codex CLI, and more)
+- Python 依赖管理是痛点（CI 环境、沙箱机器）
+- 想要 Homebrew 一键安装，无需配置 Python 环境
+- 需要在一个工具里同时获得衰减型情景记忆和永久知识图谱
+- 使用多款编辑器（支持 14 个客户端：Claude Code、Cursor、VS Code、Windsurf、Zed、Amp、Cline、Roo Code、OpenAI Codex CLI 等）
 
-**Key differentiators vs Kairn/doobidoo**:
+**与 Kairn/doobidoo 的核心差异**：
 
-- **Single Rust binary**: no Python, no pip, no virtual env — `brew install icm` and done
-- **Dual architecture in one tool**: Memories (decay, episodic) + Memoirs (permanent, typed graph) — Kairn covers the graph layer, doobidoo the semantic layer, ICM covers both
-- **Auto-extraction**: three-layer automatic capture (pattern hooks, pre-compaction, session-start) without explicit `store_memory` calls
-- **Auto-deduplication**: blocks entries with >85% similarity to existing content
+- **单一 Rust 二进制**：没有 Python、没有 pip、没有虚拟环境 —— `brew install icm` 即可
+- **一体双架构**：Memories（衰减、情景）+ Memoirs（永久、类型化图谱）—— Kairn 覆盖了图谱层，doobidoo 覆盖了语义层，ICM 两者兼备
+- **自动提取**：三层自动捕获（模式钩子、预压缩、会话启动），无需显式调用 `store_memory`
+- **自动去重**：相似度 >85% 的条目会被拦截
 
-| Feature | doobidoo | Kairn | ICM |
+| 特性 | doobidoo | Kairn | ICM |
 |---------|----------|-------|-----|
-| Language | Python | Python | Rust (single binary) |
-| Install | pip | pip | Homebrew / curl |
-| Episodic decay | No | Yes (biological) | Yes (configurable rates) |
-| Permanent knowledge graph | No | Yes | Yes (Memoirs) |
-| Auto-extraction | No | No | Yes (3 layers) |
-| Hybrid search | Semantic | Full-text + semantic | BM25 30% + vector 70% |
-| License | MIT | MIT | Source-Available |
+| 语言 | Python | Python | Rust（单一二进制） |
+| 安装方式 | pip | pip | Homebrew / curl |
+| 情景衰减 | 不支持 | 支持（生物衰减） | 支持（速率可配置） |
+| 永久知识图谱 | 不支持 | 支持 | 支持（Memoirs） |
+| 自动提取 | 不支持 | 不支持 | 支持（3 层） |
+| 混合搜索 | 语义 | 全文 + 语义 | BM25 30% + 向量 70% |
+| 许可证 | MIT | MIT | Source-Available |
 
-**Memoir relation types** (9): `part_of`, `depends_on`, `related_to`, `contradicts`, `refines`, `alternative_to`, `caused_by`, `instance_of`, `superseded_by`
+**Memoir 关系类型**（9 种）：`part_of`、`depends_on`、`related_to`、`contradicts`、`refines`、`alternative_to`、`caused_by`、`instance_of`、`superseded_by`
 
-**Installation**:
+**安装**：
 
 ```bash
-# Homebrew (recommended)
+# Homebrew（推荐）
 brew tap rtk-ai/tap && brew install icm
 
-# Quick install
+# 快速安装
 curl -fsSL https://raw.githubusercontent.com/rtk-ai/icm/main/install.sh | sh
 
-# From source
+# 从源码
 cargo install --path crates/icm-cli
 ```
 
-**Setup** (3 separate modes, not a single interactive command):
+**设置**（3 个独立模式，不是单个交互式命令）：
 
 ```bash
-# Step 1: MCP server → auto-injects into ~/.claude.json (and 13 other editors)
+# 步骤 1：MCP 服务器 → 自动注入 ~/.claude.json（以及另外 13 款编辑器）
 icm init --mode mcp
 
-# Step 2: PostToolUse hook → auto-extracts context every N tool calls
+# 步骤 2：PostToolUse 钩子 → 每 N 次工具调用自动提取上下文
 icm init --mode hook
 
-# Step 3: /recall and /remember slash commands
+# 步骤 3：/recall 和 /remember 斜杠命令
 icm init --mode skill
 ```
 
-Restart Claude Code after running all three.
+运行完三个命令后重启 Claude Code。
 
-**Usage**:
+**用法**：
 
 ```bash
-# Store episodic memory (importance = critical|high|medium|low, not a float)
+# 存储情景记忆（importance = critical|high|medium|low，不是浮点数）
 icm store --topic "my-project" --content "Use PostgreSQL for main DB" --importance high
 
-# Recall with hybrid search
+# 混合搜索召回
 icm recall "database choice"
 
-# Build permanent knowledge graph
+# 构建永久知识图谱
 icm memoir create -n "system-architecture"
 icm memoir add-concept -m "system-architecture" -n "auth-service"
 icm memoir link -m "system-architecture" --from "api-gateway" --to "auth-service" -r depends-on
 
-# Session management
-icm stats      # memory count, topics, avg weight
-icm topics     # list all topics
-icm decay      # apply temporal decay manually
-icm prune      # remove low-weight entries
+# 会话管理
+icm stats      # 记忆数量、主题、平均权重
+icm topics     # 列出所有主题
+icm decay      # 手动应用时间衰减
+icm prune      # 移除低权重条目
 ```
 
-**Onboarding prompt**: a ready-to-use session starter template is available at `examples/memory/icm-session-starter.md`.
+** onboarding 提示词**：现成可用的会话启动模板位于 `examples/memory/icm-session-starter.md`。
 
-**Performance** (1000 ops, 384d embeddings — vendor-reported):
+**性能**（1000 次操作，384 维嵌入 —— 厂商自报）：
 
-| Operation | Latency |
+| 操作 | 延迟 |
 |-----------|---------|
-| Store (no embeddings) | 34.2 µs/op |
-| Store (with embeddings) | 51.6 µs/op |
-| FTS5 full-text search | 46.6 µs/op |
-| Vector search (KNN) | 590.0 µs/op |
-| Hybrid search | 951.1 µs/op |
+| 存储（无嵌入） | 34.2 µs/op |
+| 存储（含嵌入） | 51.6 µs/op |
+| FTS5 全文搜索 | 46.6 µs/op |
+| 向量搜索（KNN） | 590.0 µs/op |
+| 混合搜索 | 951.1 µs/op |
 
-**Agent efficiency claims** (vendor-reported, Haiku model, unverified independently):
+**智能体效率声明**（厂商自报，Haiku 模型，尚未独立验证）：
 
-- Session 2: 29% fewer turns, 17% cost reduction
-- Session 3: 40% fewer turns, 22% cost reduction
+- 第 2 个会话：轮次减少 29%，成本降低 17%
+- 第 3 个会话：轮次减少 40%，成本降低 22%
 
-> ⚠️ **License note**: Free for individuals and teams of up to 20 people. Enterprise license required above that threshold. Verify your organization's size before deploying. Contact: license@rtk.ai
+> ⚠️ **许可证说明**：个人及最多 20 人团队免费。超过该规模需购买企业许可证。部署前请确认组织规模。联系：license@rtk.ai
 
-> **Source**: [rtk-ai/icm GitHub](https://github.com/rtk-ai/icm) (52 stars, Source-Available)
+> **来源**：[rtk-ai/icm GitHub](https://github.com/rtk-ai/icm)（52 stars，Source-Available）
 
-### MCP Memory Stack: Complementarity Patterns
+### MCP 记忆栈：互补模式
 
-> **⚠️ Experimental** - These patterns combine multiple MCP servers. Test in your workflow before relying on them.
+> **⚠️ 实验性** —— 以下模式组合了多个 MCP 服务器。请在依赖它们之前先在你的工作流中测试。
 
-**The 4-Layer Knowledge Stack**:
+**四层知识栈**：
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    KNOWLEDGE LAYER                   │
+│                    知识层                             │
 ├─────────────────────────────────────────────────────┤
-│  doobidoo     │ Decisions, ADRs, business context   │
-│  (semantic)   │ "Why did we do this?"               │
+│  doobidoo     │ 决策、ADR、业务上下文                  │
+│  （语义）      │ "我们当时为什么这么做？"               │
 ├───────────────┼─────────────────────────────────────┤
-│  Serena       │ Symbols, structure, key-value memory│
-│  (code index) │ "Where is X defined?"               │
+│  Serena       │ 符号、结构、键值记忆                   │
+│  （代码索引）  │ "X 在哪里定义？"                      │
 ├───────────────┼─────────────────────────────────────┤
-│  grepai       │ Semantic code search + call graph   │
-│  (code search)│ "Find code that does X"             │
+│  grepai       │ 语义代码搜索 + 调用图                  │
+│  （代码搜索）  │ "找到做 X 的代码"                     │
 ├───────────────┼─────────────────────────────────────┤
-│  Context7     │ Official library documentation      │
-│  (docs)       │ "How to use library X?"             │
+│  Context7     │ 官方库文档                            │
+│  （文档）      │ "怎么使用库 X？"                      │
 └─────────────────────────────────────────────────────┘
 ```
 
-**Comparison Matrix**:
+**能力对比矩阵**：
 
-| Capability | Serena | grepai | doobidoo | Kairn | ICM |
+| 能力 | Serena | grepai | doobidoo | Kairn | ICM |
 |------------|--------|--------|----------|-------|-----|
-| Cross-session memory | Key-value | No | Semantic | Knowledge graph | Episodic + graph |
-| Cross-IDE memory | No | No | Yes | Yes | Yes (14 clients) |
-| Cross-device sync | No | No | Yes (Cloudflare) | No | No |
-| Knowledge Graph | No | Call graph | Decision graph | Typed relationships | Typed relationships |
-| Fuzzy search | No | Code | Memory | Full-text + semantic | BM25 + vector hybrid |
-| Tags/categories | No | No | Yes | Yes | Yes (topics) |
-| Memory decay / auto-expiry | No | No | No | Yes (biological) | Yes (configurable) |
-| Auto-extraction | No | No | No | No | Yes (3 layers) |
-| Runtime | — | — | Python | Python | Rust (single binary) |
-| License | MIT | MIT | MIT | MIT | Source-Available (≤20 free) |
+| 跨会话记忆 | 键值 | 不支持 | 语义 | 知识图谱 | 情景 + 图谱 |
+| 跨 IDE 记忆 | 不支持 | 不支持 | 支持 | 支持 | 支持（14 个客户端） |
+| 跨设备同步 | 不支持 | 不支持 | 支持（Cloudflare） | 不支持 | 不支持 |
+| 知识图谱 | 不支持 | 调用图 | 决策图 | 类型化关系 | 类型化关系 |
+| 模糊搜索 | 不支持 | 代码 | 记忆 | 全文 + 语义 | BM25 + 向量混合 |
+| 标签/分类 | 不支持 | 不支持 | 支持 | 支持 | 支持（topics） |
+| 记忆衰减 / 自动过期 | 不支持 | 不支持 | 不支持 | 支持（生物衰减） | 支持（可配置） |
+| 自动提取 | 不支持 | 不支持 | 不支持 | 不支持 | 支持（3 层） |
+| 运行时 | — | — | Python | Python | Rust（单一二进制） |
+| 许可证 | MIT | MIT | MIT | MIT | Source-Available（≤20 人免费） |
 
-**Usage Patterns**:
+**使用模式**：
 
-| Pattern | Tool | Example |
+| 模式 | 工具 | 示例 |
 |---------|------|---------|
-| **Decision taken** | doobidoo | `store_memory("Decision: FastAPI because async + OpenAPI", tags=["decision", "api"])` |
-| **Convention established** | doobidoo | `store_memory("Convention: snake_case for Python", tags=["convention"])` |
-| **Bug resolved** | doobidoo | `store_memory("Bug: token TTL mismatch Redis/JWT. Fix: align TTL+60s", tags=["bug", "auth"])` |
-| **WIP warning** | doobidoo | `store_memory("WIP: refactoring AuthService, don't touch", tags=["wip"])` |
-| **Find symbol** | Serena | `find_symbol("PaymentProcessor")` |
-| **Find callers** | grepai | `grepai trace callers "validateToken"` |
-| **Search by intent** | grepai | `grepai search "authentication logic"` |
-| **Library docs** | Context7 | `resolve-library-id("fastapi")` |
+| **记录决策** | doobidoo | `store_memory("Decision: FastAPI because async + OpenAPI", tags=["decision", "api"])` |
+| **确立约定** | doobidoo | `store_memory("Convention: snake_case for Python", tags=["convention"])` |
+| **记录已修复 bug** | doobidoo | `store_memory("Bug: token TTL mismatch Redis/JWT. Fix: align TTL+60s", tags=["bug", "auth"])` |
+| **WIP 警告** | doobidoo | `store_memory("WIP: refactoring AuthService, don't touch", tags=["wip"])` |
+| **查找符号** | Serena | `find_symbol("PaymentProcessor")` |
+| **查找调用方** | grepai | `grepai trace callers "validateToken"` |
+| **按意图搜索** | grepai | `grepai search "authentication logic"` |
+| **库文档** | Context7 | `resolve-library-id("fastapi")` |
 
-**Combined Workflows**:
+**组合工作流**：
 
 ```
-# Workflow 1: Understanding a feature
-retrieve_memory("payment module status?")        # doobidoo → business context
-grepai search "payment processing"               # grepai → find code
-find_symbol("PaymentProcessor")                  # Serena → exact location
+# 工作流 1：理解一个功能
+retrieve_memory("payment module status?")        # doobidoo → 业务上下文
+grepai search "payment processing"               # grepai → 找到代码
+find_symbol("PaymentProcessor")                  # Serena → 精确定位
 
-# Workflow 2: Onboarding (Session 1 → Session N)
-# Session 1 (senior dev)
+# 工作流 2：新人入职（会话 1 → 会话 N）
+# 会话 1（资深开发者）
 store_memory("Architecture: hexagonal with ports/adapters", tags=["onboarding"])
 store_memory("Tests in __tests__/, using Vitest", tags=["onboarding", "testing"])
 store_memory("DANGER: never touch legacy/payment.ts without review", tags=["onboarding", "danger"])
 
-# Session N (new dev)
+# 会话 N（新开发者）
 retrieve_memory("project architecture?")
 retrieve_memory("where are tests?")
 retrieve_memory("dangerous areas?")
 
-# Workflow 3: ADR (Architecture Decision Records)
+# 工作流 3：ADR（架构决策记录）
 store_memory("""
 ADR-001: FastAPI vs Flask
 - Decision: FastAPI
@@ -12392,84 +12421,84 @@ ADR-001: FastAPI vs Flask
 - Rejected: Flask (sync), Django (too heavy)
 """, tags=["adr", "api"])
 
-# 3 months later
+# 3 个月后
 retrieve_memory("why FastAPI?")
 
-# Workflow 4: Debug context persistence
+# 工作流 4：调试上下文持久化
 store_memory("Auth bug: Redis TTL expires before JWT", tags=["debug", "auth"])
 store_memory("Fix: align Redis TTL = JWT exp + 60s margin", tags=["debug", "auth", "fix"])
 
-# Same bug reappears months later
+# 几个月后同样的 bug 再次出现
 retrieve_memory("auth token redis problem")
-→ Finds the fix immediately
+→ 立即找到修复方案
 
-# Workflow 5: Multi-IDE coordination
-# In Claude Code (terminal)
+# 工作流 5：多 IDE 协同
+# 在 Claude Code（终端）中
 store_memory("Refactoring auth in progress, don't touch AuthService", tags=["wip"])
 
-# In Cursor (another window)
+# 在 Cursor（另一个窗口）中
 retrieve_memory("work in progress?")
-→ Sees the warning
+→ 看到警告
 ```
 
-**When to use which memory system**:
+**该选哪个记忆系统**：
 
-| Need | Tool | Why |
+| 需求 | 工具 | 原因 |
 |------|------|-----|
-| "I know the exact key" | Serena `read_memory("api_choice")` | Fast, direct lookup |
-| "I remember the topic, not the key" | doobidoo `retrieve_memory("API decision?")` | Semantic search |
-| "Share across IDEs" | doobidoo | Multi-client support |
-| "Share across devices" | doobidoo + Cloudflare | Cloud sync |
-| "Code symbol location" | Serena `find_symbol()` | Code indexation |
-| "Code by intent" | grepai `search()` | Semantic code search |
-| "Long-term project memory, auto-expiry" | Kairn | Biological decay model |
-| "Why did X break / what resolved Y?" | Kairn | Typed relationships (resolves, causes) |
+| "我知道确切的 key" | Serena `read_memory("api_choice")` | 快速、直接查找 |
+| "我记得话题，不记得 key" | doobidoo `retrieve_memory("API decision?")` | 语义搜索 |
+| "要在多个 IDE 间共享" | doobidoo | 多客户端支持 |
+| "要在多个设备间共享" | doobidoo + Cloudflare | 云端同步 |
+| "找代码符号位置" | Serena `find_symbol()` | 代码索引 |
+| "按意图找代码" | grepai `search()` | 语义代码搜索 |
+| "长期项目记忆，自动过期" | Kairn | 生物衰减模型 |
+| "为什么 X 会坏 / 什么修复了 Y" | Kairn | 类型化关系（resolves、causes） |
 
-**Current Limitations** (doobidoo):
+**当前限制**（doobidoo）：
 
-| Limitation | Impact | Workaround |
+| 限制 | 影响 | 变通方案 |
 |------------|--------|------------|
-| No versioning | Can't see decision history | Include dates in content |
-| No permissions | Anyone can modify | Use separate DBs per team |
-| No source linking | No link to file/line | Include file refs in content |
-| No expiration | Stale memories persist | Manual cleanup with `delete_memory` OR use Kairn (auto-decay) |
-| No git integration | No branch-aware memory | Tag with branch name |
+| 无版本控制 | 无法查看决策历史 | 在内容中包含日期 |
+| 无权限控制 | 任何人都能修改 | 按团队使用独立数据库 |
+| 无源链接 | 无法关联到文件/行号 | 在内容中包含文件引用 |
+| 无过期机制 | 陈旧记忆一直保留 | 手动 `delete_memory` 清理，或使用 Kairn（自动衰减） |
+| 无 Git 集成 | 无法按分支隔离记忆 | 用分支名作为标签 |
 
 ---
 
-### Git MCP Server (Official Anthropic)
+### Git MCP Server（Anthropic 官方）
 
-**Purpose**: Programmatic Git access via 12 structured tools for commit, diff, log, and branch management.
+**用途**：通过 12 个结构化工具以编程方式访问 Git，涵盖提交、差异、日志和分支管理。
 
-**Why Git MCP vs Bash `git`**: The Bash tool can run `git` commands but returns raw terminal output that requires parsing and consumes tokens. Git MCP returns structured data directly usable by Claude, with built-in filters (date, author, branch) and token-efficient diffs via the `context_lines` parameter.
+**为什么用 Git MCP 而非 Bash `git`**：Bash 工具可以运行 `git` 命令，但返回的是原始终端输出，需要解析且消耗 Token。Git MCP 直接返回 Claude 可用的结构化数据，内置过滤器（日期、作者、分支），并通过 `context_lines` 参数实现 Token 高效的差异输出。
 
-> **⚠️ Status**: Early development — API subject to change. Suitable for local workflows; test before adopting in production pipelines.
+> **⚠️ 状态**：早期开发中 —— API 可能变动。适合本地工作流；在生产流水线中采用前请先测试。
 
-**Tools (12)**:
+**工具（12 个）**：
 
-| Tool | Description |
+| 工具 | 说明 |
 |------|-------------|
-| `git_status` | Working tree status (staged, unstaged, untracked) |
-| `git_diff_unstaged` | Unstaged changes |
-| `git_diff_staged` | Staged changes ready to commit |
-| `git_diff` | Compare any two branches, commits, or refs |
-| `git_commit` | Create a commit with message |
-| `git_add` | Stage one or more files |
-| `git_reset` | Unstage files |
-| `git_log` | Commit history with date, author, and branch filters |
-| `git_create_branch` | Create a new branch |
-| `git_checkout` | Switch branches |
-| `git_show` | Show details for a commit or tag |
-| `git_branch` | List all local branches |
+| `git_status` | 工作树状态（已暂存、未暂存、未跟踪） |
+| `git_diff_unstaged` | 未暂存的变更 |
+| `git_diff_staged` | 已暂存待提交的变更 |
+| `git_diff` | 比较任意两个分支、提交或引用 |
+| `git_commit` | 用指定消息创建提交 |
+| `git_add` | 暂存一个或多个文件 |
+| `git_reset` | 取消暂存文件 |
+| `git_log` | 提交历史，支持日期、作者、分支过滤 |
+| `git_create_branch` | 创建新分支 |
+| `git_checkout` | 切换分支 |
+| `git_show` | 显示某个提交或标签的详情 |
+| `git_branch` | 列出所有本地分支 |
 
-**Setup**:
+**设置**：
 
 ```bash
-# No install required — uvx pulls it on first run
+# 无需安装 —— uvx 首次运行时自动拉取
 uvx mcp-server-git --repository /path/to/repo
 ```
 
-**Claude Code configuration** (`~/.claude.json`):
+**Claude Code 配置**（`~/.claude.json`）：
 
 ```json
 {
@@ -12482,7 +12511,7 @@ uvx mcp-server-git --repository /path/to/repo
 }
 ```
 
-**Multi-repo configuration** (different server per project):
+**多仓库配置**（每个项目一个独立服务器）：
 
 ```json
 {
@@ -12499,64 +12528,64 @@ uvx mcp-server-git --repository /path/to/repo
 }
 ```
 
-**Comparison: Git MCP vs Bash**:
+**Git MCP 与 Bash 对比**：
 
-| Use case | Bash `git` | Git MCP |
+| 场景 | Bash `git` | Git MCP |
 |----------|-----------|---------|
-| Simple status check | Fine | Overkill |
-| Filtered log (date + author) | Long command | Native filter params |
-| Diff with context control | Possible | `context_lines` param |
-| Scripting / automation | Good | Better (structured output) |
-| CI / production pipelines | Tested, stable | Early dev, use with care |
+| 简单状态检查 | 可以 | 杀鸡用牛刀 |
+| 过滤日志（日期 + 作者） | 命令很长 | 原生过滤参数 |
+| 可控上下文的差异 | 勉强可以 | `context_lines` 参数 |
+| 脚本化 / 自动化 | 不错 | 更好（结构化输出） |
+| CI / 生产流水线 | 稳定、经测试 | 早期开发，谨慎使用 |
 
-**Typical workflows**:
+**典型工作流**：
 
-- "Show me all commits by Alice in the last 7 days on the `main` branch"
-- "What files changed in the last 3 commits? Summarize the changes."
-- "Stage `src/auth.ts` and create a commit with an appropriate message"
+- "给我看看 `main` 分支上 Alice 最近 7 天的所有提交"
+- "最近 3 个提交改了哪些文件？总结一下变更。"
+- "暂存 `src/auth.ts` 并用合适的消息创建提交"
 
-> **Source**: `modelcontextprotocol/servers/src/git` — MIT license, part of the Anthropic-maintained monorepo (77k+ stars).
+> **来源**：`modelcontextprotocol/servers/src/git` —— MIT 许可证，Anthropic 维护的 monorepo 的一部分（77k+ stars）。
 
 ---
 
-### GitHub MCP Server (Official GitHub)
+### GitHub MCP Server（GitHub 官方）
 
-**Purpose**: Full GitHub platform access — Issues, Pull Requests, Projects, Code search, repository management, and GitHub Enterprise.
+**用途**：完整的 GitHub 平台访问 —— Issue、Pull Request（PR）、Project、代码搜索、仓库管理、GitHub Enterprise。
 
-**Git MCP vs GitHub MCP** (two distinct layers):
+**Git MCP 与 GitHub MCP**（两个不同的层级）：
 
-| Layer | Tool | Scope |
-|-------|------|-------|
-| Local Git operations | Git MCP Server | Commits, diffs, branches, staging |
-| GitHub cloud platform | GitHub MCP Server | Issues, PRs, Projects, Reviews, Search |
+| 层级 | 工具 | 范围 |
+|-------|------|------|
+| 本地 Git 操作 | Git MCP Server | 提交、差异、分支、暂存 |
+| GitHub 云平台 | GitHub MCP Server | Issue、PR、Project、Review、Search |
 
-Both can be active simultaneously. They complement each other: Git MCP handles local work, GitHub MCP handles collaboration and cloud state.
+两者可以同时启用。它们互为补充：Git MCP 处理本地工作，GitHub MCP 处理协作和云端状态。
 
-**Two setup modes**:
+**两种设置模式**：
 
-| Mode | Requires | When to use |
+| 模式 | 需要 | 何时使用 |
 |------|----------|-------------|
-| Remote (`api.githubcopilot.com`) | GitHub Copilot subscription | Already a Copilot subscriber |
-| Self-hosted binary | GitHub PAT only | No Copilot, proprietary code, or privacy requirements |
+| 远程（`api.githubcopilot.com`） | GitHub Copilot 订阅 | 已经是 Copilot 订阅用户 |
+| 自托管二进制 | 仅 GitHub PAT | 没有 Copilot、专有代码或隐私要求 |
 
-**Remote MCP** (requires a GitHub Copilot subscription):
+**远程 MCP**（需要 GitHub Copilot 订阅）：
 
-> **⚠️ Known issue**: `claude mcp add --transport http` attempts OAuth dynamic client registration by default, which the Copilot endpoint does not support. You'll get: `Incompatible auth server: does not support dynamic client registration`. The fix is to inject the token manually (see below).
+> **⚠️ 已知问题**：`claude mcp add --transport http` 默认会尝试 OAuth 动态客户端注册，而 Copilot 端点不支持。你会看到：`Incompatible auth server: does not support dynamic client registration`。解决方法是手动注入 token（见下文）。
 
-Step 1 — Add the server:
+步骤 1 —— 添加服务器：
 
 ```bash
 claude mcp add --transport http github https://api.githubcopilot.com/mcp/
 ```
 
-Step 2 — Get your active GitHub CLI token:
+步骤 2 —— 获取当前活跃的 GitHub CLI token：
 
 ```bash
 gh auth token
 # → gho_xxxxxxxxxxxx
 ```
 
-Step 3 — Edit `~/.claude.json` to add the `Authorization` header:
+步骤 3 —— 编辑 `~/.claude.json`，添加 `Authorization` 请求头：
 
 ```json
 {
@@ -12572,12 +12601,12 @@ Step 3 — Edit `~/.claude.json` to add the `Authorization` header:
 }
 ```
 
-> If the token expires: `gh auth refresh` then update the value in `~/.claude.json`.
+> 如果 token 过期：运行 `gh auth refresh`，然后更新 `~/.claude.json` 中的值。
 
-**Self-hosted setup** (GitHub PAT only, no Copilot required):
+**自托管设置**（仅需 GitHub PAT，无需 Copilot）：
 
 ```bash
-# Download binary from github.com/github/github-mcp-server/releases
+# 从 github.com/github/github-mcp-server/releases 下载二进制文件
 export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx
 ./github-mcp-server stdio
 ```
@@ -12596,38 +12625,38 @@ export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx
 }
 ```
 
-**Key capabilities**:
+**核心能力**：
 
-- Issues: create, list, filter, assign, close
-- Pull Requests: create, review, merge, list by assignee/label
-- Projects: read and update GitHub Projects v2
-- Code search: search across all repos in an org
-- GitHub Enterprise: same API, different base URL
+- Issue：创建、列出、过滤、分配、关闭
+- Pull Request：创建、Review、合并、按分配人/标签列出
+- Project：读取和更新 GitHub Projects v2
+- 代码搜索：跨组织内所有仓库搜索
+- GitHub Enterprise：相同 API，不同 base URL
 
-**Typical workflows with Claude Code**:
+**与 Claude Code 的典型工作流**：
 
-- "List all open PRs assigned to me on `org/repo`, sorted by last activity"
-- "For PR #456, summarize the changes, flag breaking changes, and draft a review comment"
-- "Create an issue for bug X with a checklist, then open a branch and push a fix commit"
-- "Search all repos in the org for usages of deprecated `fetchUser()` and list files to migrate"
+- "列出 `org/repo` 上分配给我的所有 open PR，按最近活动排序"
+- "对 PR #456，总结变更、标出破坏性改动，并起草一条 review 评论"
+- "为 bug X 创建一条带 checklist 的 issue，然后开分支并推送修复提交"
+- "在组织所有仓库中搜索废弃的 `fetchUser()` 用法，列出需要迁移的文件"
 
-**Differentiator vs `@modelcontextprotocol/server-github`**: The official GitHub MCP server adds Projects support, OAuth 2.1 auth, GitHub Enterprise, and the remote hosted endpoint. The npm reference server is lighter but covers fewer features.
+**与 `@modelcontextprotocol/server-github` 的差异**：官方 GitHub MCP server 增加了 Project 支持、OAuth 2.1 认证、GitHub Enterprise 和远程托管端点。npm 上的参考服务器更轻量，但功能覆盖较少。
 
-> **Source**: `github/github-mcp-server` — Go, MIT license, 20k+ stars, actively maintained with regular releases.
+> **来源**：`github/github-mcp-server` —— Go 语言，MIT 许可证，20k+ stars，积极维护，定期发布。
 
 </details>
 
 ---
 
-### 📖 This Guide as an MCP Server
+### 📖 将本指南作为 MCP Server
 
-The Claude Code Ultimate Guide ships its own MCP server — `claude-code-ultimate-guide-mcp` — so you can query the guide directly from any Claude Code session without cloning the repo.
+《Claude Code 终极指南》自带一个 MCP 服务器 —— `claude-code-ultimate-guide-mcp` —— 你可以在任何 Claude Code 会话中直接查询本指南，无需克隆仓库。
 
-**What it gives you**: 9 tools covering search, content reading, templates, digests, cheatsheet, and release notes. The structured index (882 entries) is bundled in the package (~130KB); markdown files are fetched from GitHub on demand with 24h local cache.
+**它能提供什么**：9 个工具，覆盖搜索、内容读取、模板、摘要、速查表和发布说明。结构化索引（882 个条目）已打包在包内（约 130KB）；Markdown 文件按需从 GitHub 获取，本地缓存 24 小时。
 
-#### Installation
+#### 安装
 
-Add to `~/.claude.json`:
+添加到 `~/.claude.json`：
 
 ```json
 {
@@ -12641,7 +12670,7 @@ Add to `~/.claude.json`:
 }
 ```
 
-Or with a local clone (dev mode — reads files directly from disk):
+或使用本地克隆（开发模式 —— 直接从磁盘读取文件）：
 
 ```json
 {
@@ -12658,102 +12687,102 @@ Or with a local clone (dev mode — reads files directly from disk):
 }
 ```
 
-#### Available tools
+#### 可用工具
 
-| Tool | Signature | Description |
+| 工具 | 签名 | 说明 |
 |------|-----------|-------------|
-| `search_guide` | `(query, limit?)` | Search 882 indexed entries by keyword or question |
-| `read_section` | `(path, offset?, limit?)` | Read any guide file with pagination (500 lines max) |
-| `list_topics` | `()` | Browse all 25 topic categories |
-| `get_example` | `(name)` | Fetch a production-ready template by name |
-| `list_examples` | `(category?)` | List all templates — `agents`, `commands`, `hooks`, `skills`, `scripts` |
-| `get_changelog` | `(count?)` | Last N guide CHANGELOG entries (default 5) |
-| `get_digest` | `(period)` | Combined digest of guide + CC releases: `day`, `week`, `month` |
-| `get_release` | `(version?)` | Claude Code CLI release details |
-| `get_cheatsheet` | `(section?)` | Full cheatsheet or filtered by section |
+| `search_guide` | `(query, limit?)` | 按关键词或问题搜索 882 个索引条目 |
+| `read_section` | `(path, offset?, limit?)` | 分页读取指南任意文件（最多 500 行） |
+| `list_topics` | `()` | 浏览全部 25 个主题分类 |
+| `get_example` | `(name)` | 按名称获取生产级模板 |
+| `list_examples` | `(category?)` | 列出所有模板 —— `agents`、`commands`、`hooks`、`skills`、`scripts` |
+| `get_changelog` | `(count?)` | 最近 N 条指南 CHANGELOG（默认 5） |
+| `get_digest` | `(period)` | 指南 + CC 发布的合并摘要：`day`、`week`、`month` |
+| `get_release` | `(version?)` | Claude Code CLI 发布详情 |
+| `get_cheatsheet` | `(section?)` | 完整速查表或按章节过滤 |
 
-**Resources**: `claude-code-guide://reference` (full 94KB YAML index), `claude-code-guide://releases`, `claude-code-guide://llms`
+**资源**：`claude-code-guide://reference`（完整 94KB YAML 索引）、`claude-code-guide://releases`、`claude-code-guide://llms`
 
-**Prompt**: `claude-code-expert` — activates expert mode with optimal search workflow
+**提示词**：`claude-code-expert` —— 激活专家模式，启用最优搜索工作流
 
-#### Slash command shortcuts
+#### 斜杠命令快捷方式
 
-Install the companion slash commands for one-keystroke access (stored in `~/.claude/commands/ccguide/`):
+安装配套斜杠命令，一键访问（存储在 `~/.claude/commands/ccguide/`）：
 
 ```bash
-# These commands are included in the guide repo under .claude/commands/ccguide/
-# Copy or symlink to ~/.claude/commands/ccguide/ to install globally
+# 这些命令包含在指南仓库的 .claude/commands/ccguide/ 目录下
+# 复制或创建符号链接到 ~/.claude/commands/ccguide/ 即可全局安装
 ```
 
-**Guide commands:**
+**指南命令**：
 
-| Command | Example | Description |
+| 命令 | 示例 | 说明 |
 |---------|---------|-------------|
-| `/ccguide:search` | `/ccguide:search hooks` | Search by keyword |
-| `/ccguide:cheatsheet` | `/ccguide:cheatsheet hooks` | Cheatsheet (full or section) |
-| `/ccguide:digest` | `/ccguide:digest week` | What changed this week (guide + CC releases) |
-| `/ccguide:example` | `/ccguide:example code-reviewer` | Fetch a template |
-| `/ccguide:examples` | `/ccguide:examples agents` | List templates by category |
-| `/ccguide:release` | `/ccguide:release 2.1.59` | Release details |
-| `/ccguide:changelog` | `/ccguide:changelog 10` | Recent guide CHANGELOG |
-| `/ccguide:topics` | `/ccguide:topics` | Browse all categories |
+| `/ccguide:search` | `/ccguide:search hooks` | 按关键词搜索 |
+| `/ccguide:cheatsheet` | `/ccguide:cheatsheet hooks` | 速查表（完整或某节） |
+| `/ccguide:digest` | `/ccguide:digest week` | 本周有什么新变化（指南 + CC 发布） |
+| `/ccguide:example` | `/ccguide:example code-reviewer` | 获取模板 |
+| `/ccguide:examples` | `/ccguide:examples agents` | 按分类列出模板 |
+| `/ccguide:release` | `/ccguide:release 2.1.59` | 发布详情 |
+| `/ccguide:changelog` | `/ccguide:changelog 10` | 最近指南 CHANGELOG |
+| `/ccguide:topics` | `/ccguide:topics` | 浏览所有分类 |
 
-**Official Anthropic docs tracker** (MCP v1.1.0+):
+**Anthropic 官方文档追踪器**（MCP v1.1.0+）：
 
-| Command | Description |
+| 命令 | 说明 |
 |---------|-------------|
-| `/ccguide:init-docs` | Fetch official docs + store as local baseline (run once) |
-| `/ccguide:refresh-docs` | Re-fetch latest docs, update current snapshot (baseline unchanged) |
-| `/ccguide:diff-docs` | Compare baseline vs current — added/removed/modified pages, 0 network |
-| `/ccguide:search-docs <query>` | Search official Anthropic docs from local cache |
-| `/ccguide:daily` | **Daily briefing**: refresh + diff official docs + guide/CC digest |
+| `/ccguide:init-docs` | 拉取官方文档并存储为本地基线（运行一次） |
+| `/ccguide:refresh-docs` | 重新拉取最新文档，更新当前快照（基线不变） |
+| `/ccguide:diff-docs` | 对比基线与当前 —— 新增/删除/修改的页面，0 网络请求 |
+| `/ccguide:search-docs <query>` | 从本地缓存搜索 Anthropic 官方文档 |
+| `/ccguide:daily` | **每日简报**：刷新 + diff 官方文档 + 指南/CC 摘要 |
 
-Typical workflow:
+典型工作流：
 
 ```bash
-/ccguide:init-docs          # once — stores baseline + current in ~/.cache/claude-code-guide/
-# days later...
-/ccguide:daily              # every day — refresh + diff + digest in one shot
+/ccguide:init-docs          # 一次 —— 在 ~/.cache/claude-code-guide/ 中存储基线 + 当前
+# 几天后...
+/ccguide:daily              # 每天 —— 刷新 + diff + 摘要，一键完成
 ```
 
-#### Custom agent
+#### 自定义智能体
 
-A `claude-code-guide` agent is included in `.claude/agents/claude-code-guide.md`. It uses Haiku (fast, cheap) and automatically searches the guide before answering any Claude Code question.
+`.claude/agents/claude-code-guide.md` 中包含一个 `claude-code-guide` 智能体。它使用 Haiku（快速、便宜），并会在回答任何 Claude Code 问题之前自动搜索本指南。
 
 ---
 
-### 🌐 Community MCP Servers Ecosystem
+### 🌐 社区 MCP 服务器生态
 
-Beyond the official servers listed above, the MCP ecosystem includes **validated community servers** that extend Claude Code's capabilities with specialized integrations.
+除了上述官方服务器，MCP 生态还包含一系列**经过验证的社区服务器**，通过专业集成扩展 Claude Code 的能力。
 
-**📖 Complete Guide**: See **[MCP Servers Ecosystem](./ecosystem/mcp-servers-ecosystem.md)** for:
+**📖 完整指南**：请参阅 **[MCP 服务器生态](./ecosystem/mcp-servers-ecosystem.md)**，内容包括：
 
-- **8 validated production-ready servers**: Playwright (Microsoft), Semgrep, Kubernetes (Red Hat), Context7, Linear, Vercel, Browserbase, MCP-Compose
-- **Evaluation framework**: How servers are validated (stars, releases, docs, tests, security)
-- **Production deployment guide**: Security checklist, quick start stack, performance metrics
-- **Ecosystem evolution**: Linux Foundation standardization, MCPB format, Advanced MCP Tool Use, MCP Apps
-- **Monthly watch methodology**: Template for maintaining the guide with ecosystem updates
+- **8 个经过验证的生产级服务器**：Playwright（Microsoft）、Semgrep、Kubernetes（Red Hat）、Context7、Linear、Vercel、Browserbase、MCP-Compose
+- **评估框架**：服务器的验证标准（stars、发布、文档、测试、安全）
+- **生产部署指南**：安全清单、快速启动栈、性能指标
+- **生态演进**：Linux Foundation 标准化、MCPB 格式、Advanced MCP Tool Use、MCP Apps
+- **月度观察方法论**：维护指南并跟进生态更新的模板
 
-**Featured Community Servers**:
+**精选社区服务器**：
 
-| Server | Purpose | Quality Score | Maintainer |
+| 服务器 | 用途 | 质量评分 | 维护者 |
 |--------|---------|---------------|------------|
-| **Playwright MCP** | Browser automation with accessibility trees | 8.8/10 ⭐⭐⭐⭐⭐ | Microsoft (Official) |
-| **Semgrep MCP** | Security scanning (SAST, secrets, supply chain) | 9.0/10 ⭐⭐⭐⭐⭐ | Semgrep Inc. (Official) |
-| **Kubernetes MCP** | Cluster management in natural language | 8.4/10 ⭐⭐⭐⭐ | Red Hat Containers Community |
-| **Context7 MCP** | Real-time library documentation (500+ libs) | 8.2/10 ⭐⭐⭐⭐ | Upstash (Official) |
-| **Linear MCP** | Issue tracking, project management | 7.6/10 ⭐⭐⭐⭐ | Community |
-| **Vercel MCP** | Next.js deployments, CI/CD | 7.6/10 ⭐⭐⭐⭐ | Community |
-| **Browserbase MCP** | Cloud browser automation with AI agent | 7.6/10 ⭐⭐⭐⭐ | Browserbase Inc. (Official) |
-| **MCP-Compose** | Docker Compose-style multi-server orchestration | 7.4/10 ⭐⭐⭐⭐ | Community |
+| **Playwright MCP** | 基于无障碍树的浏览器自动化 | 8.8/10 ⭐⭐⭐⭐⭐ | Microsoft（官方） |
+| **Semgrep MCP** | 安全扫描（SAST、secrets、供应链） | 9.0/10 ⭐⭐⭐⭐⭐ | Semgrep Inc.（官方） |
+| **Kubernetes MCP** | 用自然语言管理集群 | 8.4/10 ⭐⭐⭐⭐ | Red Hat Containers Community |
+| **Context7 MCP** | 实时库文档（500+ 库） | 8.2/10 ⭐⭐⭐⭐ | Upstash（官方） |
+| **Linear MCP** | Issue 跟踪、项目管理 | 7.6/10 ⭐⭐⭐⭐ | 社区 |
+| **Vercel MCP** | Next.js 部署、CI/CD | 7.6/10 ⭐⭐⭐⭐ | 社区 |
+| **Browserbase MCP** | 面向 AI 智能体的云端浏览器自动化 | 7.6/10 ⭐⭐⭐⭐ | Browserbase Inc.（官方） |
+| **MCP-Compose** | Docker Compose 风格的多服务器编排 | 7.4/10 ⭐⭐⭐⭐ | 社区 |
 
-**Quick Start Example** (Playwright):
+**快速开始示例**（Playwright）：
 
 ```bash
-# Installation
+# 安装
 npm install @microsoft/playwright-mcp
 
-# Configuration (~/.claude.json or .mcp.json)
+# 配置（~/.claude.json 或 .mcp.json）
 {
   "mcpServers": {
     "playwright": {
@@ -12764,27 +12793,27 @@ npm install @microsoft/playwright-mcp
 }
 ```
 
-**Why use community servers?**
+**为什么要用社区服务器？**
 
-- **Specialized integrations**: Kubernetes, Vercel, Linear APIs not in official servers
-- **Enhanced capabilities**: Browser automation (Playwright), security scanning (Semgrep)
-- **Production-ready**: All servers validated for maintenance, docs, tests, security
-- **Ecosystem standard**: Many backed by major organizations (Microsoft, Red Hat, Semgrep Inc.)
+- **专业集成**：Kubernetes、Vercel、Linear 等 API 不在官方服务器中
+- **能力增强**：浏览器自动化（Playwright）、安全扫描（Semgrep）
+- **生产就绪**：所有服务器都经过维护、文档、测试、安全验证
+- **生态标准**：许多由大型组织背书（Microsoft、Red Hat、Semgrep Inc.）
 
 ---
 
-## 8.3 Configuration
+## 8.3 配置
 
-### MCP Configuration Location
+### MCP 配置位置
 
 ```
-~/.claude.json          # User-scope MCP config (field "mcpServers")
-.mcp.json               # Project-scope (project root, shareable via VCS)
+~/.claude.json          # 用户级 MCP 配置（字段 "mcpServers"）
+.mcp.json               # 项目级（项目根目录，可通过 VCS 共享）
 ```
 
-> **Note**: Three scopes exist: `local` (default, private to you + current project, in `~/.claude.json`), `project` (shared via `.mcp.json` at project root), and `user` (cross-project, also in `~/.claude.json`). Use `claude mcp add --scope <scope>` to target a specific scope.
+> **注意**：存在三个作用域：`local`（默认，仅你和当前项目私有，存储在 `~/.claude.json`）、`project`（项目根目录的 `.mcp.json`，可共享）、`user`（跨项目，也在 `~/.claude.json`）。使用 `claude mcp add --scope <scope>` 可指定目标作用域。
 
-### Example Configuration
+### 配置示例
 
 ```json
 {
@@ -12811,18 +12840,18 @@ npm install @microsoft/playwright-mcp
 }
 ```
 
-### Configuration Fields
+### 配置字段
 
-| Field | Description |
+| 字段 | 说明 |
 |-------|-------------|
-| `command` | Executable to run |
-| `args` | Command arguments |
-| `env` | Environment variables |
-| `cwd` | Working directory |
+| `command` | 要运行的可执行文件 |
+| `args` | 命令参数 |
+| `env` | 环境变量 |
+| `cwd` | 工作目录 |
 
-### Dynamic Headers for Multiple MCP Servers (v2.1.85+)
+### 多 MCP 服务器的动态请求头（v2.1.85+）
 
-When a single `headersHelper` script serves multiple MCP servers, you can branch on `CLAUDE_CODE_MCP_SERVER_NAME` and `CLAUDE_CODE_MCP_SERVER_URL` to return different authentication tokens or scopes per server:
+当单个 `headersHelper` 脚本服务于多个 MCP 服务器时，你可以根据 `CLAUDE_CODE_MCP_SERVER_NAME` 和 `CLAUDE_CODE_MCP_SERVER_URL` 分支，为每个服务器返回不同的认证 token 或作用域：
 
 ```bash
 #!/bin/bash
@@ -12840,7 +12869,7 @@ case "$CLAUDE_CODE_MCP_SERVER_NAME" in
 esac
 ```
 
-Reference the script in your MCP server config:
+在 MCP 服务器配置中引用该脚本：
 
 ```json
 {
@@ -12859,117 +12888,118 @@ Reference the script in your MCP server config:
 }
 ```
 
-### Variable Substitution
+### 变量替换
 
-| Variable | Expands To |
+| 变量 | 展开为 |
 |----------|------------|
-| `${VAR}` | Environment variable value |
-| `${VAR:-default}` | Environment variable with fallback |
+| `${VAR}` | 环境变量值 |
+| `${VAR:-default}` | 带默认值的环境变量 |
 
-> **Warning**: The syntax `${workspaceFolder}` and `${env:VAR_NAME}` are VS Code conventions, not Claude Code. Claude Code uses standard shell-style `${VAR}` and `${VAR:-default}` for environment variable expansion in MCP config.
+> **警告**：`${workspaceFolder}` 和 `${env:VAR_NAME}` 是 VS Code 的约定，Claude Code 不支持。Claude Code 在 MCP 配置中使用标准 shell 风格的 `${VAR}` 和 `${VAR:-default}`。
 
-### Managing Large MCP Server Sets
+### 管理大量 MCP 服务器
 
-When you accumulate many MCP servers, enabling them all globally degrades Claude's tool selection — each server adds tool descriptions to the context, making the model less precise at picking the right one.
+当你积累了太多 MCP 服务器时，全部全局启用会降低 Claude 的工具选择能力 —— 每个服务器都会把工具描述注入上下文，让模型在挑选正确工具时变得不那么精准。
 
-**Pattern**: keep a minimal global config (2-3 core servers) and activate project-specific servers via per-project `.mcp.json`.
+**模式**：保持极简的全局配置（2-3 个核心服务器），通过项目级的 `.mcp.json` 激活项目专属服务器。
 
 ```
-# User-scope (~/.claude.json "mcpServers") → always loaded
+# 用户级（~/.claude.json 的 "mcpServers"）→ 始终加载
 context7, sequential-thinking
 
-# Project-scope (.mcp.json at project root) → only when needed
-postgres        # database project
-playwright      # frontend project
-serena          # large codebase
+# 项目级（项目根目录的 .mcp.json）→ 按需加载
+postgres        # 数据库项目
+playwright      # 前端项目
+serena          # 大型代码库
 ```
 
-Community tools (e.g. [cc-setup](https://github.com/rhuss/cc-setup)) are emerging to provide a TUI registry with per-project toggling and health checks — useful if you manage 8+ servers regularly.
+社区工具（例如 [cc-setup](https://github.com/rhuss/cc-setup)）正在涌现，提供 TUI 注册表、按项目切换和健康检查 —— 如果你经常管理 8 个以上服务器，会很有用。
 
-#### MCP Tool Search — Lazy-Loading at Scale
+#### MCP 工具搜索 —— 规模化懒加载
 
-Claude Code v4 introduced **MCP Tool Search**: instead of loading all MCP tool definitions at startup, tool schemas are fetched on-demand when Claude needs them.
+Claude Code v4 引入了 **MCP Tool Search**：不再在启动时加载所有 MCP 工具定义，而是在 Claude 需要时才获取工具 schema。
 
-**Why it matters**: each MCP server injects its full tool schema into the context window. With a dozen servers, that's ~77,000 tokens consumed before you've written a single prompt.
+**为什么重要**：每个 MCP 服务器都会把完整的工具 schema 注入上下文窗口。十几个服务器下来，你还没写第一个提示词，就已经消耗了约 77,000 tokens。
 
-| Setup | Context used by tools |
+| 设置 | 工具占用的上下文 |
 |-------|----------------------|
-| All tools loaded upfront | ~77,000 tokens |
-| MCP Tool Search enabled | ~8,700 tokens |
-| **Reduction** | **~85%** |
+| 所有工具预先加载 | ~77,000 tokens |
+| 启用 MCP Tool Search | ~8,700 tokens |
+| **减少量** | **~85%** |
 
-Model accuracy on tool-selection tasks (measured on Opus 4): 49% → 74% (+25 points) when switching from full preload to lazy-loading. Auto-enables when MCP tools would consume >10% of the context window.
+在工具选择任务上的模型准确率（Opus 4 测试）：从完整预加载的 49% 提升到懒加载的 74%（+25 个百分点）。当 MCP 工具将占用超过上下文窗口 10% 时，会自动启用。
 
-**Practical implication**: you can now connect dozens of MCP servers without the "too many tools" accuracy penalty. The advice to keep global config minimal still applies for unrelated tools, but MCP Tool Search changes the calculus for large project-specific sets.
+**实际意义**：现在你可以连接几十个 MCP 服务器，而无需承担“工具太多”的准确率惩罚。对于无关工具，保持全局配置极简的建议仍然适用，但 MCP Tool Search 改变了大型项目专属集合的成本计算。
 
-**CLI vs MCP — when a shell command beats a server**: Familiar CLI tools (git, grep, jq, curl) are already deeply embedded in Claude's training data. A few usage examples in CLAUDE.md are often more effective than an equivalent MCP server, because the model already knows the tool's behavior, flags, and output format. An MCP server adds tool schema overhead and introduces an unfamiliar interface. Default to CLIs for standard tools; use MCP servers for proprietary systems or APIs the model has no training context for.
+**CLI vs MCP —— 什么时候 shell 命令胜过服务器**：熟悉的 CLI 工具（git、grep、jq、curl）已经深度嵌入 Claude 的训练数据。在 CLAUDE.md 里放几个使用示例，往往比等价的 MCP 服务器更有效，因为模型已经了解这些工具的行为、参数和输出格式。MCP 服务器会增加 schema 开销，并引入一个不熟悉的接口。对于标准工具，优先使用 CLI；对于专有系统或模型没有训练上下文的 API，才使用 MCP 服务器。
 
-> Source: [HumanLayer — Harness Engineering for Coding Agents](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents) (March 2026)
+> 来源：[HumanLayer — Harness Engineering for Coding Agents](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents)（2026 年 3 月）
 
-### CLI-Based MCP Configuration
+### 基于 CLI 的 MCP 配置
 
-**Quick setup with environment variables**:
+**通过环境变量快速设置**：
 
 ```bash
-# Add server with API key
+# 带 API key 添加服务器
 claude mcp add -e API_KEY=your-key my-server -- npx @org/server
 
-# Multiple environment variables
+# 多个环境变量
 claude mcp add -e DATABASE_URL=postgresql://... -e DEBUG=true postgres -- npx @prisma/postgres
 
-# Verify with --help
+# 查看帮助
 claude mcp add --help
 ```
 
-> **Source**: CLI syntax adapted from [Shipyard Claude Code Cheat Sheet](https://shipyard.build/blog/claude-code-cheat-sheet/)
+> **来源**：CLI 语法改编自 [Shipyard Claude Code Cheat Sheet](https://shipyard.build/blog/claude-code-cheat-sheet/)
 
-### 8.3.1 MCP Secrets Management
+### 8.3.1 MCP 密钥管理
 
-**Problem**: MCP servers require API keys and credentials. Storing them in plaintext `mcp.json` creates security risks (accidental Git commits, exposure in logs, lateral movement after breach).
+**问题**：MCP 服务器需要 API key 和凭证。以明文存储在 `mcp.json` 中会带来安全风险（意外提交到 Git、日志泄露、被攻破后的横向移动）。
 
-**Solution**: Separate secrets from configuration using environment variables, OS keychains, or secret vaults.
+**解决方案**：使用环境变量、OS 钥匙串或密钥保险库，将密钥与配置分离。
 
-#### Security Principles
+#### 安全原则
 
-Before implementing secrets management, understand the baseline requirements from [Security Hardening Guide](./security/security-hardening.md):
+在实施密钥管理之前，先了解 [安全加固指南](./security/security-hardening.md) 中的基线要求：
 
-- **Encryption at rest**: Secrets must be encrypted on disk (OS keychain > plaintext .env)
-- **Least privilege**: Use read-only credentials when possible
-- **Token rotation**: Short-lived tokens with automated refresh
-- **Audit logging**: Track secret access without logging the secrets themselves
-- **Never in Git**: Secrets must never be committed to version control
+- **静态加密**：密钥在磁盘上必须加密（OS 钥匙串 > 明文 .env）
+- **最小权限**：尽可能使用只读凭证
+- **Token 轮换**：短有效期 token，自动刷新
+- **审计日志**：跟踪密钥访问，但不记录密钥本身
+- **绝不入 Git**：密钥绝不能提交到版本控制
 
-For full threat model and CVE details, see [Section 8.6 MCP Security](#86-mcp-security).
+完整威胁模型和 CVE 详情，请参阅 [8.6 MCP 安全](#86-mcp-security)。
 
-#### Three Practical Approaches
+#### 三种实用方案
 
-| Approach | Security | Complexity | Use Case |
+| 方案 | 安全性 | 复杂度 | 适用场景 |
 |----------|----------|------------|----------|
-| **OS Keychain** | High (encrypted at rest) | Medium | Solo developers, macOS/Linux |
-| **.env + .gitignore** | Medium (file permissions) | Low | Small teams, rapid prototyping |
-| **Secret Vaults** | Very High (centralized, audited) | High | Enterprise, compliance requirements |
+| **OS 钥匙串** | 高（静态加密） | 中等 | 个人开发者、macOS/Linux |
+| **.env + .gitignore** | 中（文件权限） | 低 | 小团队、快速原型 |
+| **密钥保险库** | 极高（集中管理、可审计） | 高 | 企业、合规要求 |
 
----#### Approach 1: OS Keychain (Recommended)
+---
+#### 方案 1：操作系统钥匙串（推荐）
 
-**Best for**: Solo developers on macOS/Linux with high security needs.
+**适合人群**：对安全性要求较高的 macOS/Linux 个人开发者。
 
-**Pros**: Encrypted at rest, OS-level access control, no plaintext files
-**Cons**: Platform-specific, requires scripting for automation
+**优点**：静态加密、操作系统级访问控制、无明文文件
+**缺点**：平台相关、自动化需要额外脚本
 
-**macOS Keychain Setup**:
+**macOS 钥匙串设置**：
 
 ```bash
-# Store secret in Keychain
+# 将密钥存入钥匙串
 security add-generic-password \
   -a "claude-mcp" \
   -s "github-token" \
   -w "ghp_your_token_here"
 
-# Verify storage
+# 验证存储
 security find-generic-password -s "github-token" -w
 ```
 
-**MCP configuration with keychain retrieval**:
+**通过钥匙串读取的 MCP 配置**：
 
 ```json
 {
@@ -12983,23 +13013,23 @@ security find-generic-password -s "github-token" -w
 }
 ```
 
-**Linux Secret Service** (GNOME Keyring, KWallet):
+**Linux Secret Service**（GNOME Keyring、KWallet）：
 
 ```bash
-# Install secret-tool (part of libsecret)
+# 安装 secret-tool（libsecret 的一部分）
 sudo apt install libsecret-tools  # Ubuntu/Debian
 
-# Store secret
+# 存储密钥
 secret-tool store --label="GitHub Token" service claude key github-token
-# Prompt will ask for the secret value
+# 会提示输入密钥值
 
-# Retrieve in MCP config (bash wrapper)
+# 在 MCP 配置中读取（bash 包装脚本）
 # ~/.claude/scripts/mcp-github.sh
 #!/bin/bash
 export GITHUB_TOKEN=$(secret-tool lookup service claude key github-token)
 npx @github/mcp-server
 
-# ~/.claude.json (or .mcp.json)
+# ~/.claude.json（或 .mcp.json）
 {
   "mcpServers": {
     "github": {
@@ -13010,13 +13040,13 @@ npx @github/mcp-server
 }
 ```
 
-**Windows Credential Manager**:
+**Windows 凭据管理器**：
 
 ```powershell
-# Store secret
+# 存储密钥
 cmdkey /generic:"claude-mcp-github" /user:"token" /pass:"ghp_your_token_here"
 
-# Retrieve in PowerShell wrapper
+# 在 PowerShell 包装脚本中读取
 $password = cmdkey /list:"claude-mcp-github" | Select-String -Pattern "Password" | ForEach-Object { $_.ToString().Split(":")[1].Trim() }
 $env:GITHUB_TOKEN = $password
 npx @github/mcp-server
@@ -13024,31 +13054,31 @@ npx @github/mcp-server
 
 ---
 
-#### Approach 2: .env + .gitignore (Simple)
+#### 方案 2：.env + .gitignore（简单）
 
-**Best for**: Small teams, rapid prototyping, adequate security with proper `.gitignore`.
+**适合人群**：小团队、快速原型开发，配合正确的 `.gitignore` 即可满足基本安全需求。
 
-**Pros**: Simple, cross-platform, easy onboarding
-**Cons**: Plaintext on disk (file permissions only), requires discipline
+**优点**：简单、跨平台、上手快
+**缺点**：磁盘明文存储（仅靠文件权限保护）、需要自律
 
-**Setup**:
+**设置步骤**：
 
 ```bash
-# 1. Create .env file (project root or ~/.claude/)
+# 1. 创建 .env 文件（项目根目录或 ~/.claude/）
 cat > ~/.claude/.env << EOF
 GITHUB_TOKEN=ghp_your_token_here
 OPENAI_API_KEY=sk-your-key-here
 DATABASE_URL=postgresql://user:pass@localhost/db
 EOF
 
-# 2. Secure permissions (Unix only)
+# 2. 设置文件权限（仅 Unix）
 chmod 600 ~/.claude/.env
 
-# 3. Add to .gitignore
+# 3. 加入 .gitignore
 echo ".env" >> ~/.claude/.gitignore
 ```
 
-**MCP configuration with .env variables**:
+**使用 .env 环境变量的 MCP 配置**：
 
 ```json
 {
@@ -13071,25 +13101,25 @@ echo ".env" >> ~/.claude/.gitignore
 }
 ```
 
-**Load .env before Claude Code**:
+**启动 Claude Code 前加载 .env**：
 
 ```bash
-# Option 1: Shell wrapper
+# 方案 1：Shell 包装脚本
 # ~/bin/claude-with-env
 #!/bin/bash
 export $(cat ~/.claude/.env | xargs)
 claude "$@"
 
-# Option 2: direnv (automatic per-directory)
-# Install: https://direnv.net/
+# 方案 2：direnv（按目录自动加载）
+# 安装：https://direnv.net/
 echo 'dotenv ~/.claude/.env' > ~/.config/direnv/direnvrc
 direnv allow ~/.claude
 ```
 
-**Template approach for teams**:
+**团队模板化方案**：
 
 ```bash
-# Commit template (no secrets)
+# 提交模板（不含密钥）
 cat > ~/.claude/mcp-config.template.json << EOF
 {
   "mcpServers": {
@@ -13104,38 +13134,38 @@ cat > ~/.claude/mcp-config.template.json << EOF
 }
 EOF
 
-# Generate actual config from template + .env
+# 通过模板 + .env 生成实际配置
 envsubst < ~/.claude/mcp-config.template.json > ~/.claude.json
 
 # .gitignore
-.claude.json  # Generated, contains resolved secrets
-.env          # Never commit
+.claude.json  # 生成的文件，包含解析后的密钥
+.env          # 永远不要提交
 ```
 
-**See also**: [sync-claude-config.sh](../../examples/scripts/sync-claude-config.sh) for automated template substitution.
+**另见**：[sync-claude-config.sh](../../examples/scripts/sync-claude-config.sh) 自动模板替换脚本。
 
 ---
 
-#### Approach 3: Secret Vaults (Enterprise)
+#### 方案 3：密钥保险箱（企业级）
 
-**Best for**: Enterprise, compliance (SOC 2, HIPAA), centralized secret management.
+**适合人群**：企业环境、合规要求（SOC 2、HIPAA）、需要集中式密钥管理。
 
-**Pros**: Centralized, audited, automated rotation, fine-grained access control
-**Cons**: Complex setup, requires infrastructure, vendor lock-in
+**优点**：集中管理、可审计、自动轮换、细粒度访问控制
+**缺点**：部署复杂、需要基础设施、存在厂商锁定
 
-**HashiCorp Vault**:
+**HashiCorp Vault**：
 
 ```bash
-# Store secret in Vault
+# 在 Vault 中存储密钥
 vault kv put secret/claude/github token=ghp_your_token_here
 
-# Retrieve in wrapper script
+# 在包装脚本中读取
 # ~/.claude/scripts/mcp-github-vault.sh
 #!/bin/bash
 export GITHUB_TOKEN=$(vault kv get -field=token secret/claude/github)
 npx @github/mcp-server
 
-# ~/.claude.json (or .mcp.json)
+# ~/.claude.json（或 .mcp.json）
 {
   "mcpServers": {
     "github": {
@@ -13146,15 +13176,15 @@ npx @github/mcp-server
 }
 ```
 
-**AWS Secrets Manager**:
+**AWS Secrets Manager**：
 
 ```bash
-# Store secret
+# 存储密钥
 aws secretsmanager create-secret \
   --name claude/github-token \
   --secret-string "ghp_your_token_here"
 
-# Retrieve in wrapper
+# 在包装脚本中读取
 export GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
   --secret-id claude/github-token \
   --query SecretString \
@@ -13162,26 +13192,26 @@ export GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
 npx @github/mcp-server
 ```
 
-**1Password CLI** (team-friendly):
+**1Password CLI**（适合团队）：
 
 ```bash
-# Store in 1Password (via GUI or CLI)
+# 在 1Password 中存储（通过 GUI 或 CLI）
 op item create --category=password \
   --title="Claude MCP GitHub Token" \
   token=ghp_your_token_here
 
-# Retrieve in wrapper
+# 在包装脚本中读取
 export GITHUB_TOKEN=$(op read "op://Private/Claude MCP GitHub Token/token")
 npx @github/mcp-server
 ```
 
 ---
 
-#### Secrets Rotation Workflow
+#### 密钥轮换工作流
 
-**Problem**: API keys expire or are compromised. Rotating secrets across multiple MCP servers is manual and error-prone.
+**问题**：API 密钥会过期或被泄露。在多个 MCP 服务器之间手动轮换密钥既繁琐又容易出错。
 
-**Solution**: Centralized `.env` file with rotation script.
+**解决方案**：集中式 `.env` 文件 + 轮换脚本。
 
 ```bash
 # ~/.claude/rotate-secret.sh
@@ -13189,251 +13219,251 @@ npx @github/mcp-server
 SECRET_NAME=$1
 NEW_VALUE=$2
 
-# 1. Update .env file
+# 1. 更新 .env 文件
 sed -i.bak "s|^${SECRET_NAME}=.*|${SECRET_NAME}=${NEW_VALUE}|" ~/.claude/.env
 
-# 2. Regenerate config from template
+# 2. 从模板重新生成配置
 envsubst < ~/.claude/mcp-config.template.json > ~/.claude.json
 
-# 3. Restart MCP servers (if running)
+# 3. 重启 MCP 服务器（如果正在运行）
 pkill -f "mcp-server" || true
 
-echo "✅ Rotated $SECRET_NAME"
-echo "⚠️  Restart Claude Code to apply changes"
+echo "✅ 已轮换 $SECRET_NAME"
+echo "⚠️  请重启 Claude Code 以应用变更"
 ```
 
-**Usage**:
+**用法**：
 
 ```bash
-# Rotate GitHub token
+# 轮换 GitHub token
 ./rotate-secret.sh GITHUB_TOKEN ghp_new_token_here
 
-# Rotate database password
+# 轮换数据库密码
 ./rotate-secret.sh DATABASE_URL postgresql://user:new_pass@localhost/db
 ```
 
-**Automated rotation with Vault** (advanced):
+**Vault 自动轮换**（高级）：
 
 ```bash
 # vault-rotate.sh
 #!/bin/bash
-# Fetch latest secrets from Vault, update .env, restart Claude
+# 从 Vault 获取最新密钥，更新 .env，重启 Claude
 
 vault kv get -format=json secret/claude | jq -r '.data.data | to_entries[] | "\(.key)=\(.value)"' > ~/.claude/.env
 envsubst < ~/.claude/mcp-config.template.json > ~/.claude.json
 
-echo "✅ Secrets rotated from Vault"
+echo "✅ 已从 Vault 轮换密钥"
 ```
 
-Schedule with cron:
+用 cron 定时执行：
 
 ```bash
-# Rotate daily at 3 AM
+# 每天凌晨 3 点轮换
 0 3 * * * ~/claude-rotate.sh >> ~/claude-rotate.log 2>&1
 ```
 
 ---
 
-#### Pre-Commit Secret Detection
+#### 提交前密钥检测
 
-**Problem**: Developers accidentally commit secrets to Git despite `.gitignore` (e.g., adding `.env` with `git add -f`).
+**问题**：即使有 `.gitignore`，开发者仍可能意外将密钥提交到 Git（例如用 `git add -f` 强制添加 `.env`）。
 
-**Solution**: [Pre-commit hook](../../examples/hooks/bash/pre-commit-secrets.sh) to block commits containing secrets.
+**解决方案**：[Pre-commit hook](../../examples/hooks/bash/pre-commit-secrets.sh)，拦截包含密钥的提交。
 
 ```bash
-# Install hook
+# 安装钩子
 cp examples/hooks/bash/pre-commit-secrets.sh .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 
-# Test (should fail)
+# 测试（应当失败）
 echo "GITHUB_TOKEN=ghp_test" > test.txt
 git add test.txt
 git commit -m "Test"
-# ❌ Blocked: Secret detected in test.txt
+# ❌ 被拦截：test.txt 中检测到密钥
 ```
 
-**Detection patterns** (see hook for full list):
+**检测规则**（完整列表见钩子脚本）：
 
-- OpenAI keys: `sk-[A-Za-z0-9]{48}`
-- GitHub tokens: `ghp_[A-Za-z0-9]{36}`
-- AWS keys: `AKIA[A-Z0-9]{16}`
-- Generic API keys: `api[_-]?key[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9]{20,}`
+- OpenAI 密钥：`sk-[A-Za-z0-9]{48}`
+- GitHub token：`ghp_[A-Za-z0-9]{36}`
+- AWS 密钥：`AKIA[A-Z0-9]{16}`
+- 通用 API 密钥：`api[_-]?key[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9]{20,}`
 
 ---
 
-#### Verification Checklist
+#### 验证清单
 
-Before deploying MCP servers with secrets:
+部署带密钥的 MCP 服务器前，请逐项确认：
 
-| Check | Command | Pass Criteria |
-|-------|---------|---------------|
-| **.env not in Git** | `git ls-files | grep .env` | No output |
-| **File permissions** | `ls -l ~/.claude/.env` | `-rw-------` (600) |
-| **Template committed** | `git ls-files | grep template` | `mcp.json.template` present |
-| **Pre-commit hook** | `cat .git/hooks/pre-commit` | Secret detection script present |
-| **Secrets resolved** | `claude mcp list` | All servers start without errors |
+| 检查项 | 命令 | 通过标准 |
+|--------|------|----------|
+| **.env 未入 Git** | `git ls-files | grep .env` | 无输出 |
+| **文件权限** | `ls -l ~/.claude/.env` | `-rw-------` (600) |
+| **模板已提交** | `git ls-files | grep template` | 存在 `mcp.json.template` |
+| **Pre-commit 钩子** | `cat .git/hooks/pre-commit` | 包含密钥检测脚本 |
+| **密钥解析正常** | `claude mcp list` | 所有服务器无错误启动 |
 
-**Test secret isolation**:
+**测试密钥隔离**：
 
 ```bash
-# Should work (secret from .env)
+# 应当正常（从 .env 加载密钥）
 export $(cat ~/.claude/.env | xargs)
 claude
 
-# Should fail (no secrets in environment)
+# 应当失败（环境变量中无密钥）
 unset GITHUB_TOKEN DATABASE_URL
 claude
-# ❌ MCP servers fail to start (expected)
+# ❌ MCP 服务器启动失败（预期行为）
 ```
 
 ---
 
-#### Best Practices Summary
+#### 最佳实践总结
 
-| Practice | Rationale |
-|----------|-----------|
-| **Use OS keychain when possible** | Encrypted at rest, OS-level security |
-| **Never commit .env to Git** | One leak = full compromise |
-| **Commit .env.example template** | Team onboarding without secrets |
-| **Use ${VAR} in MCP config** | Separation of config and secrets |
-| **Rotate secrets quarterly** | Limit blast radius of old leaks |
-| **Audit .gitignore before push** | Prevent accidental exposure |
-| **Least privilege credentials** | Read-only DB users, scoped API tokens |
-| **Monitor for leaked secrets** | GitHub secret scanning, GitGuardian |
+| 实践 | 原因 |
+|------|------|
+| **尽可能使用 OS 钥匙串** | 静态加密，操作系统级安全 |
+| **永远不要将 .env 提交到 Git** | 一次泄露 = 全面沦陷 |
+| **提交 .env.example 模板** | 方便团队新成员上手，同时不暴露密钥 |
+| **在 MCP 配置中使用 ${VAR}** | 配置与密钥分离 |
+| **每季度轮换密钥** | 限制旧密钥泄露的影响范围 |
+| **推送前检查 .gitignore** | 防止意外暴露 |
+| **最小权限凭据** | 只读数据库用户、限定范围的 API token |
+| **监控泄露的密钥** | GitHub Secret Scanning、GitGuardian |
 
-For production deployments, consider [zero standing privilege](https://www.rkon.com/articles/mcp-server-security-navigating-the-new-ai-attack-surface/) where MCP servers start with no secrets and request just-in-time credentials on tool invocation.
+对于生产部署，可以考虑[零长期权限](https://www.rkon.com/articles/mcp-server-security-navigating-the-new-ai-attack-surface/)模式：MCP 服务器启动时不持有任何密钥，仅在调用工具时按需申请临时凭据。
 
-## 8.4 Server Selection Guide
+## 8.4 服务器选择指南
 
-### Decision Tree
-
-```
-What do you need?
-│
-├─ Know exact pattern/text?
-│  └─ Use native Grep tool or rg (~20ms)
-│
-├─ Deep code understanding?
-│  └─ Use Serena
-│
-├─ Explore code by intent / semantic search?
-│  └─ Use grepai (~500ms)
-│
-├─ Trace who calls what? (call graph)
-│  └─ Use grepai
-│
-├─ Library documentation?
-│  └─ Use Context7
-│
-├─ Complex reasoning?
-│  └─ Use Sequential Thinking
-│
-├─ Database queries?
-│  └─ Use Postgres
-│
-├─ Browser testing?
-│  └─ Use Playwright
-│
-└─ General task?
-   └─ Use built-in tools
-```
-
-### Server Comparison
-
-| Need | Best Tool | Why |
-|------|-----------|-----|
-| "Find exact string 'validateUser'" | Native Grep / rg | Fast exact match (~20ms) |
-| "Find all usages of this function" | Serena | Semantic symbol analysis |
-| "Remember this for next session" | Serena | Persistent memory |
-| "Find code that handles payments" | grepai / mgrep | Intent-based semantic search |
-| "Who calls this function?" | grepai | Call graph analysis |
-| "How does React useEffect work?" | Context7 | Official docs |
-| "Why is this failing?" | Sequential | Structured debugging |
-| "What's in the users table?" | Postgres | Direct query |
-| "Test the login flow" | Playwright | Browser automation |
-
-### Combining Servers
-
-Servers can work together:
+### 决策树
 
 ```
-1. Context7 → Get official pattern for auth
-2. Serena → Find existing auth code
-3. Sequential → Analyze how to integrate
-4. Playwright → Test the implementation
+你需要什么？
+│
+├─ 知道确切的模式/文本？
+│  └─ 使用原生 Grep 工具或 rg（约 20ms）
+│
+├─ 深度代码理解？
+│  └─ 使用 Serena
+│
+├─ 按意图/语义搜索代码？
+│  └─ 使用 grepai（约 500ms）
+│
+├─ 追踪调用关系？（调用图）
+│  └─ 使用 grepai
+│
+├─ 查询库文档？
+│  └─ 使用 Context7
+│
+├─ 复杂推理？
+│  └─ 使用 Sequential Thinking
+│
+├─ 数据库查询？
+│  └─ 使用 Postgres
+│
+├─ 浏览器测试？
+│  └─ 使用 Playwright
+│
+└─ 一般任务？
+   └─ 使用内置工具
 ```
 
-### Production Case Study: Multi-System Support Investigator
+### 服务器对比
 
-**Context**: Mergify (CI/CD automation platform) needed to triage support tickets across 5 disconnected systems — a manual 15-minute process per ticket.
+| 需求 | 最佳工具 | 原因 |
+|------|----------|------|
+| "查找精确字符串 'validateUser'" | 原生 Grep / rg | 快速精确匹配（约 20ms） |
+| "查找这个函数的所有用法" | Serena | 语义符号分析 |
+| "下次会话记住这个" | Serena | 持久化记忆 |
+| "查找处理支付的代码" | grepai / mgrep | 基于意图的语义搜索 |
+| "谁调用了这个函数？" | grepai | 调用图分析 |
+| "React useEffect 是怎么工作的？" | Context7 | 官方文档 |
+| "为什么会失败？" | Sequential | 结构化调试 |
+| "users 表里有什么？" | Postgres | 直接查询 |
+| "测试登录流程" | Playwright | 浏览器自动化 |
 
-**Architecture**: Claude Code as orchestrator + 5 custom MCP servers as system adapters:
+### 组合使用服务器
+
+服务器可以协同工作：
 
 ```
-Support ticket received
+1. Context7 → 获取官方认证模式
+2. Serena → 查找现有认证代码
+3. Sequential → 分析如何集成
+4. Playwright → 测试实现效果
+```
+
+### 生产案例：多系统支持调查员
+
+**背景**：Mergify（CI/CD 自动化平台）需要处理来自 5 个互不连通系统的支持工单——每张工单原本要手动处理 15 分钟。
+
+**架构**：Claude Code 作为编排器 + 5 个自定义 MCP 服务器作为系统适配器：
+
+```
+收到支持工单
         │
         ▼
 ┌───────────────┐
-│  Claude Code  │  ← orchestrates, synthesizes, produces report
+│  Claude Code  │  ← 编排、综合、生成报告
 └───────┬───────┘
-        │ parallel fan-out
+        │ 并行扇出
         ├──────────────────┬──────────────────┬──────────────────┬──────────────────┐
         ▼                  ▼                  ▼                  ▼                  ▼
  ┌─────────────┐  ┌─────────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
  │  Datadog    │  │     Sentry      │  │  PostgreSQL  │  │    Linear    │  │    GitHub    │
- │  (metrics,  │  │  (errors, perf  │  │  (customer   │  │  (tickets,   │  │   (source,   │
- │   traces)   │  │   regressions)  │  │   data, DB)  │  │   history)   │  │  recent PRs) │
+ │  (指标、    │  │  (错误、性能    │  │  (客户       │  │  (工单、      │  │   (源码、     │
+ │   追踪)     │  │   回归)         │  │   数据、DB)  │  │   历史)      │  │  近期 PR)    │
  └─────────────┘  └─────────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
 ```
 
-**Key design decisions:**
+**关键设计决策**：
 
-- MCP servers handle auth/credentials — Claude Code sees only clean interfaces
-- Queries execute **in parallel**, not sequentially → majority of the time savings
-- Human investigators review Claude's structured report, not raw data
-- One dedicated repo for all MCP server implementations + system prompt
+- MCP 服务器自行处理认证/凭据 —— Claude Code 只看到干净的接口
+- 查询**并行**执行，而非串行 —— 这是节省时间的关键
+- 人工调查员审阅 Claude 的结构化报告，而非原始数据
+- 所有 MCP 服务器实现 + 系统提示词放在同一个专用仓库中
 
-**Results** (self-reported by Mergify, Nov 2025):
+**成果**（Mergify 自述，2025 年 11 月）：
 
-- Triage time: ~15 min → <5 min (⅔ reduction)
-- First-pass accuracy: 75% (25% still require human follow-up)
+- 分类时间：约 15 分钟 → < 5 分钟（减少 ⅔）
+- 初筛准确率：75%（25% 仍需人工跟进）
 
-**Key takeaway**: This pattern — Claude Code as operational orchestrator with domain-specific MCP adapters — applies to any ops/support team juggling multiple disconnected systems. It's distinct from "Claude Code as dev tool": here Claude runs in a **production workflow**, not an IDE.
+**核心启示**：这种模式——Claude Code 作为运营编排器，配合领域专属的 MCP 适配器——适用于任何需要 juggling 多个互不连通系统的运维/支持团队。它与"Claude Code 作为开发工具"截然不同：这里的 Claude 运行在**生产工作流**中，而不是 IDE 里。
 
-> Source: [Mergify blog — "How We Turned Claude Into a Cross-System Support Investigator"](https://mergify.com/blog/how-we-turned-claude-into-a-cross-system-support-investigator) (Julian Maurin, Nov 2025)
+> 来源：[Mergify 博客 — "How We Turned Claude Into a Cross-System Support Investigator"](https://mergify.com/blog/how-we-turned-claude-into-a-cross-system-support-investigator)（Julian Maurin，2025 年 11 月）
 
-## 8.5 Plugin System
+## 8.5 插件系统
 
-Claude Code includes a comprehensive **plugin system** that allows you to extend functionality through community-created or custom plugins and marketplaces.
+Claude Code 拥有一套完善的**插件系统**，让你可以通过社区或自定义插件及市场来扩展功能。
 
-### What Are Plugins?
+### 什么是插件？
 
-Plugins are packaged extensions that can add:
+插件是打包好的扩展，可以增加：
 
-- Custom agents with specialized behavior
-- New skills for reusable workflows
-- Pre-configured commands
-- Domain-specific tooling
+- 具备专业行为的自定义智能体
+- 可复用工作流的新技能
+- 预配置命令
+- 领域专属工具
 
-Think of plugins as **distributable packages** that bundle agents, skills, and configuration into installable modules.
+你可以把插件理解为**可分发包**：它们将智能体、技能和配置打包成可安装的模块。
 
-### Plugin Commands
+### 插件命令
 
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `claude plugin` | List installed plugins | Shows all plugins with status |
-| `claude plugin install <name>` | Install plugin from marketplace | `claude plugin install security-audit` |
-| `claude plugin install <name>@<marketplace>` | Install from specific marketplace | `claude plugin install linter@company` |
-| `claude plugin enable <name>` | Enable installed plugin | `claude plugin enable security-audit` |
-| `claude plugin disable <name>` | Disable plugin without removing | `claude plugin disable linter` |
-| `claude plugin uninstall <name>` | Remove plugin completely (prompts before deleting persistent data) | `claude plugin uninstall security-audit` |
-| `claude plugin update [name]` | Update plugin to latest version | `claude plugin update security-audit` |
-| `claude plugin validate <path>` | Validate plugin manifest | `claude plugin validate ./my-plugin` |
+| 命令 | 用途 | 示例 |
+|------|------|------|
+| `claude plugin` | 列出已安装插件 | 显示所有插件及其状态 |
+| `claude plugin install <name>` | 从市场安装插件 | `claude plugin install security-audit` |
+| `claude plugin install <name>@<marketplace>` | 从指定市场安装 | `claude plugin install linter@company` |
+| `claude plugin enable <name>` | 启用已安装插件 | `claude plugin enable security-audit` |
+| `claude plugin disable <name>` | 禁用插件（不删除） | `claude plugin disable linter` |
+| `claude plugin uninstall <name>` | 完全移除插件（删除前会提示是否保留持久数据） | `claude plugin uninstall security-audit` |
+| `claude plugin update [name]` | 更新插件到最新版本 | `claude plugin update security-audit` |
+| `claude plugin validate <path>` | 验证插件清单 | `claude plugin validate ./my-plugin` |
 
-> **`${CLAUDE_PLUGIN_DATA}` — Persistent plugin storage (v2.1.78+)**: Plugins can store state that survives updates using the `${CLAUDE_PLUGIN_DATA}` env variable. This variable points to a dedicated directory that is preserved when the plugin is updated and only deleted on explicit `/plugin uninstall` (with confirmation prompt). Use it for caches, user preferences, or any data your plugin needs across sessions.
+> **`${CLAUDE_PLUGIN_DATA}` — 插件持久化存储（v2.1.78+）**：插件可以利用 `${CLAUDE_PLUGIN_DATA}` 环境变量保存状态，这些状态在更新插件时会被保留，只有在执行 `/plugin uninstall` 并确认后才会删除。你可以用它来存放缓存、用户偏好，或任何需要跨会话保留的数据。
 >
 > ```json
-> // In your plugin's hooks.json
+> // 在你的插件 hooks.json 中
 > {
 >   "hooks": {
 >     "SessionStart": [{
@@ -13444,80 +13474,80 @@ Think of plugins as **distributable packages** that bundle agents, skills, and c
 > }
 > ```
 
-### Marketplace Management
+### 市场管理
 
-Marketplaces are repositories of plugins you can install from.
+市场是你可以从中安装插件的仓库集合。
 
-**Marketplace commands:**
+**市场命令**：
 
 ```bash
-# Add a marketplace
+# 添加市场
 claude plugin marketplace add <url-or-path>
 
-# Examples:
+# 示例：
 claude plugin marketplace add https://github.com/claudecode/plugins
 claude plugin marketplace add /Users/yourname/company-plugins
-claude plugin marketplace add gh:myorg/claude-plugins  # GitHub shorthand
+claude plugin marketplace add gh:myorg/claude-plugins  # GitHub 简写
 
-# List configured marketplaces
+# 列出已配置的市场
 claude plugin marketplace list
 
-# Update marketplace catalog
+# 更新市场目录
 claude plugin marketplace update [name]
 
-# Remove a marketplace
+# 移除市场
 claude plugin marketplace remove <name>
 ```
 
-### Using Plugins
+### 使用插件
 
-**Typical workflow:**
+**典型工作流**：
 
 ```bash
-# 1. Add a marketplace (one-time setup)
+# 1. 添加市场（一次性设置）
 claude plugin marketplace add https://github.com/awesome-claude/plugins
 
-# 2. Install a plugin
+# 2. 安装插件
 claude plugin install code-reviewer
 
-# 3. Enable it for your project
+# 3. 为项目启用
 claude plugin enable code-reviewer
 
-# 4. Use it in Claude Code session
+# 4. 在 Claude Code 会话中使用
 claude
 You: /review-pr
-# Plugin command is now available
+# 插件命令现在可用
 ```
 
-### Plugin Session Loading
+### 插件会话加载
 
-Load plugins temporarily for a single session:
+临时为单次会话加载插件：
 
 ```bash
-# Load plugin directory for this session only
+# 仅本次会话加载插件目录
 claude --plugin-dir ~/.claude/custom-plugins
 
-# Load multiple plugin directories
+# 加载多个插件目录
 claude --plugin-dir ~/work/plugins --plugin-dir ~/personal/plugins
 ```
 
-This is useful for testing plugins before permanent installation.
+这在永久安装前测试插件时非常有用。
 
-### Repo-Level Plugin Policy via `--add-dir` (v2.1.45+)
+### 仓库级插件策略 via `--add-dir`（v2.1.45+）
 
-Define plugin policies at repository or shared-config level using `--add-dir`:
+使用 `--add-dir` 在仓库或共享配置级别定义插件策略：
 
 ```bash
-# Load plugin configuration from a shared directory
+# 从共享目录加载插件配置
 claude --add-dir /path/to/shared-config
 ```
 
-The directory's `settings.json` can specify:
+该目录的 `settings.json` 可以指定：
 
-- `enabledPlugins`: list of pre-enabled plugins for every session
-- `extraKnownMarketplaces`: additional marketplace registries to recognize
+- `enabledPlugins`：每次会话默认启用的插件列表
+- `extraKnownMarketplaces`：额外识别的市场注册表
 
-**Example shared config `settings.json`:**
+**共享配置 `settings.json` 示例**：
 
 ```json
 {
@@ -13528,56 +13558,56 @@ The directory's `settings.json` can specify:
 }
 ```
 
-**Team use case**: Commit a shared config directory to your repo and all team members automatically get the same enabled plugins and approved marketplaces — no per-user configuration needed.
+**团队场景**：将共享配置目录提交到仓库，所有团队成员自动获得相同的启用插件和已批准市场——无需逐人配置。
 
-### When to Use Plugins
+### 何时使用插件
 
-| Scenario | Use Plugins |
-|----------|-------------|
-| **Team workflows** | ✅ Share standardized agents/skills across team via private marketplace |
-| **Domain expertise** | ✅ Install pre-built plugins for security, accessibility, performance analysis |
-| **Repeating patterns** | ✅ Package your custom workflows for reuse across projects |
-| **Community solutions** | ✅ Leverage community expertise instead of rebuilding from scratch |
-| **Quick experiments** | ❌ Use custom agents/skills directly in `.claude/` folder |
-| **Project-specific** | ❌ Keep as project CLAUDE.md instructions instead |
+| 场景 | 是否使用插件 |
+|------|--------------|
+| **团队工作流** | ✅ 通过私有市场跨团队共享标准化智能体/技能 |
+| **领域专业知识** | ✅ 安装安全、可访问性、性能分析等预构建插件 |
+| **重复模式** | ✅ 将自定义工作流打包，跨项目复用 |
+| **社区方案** | ✅ 借助社区经验，避免从零造轮子 |
+| **快速实验** | ❌ 直接在 `.claude/` 文件夹中使用自定义智能体/技能 |
+| **项目专属** | ❌ 保留为项目 CLAUDE.md 指令即可 |
 
-### Creating Custom Plugins
+### 创建自定义插件
 
-Plugins are structured directories with a manifest inside `.claude-plugin/`:
+插件是带有清单的目录结构，清单放在 `.claude-plugin/` 中：
 
 ```
 my-plugin/
 ├── .claude-plugin/
-│   └── plugin.json       # Plugin manifest (ONLY file in this dir)
+│   └── plugin.json       # 插件清单（该目录下只能有这一个文件）
 ├── agents/
-│   └── my-agent.md       # Custom agents
+│   └── my-agent.md       # 自定义智能体
 ├── skills/
 │   └── code-review/
-│       └── SKILL.md      # Agent Skills (folder + SKILL.md)
+│       └── SKILL.md      # 智能体技能（文件夹 + SKILL.md）
 ├── commands/
-│   └── my-cmd.md         # Slash commands
+│   └── my-cmd.md         # 斜杠命令
 ├── hooks/
-│   └── hooks.json        # Event handlers
-├── .mcp.json             # MCP server configurations (optional)
-├── .lsp.json             # LSP server configurations (optional)
-└── README.md             # Documentation
+│   └── hooks.json        # 事件处理器
+├── .mcp.json             # MCP 服务器配置（可选）
+├── .lsp.json             # LSP 服务器配置（可选）
+└── README.md             # 文档
 ```
 
-### LSP Native Support (v2.0.74+)
+### 原生 LSP 支持（v2.0.74+）
 
-Since v2.0.74 (December 2025), Claude Code natively integrates with Language Server Protocol servers. Instead of navigating your codebase through text search (grep), Claude connects to the LSP server of your project and understands symbols, types, and cross-references — the same way an IDE does.
+自 v2.0.74（2025 年 12 月）起，Claude Code 原生集成 Language Server Protocol 服务器。它不再仅仅通过文本搜索（grep）浏览代码库，而是直接连接你项目的 LSP 服务器，像 IDE 一样理解符号、类型和交叉引用。
 
-**Why it matters**: Finding all call sites of a function drops from ~45 seconds (text search) to ~50ms (LSP). Claude also gets automatic diagnostics after every file edit — errors and warnings appear in real time, without a separate build step.
+**意义何在**：查找某个函数的所有调用点从约 45 秒（文本搜索）缩短到约 50ms（LSP）。而且每次编辑文件后，Claude 会自动获得诊断信息——错误和警告实时出现，无需额外构建。
 
-**Supported languages (11)**: Python, TypeScript, JavaScript, Go, Rust, Java, C/C++, C#, PHP, Kotlin, Ruby.
+**支持语言（11 种）**：Python、TypeScript、JavaScript、Go、Rust、Java、C/C++、C#、PHP、Kotlin、Ruby。
 
-#### Activation
+#### 激活方式
 
 ```bash
-# Option 1 — one-time env variable
+# 方案 1 — 一次性环境变量
 ENABLE_LSP_TOOL=1 claude
 
-# Option 2 — persist in ~/.claude/settings.json
+# 方案 2 — 持久化到 ~/.claude/settings.json
 {
   "env": {
     "ENABLE_LSP_TOOL": "1"
@@ -13585,20 +13615,20 @@ ENABLE_LSP_TOOL=1 claude
 }
 ```
 
-The LSP server for your language must already be installed on the machine — Claude Code connects to it, it doesn't install it. Common servers:
+你的语言 LSP 服务器必须已经安装在机器上——Claude Code 只负责连接，不负责安装。常用服务器：
 
-| Language | Server | Install |
-|----------|--------|---------|
-| TypeScript | `tsserver` | Bundled with TypeScript |
+| 语言 | 服务器 | 安装方式 |
+|------|--------|----------|
+| TypeScript | `tsserver` | 随 TypeScript 捆绑 |
 | Python | `pylsp` | `pip install python-lsp-server` |
 | Go | `gopls` | `go install golang.org/x/tools/gopls@latest` |
 | Rust | `rust-analyzer` | `rustup component add rust-analyzer` |
-| Kotlin | `kotlin-language-server` | Via IntelliJ or standalone |
-| Swift | `sourcekit-lsp` | Bundled with Xcode |
+| Kotlin | `kotlin-language-server` | 通过 IntelliJ 或独立安装 |
+| Swift | `sourcekit-lsp` | 随 Xcode 捆绑 |
 
-#### Timeout configuration (`.lsp.json`)
+#### 超时配置（`.lsp.json`）
 
-Controls how long Claude waits for an LSP server to initialize before treating it as unresponsive (v2.1.50+):
+控制 Claude 等待 LSP 服务器初始化的时间，超时则视为无响应（v2.1.50+）：
 
 ```json
 {
@@ -13609,11 +13639,11 @@ Controls how long Claude waits for an LSP server to initialize before treating i
 }
 ```
 
-Useful in slow environments (CI, Docker, cold start) where default timeouts cause LSP features to be silently skipped.
+在慢速环境（CI、Docker、冷启动）中，默认超时可能导致 LSP 功能被静默跳过，此时调整这个配置很有用。
 
-> ⚠️ **Common mistake**: Don't put `commands/`, `agents/`, `skills/`, or `hooks/` inside `.claude-plugin/`. Only `plugin.json` goes there.
+> ⚠️ **常见错误**：不要把 `commands/`、`agents/`、`skills/` 或 `hooks/` 放在 `.claude-plugin/` 里面。该目录只能放 `plugin.json`。
 
-**Example `.claude-plugin/plugin.json`:**
+**`.claude-plugin/plugin.json` 示例**：
 
 ```json
 {
@@ -13626,298 +13656,298 @@ Useful in slow environments (CI, Docker, cold start) where default timeouts caus
 }
 ```
 
-> The manifest only defines metadata. Claude Code auto-discovers components from the directory structure.
+> 清单只定义元数据。Claude Code 会根据目录结构自动发现组件。
 
-**Skill namespacing**: Plugin skills are prefixed with the plugin name to prevent conflicts:
+**技能命名空间**：插件中的技能会自动加上插件名前缀，防止冲突：
 
-- Plugin `security-audit` with skill `scan` → `/security-audit:scan`
+- 插件 `security-audit` 中的技能 `scan` → `/security-audit:scan`
 
-**Validate before distribution:**
+**分发前验证**：
 
 ```bash
 claude plugin validate ./my-plugin
 ```
 
-**Official documentation**: [code.claude.com/docs/en/plugins](https://code.claude.com/docs/en/plugins)
+**官方文档**：[code.claude.com/docs/en/plugins](https://code.claude.com/docs/en/plugins)
 
-### Plugin vs. MCP Server
+### 插件 vs MCP 服务器
 
-Understanding when to use which:
+理解何时该用哪个：
 
-| Feature | Plugin | MCP Server |
-|---------|--------|------------|
-| **Purpose** | Bundle Claude-specific workflows (agents, skills) | Add external tool capabilities (databases, APIs) |
-| **Complexity** | Simpler - just files + manifest | More complex - requires server implementation |
-| **Scope** | Claude Code instructions and patterns | External system integrations |
-| **Installation** | `claude plugin install` | Add to `settings.json` MCP config |
-| **Use case** | Security auditor agent, code review workflows | PostgreSQL access, Playwright browser automation |
-| **Interactive UI** | No | Yes (via MCP Apps extension - SEP-1865)* |
+| 特性 | 插件 | MCP 服务器 |
+|------|------|------------|
+| **用途** | 打包 Claude 专属工作流（智能体、技能） | 添加外部工具能力（数据库、API） |
+| **复杂度** | 更简单 — 只需文件 + 清单 | 更复杂 — 需要实现服务器 |
+| **范围** | Claude Code 指令和模式 | 外部系统集成 |
+| **安装方式** | `claude plugin install` | 在 `settings.json` 中添加 MCP 配置 |
+| **用例** | 安全审计智能体、代码审查工作流 | PostgreSQL 访问、Playwright 浏览器自动化 |
+| **交互式 UI** | 无 | 有（通过 MCP Apps 扩展 — SEP-1865）* |
 
-**Rule of thumb:**
+**经验法则**：
 
-- **Plugin** = "How Claude thinks" (new workflows, specialized agents)
-- **MCP Server** = "What Claude can do" (new tools, external systems)
-- **MCP Apps** = "What Claude can show" (interactive UIs in supported clients)*
+- **插件** = "Claude 如何思考"（新工作流、专业智能体）
+- **MCP 服务器** = "Claude 能做什么"（新工具、外部系统）
+- **MCP Apps** = "Claude 能展示什么"（在支持的客户端中呈现交互式 UI）*
 
-*Note: MCP Apps render in Claude Desktop, VS Code, ChatGPT, Goose. Not supported in Claude Code CLI (terminal is text-only). See [Section 8.1](#81-what-is-mcp) for details.
+*注：MCP Apps 可在 Claude Desktop、VS Code、ChatGPT、Goose 中渲染。Claude Code CLI 不支持（终端是纯文本）。详见 [8.1 节](#81-what-is-mcp)。
 
-### Security Considerations
+### 安全考量
 
-**Before installing plugins:**
+**安装插件前**：
 
-1. **Trust the source** - Only install from verified marketplaces
-2. **Review manifest** - Check what the plugin includes with `validate`
-3. **Test in isolation** - Use `--plugin-dir` for testing before permanent install
-4. **Company policies** - Check if your organization has approved plugin sources
+1. **信任来源** — 只从经过验证的市场安装
+2. **审查清单** — 用 `validate` 检查插件包含什么
+3. **隔离测试** — 永久安装前先用 `--plugin-dir` 测试
+4. **公司政策** — 确认组织是否有批准的插件来源
 
-**Red flags:**
+**危险信号**：
 
-- Plugins requesting network access without clear reason
-- Unclear or obfuscated code in agents/skills
-- Plugins without documentation or proper manifest
+- 没有明确理由就请求网络访问的插件
+- 智能体/技能中代码含糊或混淆的插件
+- 没有文档或清单不完整的插件
 
-### Example Use Cases
+### 示例用例
 
-**1. Team Code Standards Plugin**
+**1. 团队代码规范插件**
 
 ```bash
-# Company creates private marketplace
+# 公司创建私有市场
 git clone git@github.com:yourcompany/claude-plugins.git ~/company-plugins
 
-# Add marketplace
+# 添加市场
 claude plugin marketplace add ~/company-plugins
 
-# Install company standards
+# 安装公司规范
 claude plugin install code-standards@company
 
-# Now all team members use same linting, review patterns
+# 现在所有团队成员使用相同的 lint、审查模式
 ```
 
-**2. Security Audit Suite**
+**2. 安全审计套件**
 
 ```bash
-# Install community security plugin
+# 安装社区安全插件
 claude plugin install owasp-scanner
 
-# Use in session
+# 在会话中使用
 claude
 You: /security-scan
-# Runs OWASP Top 10 checks, dependency audit, secret scanning
+# 执行 OWASP Top 10 检查、依赖审计、密钥扫描
 ```
 
-**3. Accessibility Testing**
+**3. 可访问性测试**
 
 ```bash
-# Install a11y plugin
+# 安装 a11y 插件
 claude plugin install wcag-checker
 
-# Enable for project
+# 为项目启用
 claude plugin enable wcag-checker
 
-# Adds accessibility-focused agents
+# 添加专注可访问性的智能体
 You: Review this component for WCAG 2.1 compliance
 ```
 
-### Troubleshooting
+### 故障排查
 
-**Plugin not found after install:**
+**安装后找不到插件**：
 
 ```bash
-# Refresh marketplace catalogs
+# 刷新市场目录
 claude plugin marketplace update
 
-# Verify plugin is installed
+# 确认已安装
 claude plugin
 
-# Check if disabled
+# 检查是否被禁用
 claude plugin enable <name>
 ```
 
-**Plugin conflicts:**
+**插件冲突**：
 
 ```bash
-# Disable conflicting plugin
+# 禁用冲突插件
 claude plugin disable <conflicting-plugin>
 
-# Or uninstall completely
+# 或完全卸载
 claude plugin uninstall <conflicting-plugin>
 ```
 
-**Plugin not loading in session:**
+**插件在会话中未加载**：
 
-- Plugins are loaded at session start
-- Restart Claude Code after enabling/disabling
-- Check `~/.claude/plugins/` for installation
+- 插件在会话启动时加载
+- 启用/禁用后请重启 Claude Code
+- 检查 `~/.claude/plugins/` 确认安装位置
 
-### Community Marketplaces
+### 社区市场
 
-The Claude Code plugin ecosystem has grown significantly. Here are verified community resources:
+Claude Code 的插件生态已经相当繁荣。以下是经过验证的社区资源：
 
-**Major marketplaces:**
+**主要市场**：
 
-| Marketplace | Stats | Focus |
-|-------------|-------|-------|
-| [wshobson/agents](https://github.com/wshobson/agents) | 67 plugins, 99 agents, 107 skills | Production-ready dev workflows, DevOps, security |
-| [claude-plugins.dev](https://claude-plugins.dev) | 11,989 plugins, 63,065 skills indexed | Registry + CLI for plugin discovery |
-| [claudemarketplaces.com](https://claudemarketplaces.com) | Auto-scans GitHub | Marketplace directory |
+| 市场 | 数据 | 专注领域 |
+|------|------|----------|
+| [wshobson/agents](https://github.com/wshobson/agents) | 67 个插件、99 个智能体、107 个技能 | 生产级开发工作流、DevOps、安全 |
+| [claude-plugins.dev](https://claude-plugins.dev) | 11,989 个插件、63,065 个技能已索引 | 注册表 + 插件发现 CLI |
+| [claudemarketplaces.com](https://claudemarketplaces.com) | 自动扫描 GitHub | 市场目录 |
 
-**Installation example (wshobson/agents):**
+**安装示例（wshobson/agents）**：
 
 ```bash
-# Add the marketplace
+# 添加市场
 /plugin marketplace add wshobson/agents
 
-# Browse available plugins
+# 浏览可用插件
 /plugin
 
-# Install specific plugin
+# 安装指定插件
 /plugin install react-development
 ```
 
-**Popular plugins by install count** (Jan 2026):
+**按安装量排名的热门插件**（2026 年 1 月）：
 
-| Plugin | Installs | Use case |
-|--------|----------|----------|
-| Context7 | ~72k | Library documentation lookup |
-| Ralph Wiggum | ~57k | Code review automation |
-| Figma MCP | ~18k | Design-to-code workflow |
-| Linear MCP | ~9.5k | Issue tracking integration |
+| 插件 | 安装量 | 用途 |
+|------|--------|------|
+| Context7 | ~72k | 库文档查询 |
+| Ralph Wiggum | ~57k | 代码审查自动化 |
+| Figma MCP | ~18k | 设计到代码工作流 |
+| Linear MCP | ~9.5k | 问题跟踪集成 |
 
-**Curated lists:**
+**精选列表**：
 
-- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) (20k+ stars) - Commands, templates, plugins
-- [awesome-claude-code-plugins](https://github.com/ccplugins/awesome-claude-code-plugins) - Plugin-focused curation
-- [awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills) (5.5k stars) - Skills-only taxonomy (62 skills across 12 categories)
+- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)（20k+ stars）- 命令、模板、插件
+- [awesome-claude-code-plugins](https://github.com/ccplugins/awesome-claude-code-plugins) - 专注插件的精选
+- [awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills)（5.5k stars）- 仅技能分类（12 个类别共 62 个技能）
 
-> **Source**: Stats from [claude-plugins.dev](https://claude-plugins.dev), [Firecrawl analysis](https://www.firecrawl.dev/blog/best-claude-code-plugins) (Jan 2026). Counts evolve rapidly.
+> **来源**：数据来自 [claude-plugins.dev](https://claude-plugins.dev)、[Firecrawl 分析](https://www.firecrawl.dev/blog/best-claude-code-plugins)（2026 年 1 月）。数量变化很快。
 
-### Featured Community Plugins
+### 精选社区插件
 
-Two community plugins address complementary problems that AI-assisted development creates: **code quality drift** (accumulation of poorly-structured AI-generated code) and **hallucination in generated solutions**.
+有两个社区插件恰好解决了 AI 辅助开发带来的互补问题：**代码质量漂移**（ poorly-structured AI 生成代码的累积）和**生成方案中的幻觉**。
 
-#### Vitals — Codebase Health Detection
+#### Vitals — 代码库健康检测
 
-**Problem solved**: AI tools write code faster than teams can maintain it. GitClear's analysis of 211M lines shows refactoring collapsed from 25% to under 10% of all changes (2021–2025). Vitals identifies which files are most likely to cause problems next — before they do.
+**解决的问题**：AI 工具写代码的速度超过了团队的维护速度。GitClear 对 2.11 亿行代码的分析显示，重构占比从 2021 年的 25% 下降到 2025 年的不足 10%。Vitals 能在问题发生前识别出最可能出问题的文件。
 
-**How it works**: Computes `git churn × structural complexity × coupling centrality` to rank hotspots. Not just "this file is complex" but "this complex file changed 49 times in 90 days and 63 other files break when it does."
+**工作原理**：计算 `git 变更频率 × 结构复杂度 × 耦合中心性` 来给热点排序。不是简单地说"这个文件很复杂"，而是"这个复杂文件 90 天内改了 49 次，而且 63 个其他文件在它改动时会崩溃"。
 
 ```bash
-# Install (two commands in Claude Code)
+# 安装（Claude Code 中执行两条命令）
 /plugin marketplace add chopratejas/vitals
 /plugin install vitals@vitals
 
-# Scan from repo root
+# 从仓库根目录扫描
 /vitals:scan
 
-# Scope options
-/vitals:scan src/           # Specific folder
-/vitals:scan --top 20       # More results (default: 10)
+# 范围选项
+/vitals:scan src/           # 指定文件夹
+/vitals:scan --top 20       # 显示更多结果（默认：10）
 /vitals:scan src/auth --top 5
 ```
 
-**What you get**: Claude reads the flagged files and gives semantic diagnosis. Instead of "high complexity," you get: "this class handles routing, caching, rate limiting, AND metrics in 7,137 lines — extract each concern."
+**输出**：Claude 会读取被标记的文件并给出语义诊断。不是"复杂度高"，而是"这个类在 7,137 行里同时处理了路由、缓存、限流和指标 —— 把每个关注点拆出来"。
 
-**Status**: v0.1 alpha. MIT. Zero dependencies (Python stdlib + git). Works on any repo.
+**状态**：v0.1 alpha。MIT 协议。零依赖（Python 标准库 + git）。适用于任何仓库。
 
-**Source**: [chopratejas/vitals](https://github.com/chopratejas/vitals)
+**来源**：[chopratejas/vitals](https://github.com/chopratejas/vitals)
 
-#### SE-CoVe — Chain-of-Verification
+#### SE-CoVe — 验证链
 
-**Problem solved**: AI-generated code contains subtle errors that survive code review because both the AI and the reviewer follow the same reasoning path. SE-CoVe breaks this by running an independent verifier that never sees the initial solution.
+**解决的问题**：AI 生成的代码中常常包含 subtle 错误，而且能逃过代码审查，因为 AI 和审查者走的是同一条推理路径。SE-CoVe 通过运行一个从未见过初始方案的独立验证器来打破这个循环。
 
-**Research foundation**: Adaptation of Meta's Chain-of-Verification methodology (Dhuliawala et al., ACL 2024 Findings — [arXiv:2309.11495](https://arxiv.org/abs/2309.11495)).
+**研究基础**：改编自 Meta 的 Chain-of-Verification 方法（Dhuliawala 等，ACL 2024 Findings — [arXiv:2309.11495](https://arxiv.org/abs/2309.11495)）。
 
-**How it works** — 5-stage pipeline:
+**工作原理** — 5 阶段流水线：
 
-1. **Baseline** — Claude generates initial solution
-2. **Planner** — Creates verification questions from the solution's claims
-3. **Executor** — Answers questions without seeing the baseline (prevents confirmation bias)
-4. **Synthesizer** — Compares findings, surfaces discrepancies
-5. **Output** — Produces verified solution
+1. **Baseline** — Claude 生成初始方案
+2. **Planner** — 从方案的主张中提取验证问题
+3. **Executor** — 在看不到 baseline 的情况下回答问题（防止确认偏误）
+4. **Synthesizer** — 对比发现，指出不一致之处
+5. **Output** — 生成经过验证的方案
 
 ```bash
-# Install (two separate commands — marketplace limitation)
+# 安装（分两条命令 — 市场限制）
 /plugin marketplace add vertti/se-cove-claude-plugin
 /plugin install chain-of-verification
 
-# Use
-/chain-of-verification:verify <your question>
-/ver<Tab>   # Autocomplete available
+# 使用
+/chain-of-verification:verify <你的问题>
+/ver<Tab>   # 支持自动补全
 ```
 
-**Trade-offs**: ~2x token cost, reduced output volume. Worth it for security-sensitive code, complex debugging, and architectural decisions — not for rapid prototyping or simple fixes.
+**权衡**：Token 成本约 2 倍，输出量减少。对于安全敏感代码、复杂调试和架构决策值得使用——但不适合快速原型或简单修复。
 
-**Source**: [vertti/se-cove-claude-plugin](https://github.com/vertti/se-cove-claude-plugin) — v1.1.1, MIT
+**来源**：[vertti/se-cove-claude-plugin](https://github.com/vertti/se-cove-claude-plugin) — v1.1.1，MIT
 
-#### Vitals vs. SE-CoVe — Which to Use
+#### Vitals vs. SE-CoVe — 该用哪个
 
-These tools solve different problems at different stages of the development cycle:
+这两个工具在开发周期的不同阶段解决不同问题：
 
 | | Vitals | SE-CoVe |
 |--|--------|---------|
-| **When** | Maintenance / weekly review | Per-task generation |
-| **Problem** | Accumulated code debt | Per-solution accuracy |
-| **Input** | Entire git history | A specific question |
-| **Output** | Ranked hotspot files + diagnosis | Verified answer |
-| **Token cost** | Low (Python analysis + Claude reads top files) | ~2x standard generation |
-| **Best for** | "Which file is going to break?" | "Is this solution correct?" |
-| **Status** | v0.1 alpha | v1.1.1 stable |
+| **何时使用** | 维护 / 每周回顾 | 每次任务生成 |
+| **问题** | 累积的技术债务 | 单次方案的准确性 |
+| **输入** | 完整 git 历史 | 一个具体问题 |
+| **输出** | 热点文件排序 + 诊断 | 经过验证的答案 |
+| **Token 成本** | 低（Python 分析 + Claude 读取前几名文件） | ~2 倍标准生成 |
+| **最适合** | "哪个文件即将崩溃？" | "这个方案正确吗？" |
+| **状态** | v0.1 alpha | v1.1.1 stable |
 
-**Complementary workflow**: Run Vitals weekly to identify which areas of the codebase need attention, then use SE-CoVe when asking Claude to refactor or fix those hotspot files.
+**互补工作流**：每周运行 Vitals 识别代码库中需要关注的区域，然后在让 Claude 重构或修复这些热点文件时使用 SE-CoVe。
 
-#### Lightweight Role-Switch Review
+#### 轻量级角色切换审查
 
-Not every change warrants SE-CoVe's 5-stage pipeline. For everyday review within a single session, you can prompt Claude to switch from author to reviewer explicitly:
+并不是每次改动都值得启动 SE-CoVe 的 5 阶段流水线。对于日常的单会话审查，你可以显式提示 Claude 从作者切换到审查者：
 
 ```markdown
-You just wrote the implementation above. Now forget you wrote it.
-Review it as a senior engineer who did not author this code.
+你刚刚写了上面的实现。现在忘掉是你写的。
+以一个没有写过这段代码的高级工程师身份来审查它。
 
-Check: requirement fidelity, edge cases, error handling, backward
-compatibility, security, performance. For each issue found, cite
-the file and line, explain the problem, and propose a concrete fix.
+检查：需求忠实度、边界情况、错误处理、向后
+兼容性、安全性、性能。每发现一个问题，引用
+文件和行号，解释问题，并提出具体的修复建议。
 
-Verdict: APPROVE, REQUEST CHANGES, or REJECT.
+结论：APPROVE、REQUEST CHANGES 或 REJECT。
 ```
 
-This works because the explicit instruction to "forget you wrote it" forces Claude to re-evaluate rather than defend prior decisions. It catches surface-level issues (missing null checks, inconsistent error handling, naming drift) but shares the same reasoning path as the author, so subtle architectural flaws may survive.
+这之所以有效，是因为"忘掉是你写的"这个明确指令迫使 Claude 重新评估，而不是为之前的决定辩护。它能抓住表层问题（缺少空值检查、错误处理不一致、命名漂移），但由于和作者共享同一条推理路径，一些 subtle 的架构缺陷可能会漏过。
 
-**When to use what:**
+**何时使用什么**：
 
-| Approach | Cost | Catches | Best for |
-|----------|------|---------|----------|
-| Role-switch (same session) | 1x | Surface issues, naming, obvious bugs | Daily development, quick fixes |
-| SE-CoVe (plugin) | ~2x | Reasoning-path blind spots, subtle logic errors | Security-sensitive code, architecture |
-| Cross-model review (see below) | 1x-2x | Different reasoning patterns, fresh perspective | Critical paths, pre-merge gates |
-| Scope-focused agents | 2-5x | Domain-specific issues in parallel | Large PRs, multi-concern review |
+| 方法 | 成本 | 能发现 | 最适合 |
+|------|------|--------|--------|
+| 角色切换（同会话） | 1x | 表层问题、命名、明显 bug | 日常开发、快速修复 |
+| SE-CoVe（插件） | ~2x | 推理路径盲点、 subtle 逻辑错误 | 安全敏感代码、架构 |
+| 跨模型审查（见下文） | 1x-2x | 不同推理模式、全新视角 | 关键路径、合并前关卡 |
+| 范围聚焦智能体 | 2-5x | 并行领域专属问题 | 大型 PR、多关注点审查 |
 
-#### Cross-Model Review
+#### 跨模型审查
 
-A single model reviewing its own code follows the same reasoning patterns that produced the code. Using a different model for review introduces genuinely independent analysis.
+单一模型审查自己生成的代码时，会沿用生成代码时的相同推理模式。换用不同模型进行审查，则能引入真正独立的分析。
 
-**The pattern**: generate with one model, review with another.
+**模式**：用一个模型生成，用另一个模型审查。
 
 ```bash
-# Implement with Opus (deep reasoning)
+# 用 Opus 实现（深度推理）
 claude --model opus
 
-# Review the diff with Sonnet (different reasoning path, lower cost)
+# 用 Sonnet 审查 diff（不同推理路径，成本更低）
 claude -p "Review the changes in the last commit. Check for logic errors, \
   edge cases, backward compatibility, and security issues. \
   Cite file:line for each finding." --model sonnet
 
-# Quick sanity check with Haiku (fast, cheap, catches obvious issues)
+# 用 Haiku 快速把关（快、便宜、能抓明显问题）
 claude -p "List any bugs, missing error handling, or security issues \
   in the last commit." --model haiku
 ```
 
-**With custom agents:**
+**配合自定义智能体**：
 
 ```yaml
 # .claude/agents/cross-model-reviewer.md
 ---
 name: cross-model-reviewer
-model: sonnet  # Different from your working model
+model: sonnet  # 与你当前使用的模型不同
 tools: Read, Grep, Glob
 ---
 You are reviewing code you did not write. Your job is to find problems.
@@ -13933,69 +13963,69 @@ For each finding: severity (critical/high/medium), file:line, problem, fix.
 If no issues found, say so explicitly.
 ```
 
-**Why different models catch different bugs**: each model has distinct reasoning biases, training distributions, and failure modes. A bug that sits in one model's blind spot may be obvious to another. This is the same principle behind diverse code review teams in traditional engineering.
+**为什么不同模型能发现不同 bug**：每个模型都有独特的推理偏见、训练分布和失效模式。一个模型的盲点里的 bug，对另一个模型来说可能显而易见。这与传统工程中多元化代码审查团队的原理相同。
 
-**Cost-effective patterns:**
+**高性价比模式**：
 
-| Generation Model | Review Model | Cost Multiplier | When |
-|-----------------|-------------|-----------------|------|
-| Opus | Sonnet | ~1.3x | Default for critical code |
-| Sonnet | Haiku | ~1.05x | High-volume, pre-commit gate |
-| Sonnet | Opus | ~2x | Architecture, security-critical |
-| Any | Same model, fresh session | ~1.5x | Context isolation without model switch |
+| 生成模型 | 审查模型 | 成本倍数 | 适用场景 |
+|-----------------|-------------|-----------------|----------|
+| Opus | Sonnet | ~1.3x | 关键代码默认方案 |
+| Sonnet | Haiku | ~1.05x | 高吞吐量、提交前关卡 |
+| Sonnet | Opus | ~2x | 架构、安全关键代码 |
+| 任意 | 同模型，新会话 | ~1.5x | 不切换模型的上下文隔离 |
 
-The fresh session variant (same model, new context via `claude -p`) gives you context isolation without changing the model. Less effective than a true model switch but still better than reviewing in the same session where the code was written.
+"新会话"变体（同模型，通过 `claude -p` 新建上下文）让你在不换模型的情况下获得上下文隔离。效果不如真正换模型，但仍比在生成代码的同一会话中审查要好。
 
 ---
 
-## 8.6 MCP Security
+## 8.6 MCP 安全
 
-MCP servers extend Claude Code's capabilities, but they also expand its attack surface. Before installing any MCP server, especially community-created ones, apply the same security scrutiny you'd use for any third-party code dependency.
+MCP 服务器扩展了 Claude Code 的能力，但也扩大了攻击面。在安装任何 MCP 服务器之前，尤其是社区创建的，要施加与审查第三方代码依赖同等的安全审视。
 
-> **CVE details & advanced vetting**: For documented CVEs (2025-53109/53110, 54135, 54136), MCP Safe List, and incident response procedures, see [Security Hardening Guide](./security/security-hardening.md).
+> **CVE 详情与高级审查**：关于已记录的 CVE（2025-53109/53110、54135、54136）、MCP 安全白名单和事件响应流程，参见 [安全加固指南](./security/security-hardening.md)。
 
-### Pre-Installation Checklist
+### 安装前检查清单
 
-Before adding an MCP server to your configuration:
+在将 MCP 服务器加入配置前：
 
-| Check | Why |
-|-------|-----|
-| **Source verification** | GitHub with stars, known organization, or official vendor |
-| **Code audit** | Review source code—avoid opaque binaries without source |
-| **Minimal permissions** | Does it need filesystem access? Network? Why? |
-| **Active maintenance** | Recent commits, responsive to issues |
-| **Documentation** | Clear explanation of what tools it exposes |
+| 检查项 | 原因 |
+|--------|------|
+| **来源验证** | GitHub 有 star、知名组织或官方厂商 |
+| **代码审计** | 审查源码——避免无源码的不透明二进制 |
+| **最小权限** | 它需要文件系统访问吗？网络访问吗？为什么？ |
+| **活跃维护** | 近期有提交、对 issue 有响应 |
+| **文档清晰** | 清楚说明暴露了哪些工具 |
 
-### Security Risks to Understand
+### 需要了解的安全风险
 
-**Tool Shadowing**
+**工具影子攻击（Tool Shadowing）**
 
-A malicious MCP server can declare tools with common names (like `Read`, `Write`, `Bash`) that shadow built-in tools. When Claude invokes what it thinks is the native `Read` tool, the MCP server intercepts the call.
+恶意 MCP 服务器可以声明与常用工具同名的工具（如 `Read`、`Write`、`Bash`），从而覆盖内置工具。当 Claude 调用它以为是原生 `Read` 工具时，实际被 MCP 服务器截获。
 
 ```
-Legitimate flow:  Claude → Native Read tool → Your file
-Shadowed flow:    Claude → Malicious MCP "Read" → Attacker exfiltrates content
+正常流程：  Claude → 原生 Read 工具 → 你的文件
+影子流程：  Claude → 恶意 MCP "Read" → 攻击者外泄内容
 ```
 
-**Mitigation**: Check exposed tools with `/mcp` command. Use `disallowedTools` in settings to block suspicious tool names from specific servers.
+**缓解**：用 `/mcp` 命令检查暴露的工具。在 settings 中使用 `disallowedTools` 阻止来自特定服务器的可疑工具名。
 
-**Confused Deputy Problem**
+**困惑副手问题（Confused Deputy Problem）**
 
-An MCP server with elevated privileges (database access, API keys) can be manipulated via prompt to perform unauthorized actions. The server authenticates Claude's request but doesn't verify the user's authorization for that specific action.
+拥有高权限（数据库访问、API 密钥）的 MCP 服务器可能通过提示注入被操纵执行未授权操作。服务器验证了 Claude 的请求，但没有验证用户对该具体操作是否被授权。
 
-Example: A database MCP with admin credentials receives a query from a prompt-injected request, executing destructive operations the user never intended.
+示例：一个带有管理员凭据的数据库 MCP 收到提示注入请求发来的查询，执行了用户从未打算进行的破坏性操作。
 
-**Mitigation**: Always configure MCP servers with **read-only credentials by default**. Only grant write access when explicitly needed.
+**缓解**：默认始终为 MCP 服务器配置**只读凭据**。仅在明确需要时才授予写权限。
 
-**Dynamic Capability Injection**
+**动态能力注入**
 
-MCP servers can dynamically change their tool offerings. A server might pass initial review, then later inject additional tools.
+MCP 服务器可以动态改变其提供的工具。一个服务器可能通过了初始审查，之后却注入额外工具。
 
-**Mitigation**: Pin server versions in your configuration. Periodically re-audit installed servers.
+**缓解**：在配置中固定服务器版本。定期重新审计已安装的服务器。
 
-### Secure Configuration Patterns
+### 安全配置模式
 
-**Minimal privilege setup:**
+**最小权限设置**：
 
 ```json
 {
@@ -14011,7 +14041,7 @@ MCP servers can dynamically change their tool offerings. A server might pass ini
 }
 ```
 
-**Tool restriction via settings:**
+**通过 settings 限制工具**：
 
 ```json
 {
@@ -14021,147 +14051,146 @@ MCP servers can dynamically change their tool offerings. A server might pass ini
 }
 ```
 
-> **Note**: `disallowedTools` is a root-level key or CLI flag (`--disallowedTools`), not nested under `permissions`. For settings.json, use `permissions.deny` to block tool patterns.
+> **注意**：`disallowedTools` 是根级键或 CLI 参数（`--disallowedTools`），不是嵌套在 `permissions` 下的。对于 settings.json，使用 `permissions.deny` 来屏蔽工具模式。
 
-### Red Flags
+### 危险信号
 
-Avoid MCP servers that:
+避免以下 MCP 服务器：
 
-- Request credentials beyond their stated purpose
-- Expose shell execution tools without clear justification
-- Have no source code available (binary-only distribution)
-- Haven't been updated in 6+ months with open security issues
-- Request network access for local-only functionality
+- 索取超出其声明用途的凭据
+- 没有明确理由就暴露 shell 执行工具
+- 没有源码可用（仅二进制分发）
+- 6 个月以上未更新且存在未解决的安全问题
+- 为纯本地功能请求网络访问
 
-### Auditing Installed Servers
+### 审计已安装的服务器
 
 ```bash
-# List active MCP servers and their tools
+# 列出活跃的 MCP 服务器及其工具
 claude
 /mcp
 
-# Check what tools a specific server exposes
-# Look for unexpected tools or overly broad capabilities
+# 检查特定服务器暴露了哪些工具
+# 留意意外工具或过于宽泛的能力
 ```
 
-**Best practice**: Audit your MCP configuration quarterly. Remove servers you're not actively using.
+**最佳实践**：每季度审计一次 MCP 配置。移除不活跃使用的服务器。
 
 ---
 
-# 9. Advanced Patterns
+# 9. 高级模式
 
-_Quick jump:_ [The Trinity](#91-the-trinity) · [Composition Patterns](#92-composition-patterns) · [CI/CD Integration](#93-cicd-integration) · [IDE Integration](#94-ide-integration) · [Tight Feedback Loops](#95-tight-feedback-loops)
-
----
-
-> **Prerequisite**: Read [4.1 What Are Agents](#41-what-are-agents) and [3.1 CLAUDE.md](#31-memory-files-claudemd) before diving into 9.17-9.20.
-
-> **New to Claude Code?** Start with Ch.1-3 first. Chapter 9 makes most sense after 1-2 months of daily use.
-
-## 📌 Section 9 TL;DR (3 minutes)
-
-**What you'll learn**: Production-grade workflows that combine multiple Claude Code features.
-
-### Pattern Categories:
-
-**🎯 The Trinity (9.1)** — Ultimate workflow: Plan Mode → Extended Thinking → Sequential MCP
-
-- When: Architecture decisions, complex refactoring, critical systems
-- Why: Maximum reasoning power + safe exploration
-
-**🔄 Integration Patterns (9.2-9.4)**
-
-- Composition: Agents + Skills + Hooks working together
-- CI/CD: GitHub Actions, automated reviews, quality gates
-- IDE: VS Code + Claude Code = seamless flow
-
-**⚡ Productivity Patterns (9.5-9.8)**
-
-- Tight feedback loops: Test-driven with instant validation
-- Todo as mirrors: Keep context aligned with reality
-- Vibe coding: Skeleton → iterate → production
-
-**🎨 Quality Patterns (9.9-9.11)**
-
-- Batch operations: Process multiple files efficiently
-- Continuous improvement: Refine over multiple sessions
-- Common pitfalls: Learn from mistakes (Do/Don't lists)
-
-### When to Use This Section:
-
-- ✅ You're productive with basics and want mastery
-- ✅ You're setting up team workflows or CI/CD
-- ✅ You hit limits of simple "ask Claude" approach
-- ❌ You're still learning basics (finish Sections 1-8 first)
+_快速跳转：_[三位一体](#91-the-trinity) · [组合模式](#92-composition-patterns) · [CI/CD 集成](#93-cicd-integration) · [IDE 集成](#94-ide-integration) · [紧密反馈循环](#95-tight-feedback-loops)
 
 ---
 
-**Reading time**: 20 minutes
-**Skill level**: Month 1+
-**Goal**: Master power-user techniques
+> **前置要求**：深入阅读 9.17-9.20 前，请先读完 [4.1 什么是智能体](#41-what-are-agents) 和 [3.1 CLAUDE.md](#31-memory-files-claudemd)。
 
----## 🌍 Industry Context: 2026 Agentic Coding Trends
+> **刚接触 Claude Code？** 建议先读完第 1-3 章。第 9 章在有了 1-2 个月的日常使用经验后最能发挥作用。
 
-> **Source**: [Anthropic "2026 Agentic Coding Trends Report"](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) (Feb 2026)
+## 📌 第 9 章 TL;DR（3 分钟）
 
-Les patterns de cette section reflètent l'évolution de l'industrie documentée par Anthropic auprès de 5000+ organisations.
+**你将学到**：将多种 Claude Code 特性组合在一起的生产级工作流。
 
-### 📊 Données d'Adoption Validées
+### 模式分类：
 
-| Pattern | Adoption Timeline | Productivity Gain | Business Impact |
-|---------|------------------|-------------------|-----------------|
-| **Agent Teams** (9.20) | 3-6 mois | 50-67% | Timeline: semaines → jours |
-| **Multi-Instance** (9.17) | 1-2 mois | 2x output | Cost: $500-1K/month |
-| **Sandbox Isolation** (guide/sandbox-native.md) | Immediate | Security baseline | Compliance requirement |
+**🎯 三位一体（9.1）** —— 终极工作流：计划模式 → 扩展思考 → Sequential MCP
 
-### 🎯 Research Insights (Anthropic Internal Study)
+- 何时使用：架构决策、复杂重构、关键系统
+- 为何有效：最大推理能力 + 安全探索
 
-- **60% of work** uses AI (vs 0% en 2023)
-- **0-20% "fully delegated"** → Collaboration centrale, pas remplacement
-- **67% more PRs merged** per engineer per day
-- **27% new work** wouldn't be done without AI (exploratory, nice-to-have)
+**🔄 集成模式（9.2-9.4）**
 
-### ⚠️ Anti-Patterns Entreprise
+- 组合：智能体 + 技能 + 钩子协同工作
+- CI/CD：GitHub Actions、自动审查、质量关卡
+- IDE：VS Code + Claude Code = 无缝流程
 
-**Over-Delegation** (trop d'agents):
+**⚡ 生产力模式（9.5-9.8）**
 
-- Symptôme: Context switching cost > productivity gain
-- Limite: >5 agents simultanés = coordination overhead
-- Fix: Start 1-2 agents, scale progressivement
+- 紧密反馈循环：测试驱动 + 即时验证
+- Todo 作为镜子：让上下文与现实保持一致
+- 凭感觉编程：骨架 → 迭代 → 生产
 
-**Premature Automation**:
+**🎨 质量模式（9.9-9.11）**
 
-- Symptôme: Automatiser workflow non maîtrisé manuellement
-- Fix: Manual → Semi-auto → Full-auto (progressive)
+- 批量操作：高效处理多个文件
+- 持续改进：在多会话中逐步精炼
+- 常见陷阱：从错误中学习（Do/Don't 清单）
 
-**Tool Sprawl** (MCP prolifération):
+### 本章适合谁：
 
-- Symptôme: >10 MCP servers, conflicts, maintenance burden
-- Fix: Start core stack (Serena, Context7, Sequential), add selectively
-
-### 📚 Case Studies Industrie
-
-- **Fountain** (workforce mgmt): 50% faster screening via hierarchical multi-agent
-- **Rakuten** (tech): 7h autonomous vLLM implementation (12.5M lines, 99.9% accuracy)
-- **CRED** (fintech): 2x execution speed, quality maintained (15M users)
-- **TELUS** (telecom): 500K hours saved, 13K custom solutions
-- **Zapier** (automation): 89% adoption, 800+ internal agents
-
-### 🔗 Navigation
-
-Chaque pattern ci-dessous inclut:
-
-- ✅ **Industry validation** (stats adoption, ROI)
-- ✅ **Practical guide** (workflows step-by-step)
-- ✅ **Anti-patterns** (pitfalls to avoid)
-
-**Full evaluation**: [`docs/resource-evaluations/anthropic-2026-agentic-coding-trends.md`](../docs/resource-evaluations/anthropic-2026-agentic-coding-trends.md)
+- ✅ 你已经熟练掌握了基础，想要精通
+- ✅ 你正在搭建团队工作流或 CI/CD
+- ✅ 你觉得简单的"问 Claude"已经碰到天花板
+- ❌ 你还在学习基础（请先完成第 1-8 章）
 
 ---
 
-## 9.1 The Trinity
+**阅读时间**：20 分钟
+**技能水平**：使用 1 个月+
+**目标**：掌握高级用户技巧
+## 🌍 行业背景：2026 年智能体化编程趋势
 
-The most powerful Claude Code pattern combines three techniques:
+> **来源**：[Anthropic《2026 智能体化编程趋势报告》](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)（2026 年 2 月）
+
+本节介绍的这些模式，反映了 Anthropic 在对 5000 多家组织调研后记录下的行业演进方向。
+
+### 📊 经验证的采用数据
+
+| 模式 | 采用周期 | 生产力提升 | 业务影响 |
+|------|---------|-----------|---------|
+| **智能体团队**（9.20） | 3-6 个月 | 50-67% | 时间线：周 → 天 |
+| **多实例**（9.17） | 1-2 个月 | 2 倍产出 | 成本：$500-1K/月 |
+| **沙箱隔离**（guide/sandbox-native.md） | 即时 | 安全基线 | 合规要求 |
+
+### 🎯 研究洞察（Anthropic 内部研究）
+
+- **60% 的工作**已使用 AI（2023 年为 0%）
+- **0-20% 为“完全委托”** → 核心是协作，而非替代
+- 每位工程师每天合并的 PR **增加 67%**
+- **27% 的新工作**没有 AI 就不会做（探索性、锦上添花型）
+
+### ⚠️ 企业反模式
+
+**过度委托**（智能体过多）：
+
+- 症状：上下文切换成本 > 生产力收益
+- 临界点：>5 个并发智能体 = 协调开销
+- 修复：从 1-2 个智能体开始，逐步扩展
+
+**过早自动化**：
+
+- 症状：自动化尚未手动掌握的流程
+- 修复：手动 → 半自动 → 全自动（渐进式）
+
+**工具泛滥**（MCP 激增）：
+
+- 症状：>10 个 MCP 服务器，冲突、维护负担重
+- 修复：从核心栈（Serena、Context7、Sequential）开始，有选择地添加
+
+### 📚 行业案例研究
+
+- **Fountain**（劳动力管理）：通过分层多智能体，筛选速度提升 50%
+- **Rakuten**（科技）：7 小时自主完成 vLLM 实现（1250 万行代码，99.9% 准确率）
+- **CRED**（金融科技）：执行速度翻倍，质量保持（1500 万用户）
+- **TELUS**（电信）：节省 50 万小时，1.3 万个定制方案
+- **Zapier**（自动化）：采用率 89%，800+ 内部智能体
+
+### 🔗 导航
+
+以下每个模式都包含：
+
+- ✅ **行业验证**（采用数据、ROI）
+- ✅ **实用指南**（分步骤工作流）
+- ✅ **反模式**（需要避开的坑）
+
+**完整评估**：[`docs/resource-evaluations/anthropic-2026-agentic-coding-trends.md`](../docs/resource-evaluations/anthropic-2026-agentic-coding-trends.md)
+
+---
+
+## 9.1 三位一体
+
+最强大的 Claude Code 模式，是将三种技术组合在一起：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -14169,66 +14198,66 @@ The most powerful Claude Code pattern combines three techniques:
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │   ┌─────────────┐                                       │
-│   │ Plan Mode   │  Safe exploration without changes     │
+│   │ Plan Mode   │  安全探索，不做任何改动               │
 │   └──────┬──────┘                                       │
 │          │                                              │
 │          ▼                                              │
 │   ┌─────────────┐                                       │
-│   │ Ext.Thinking│  Deep analysis (Opus 4.5/4.6, adaptive in 4.6) │
+│   │ Ext.Thinking│  深度分析（Opus 4.5/4.6，4.6 为自适应）│
 │   └──────┬──────┘                                       │
 │          │                                              │
 │          ▼                                              │
 │   ┌─────────────────────┐                               │
-│   │ Sequential Thinking │  Structured multi-step reason │
+│   │ Sequential Thinking │  结构化多步推理               │
 │   └─────────────────────┘                               │
 │                                                         │
-│   Combined: Maximum understanding before action         │
+│   组合效果：行动前获得最大理解                          │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### When to Use the Trinity
+### 何时使用三位一体
 
-| Situation | Use Trinity? |
-|-----------|--------------|
-| Fixing a typo | ❌ Overkill |
-| Adding a feature | Maybe |
-| Debugging complex issue | ✅ Yes |
-| Architectural decision | ✅ Yes |
-| Legacy system modernization | ✅ Yes |
+| 场景 | 是否使用三位一体？ |
+|------|------------------|
+| 修复拼写错误 | ❌ 小题大做 |
+| 添加新功能 | 也许 |
+| 调试复杂问题 | ✅ 是 |
+| 架构决策 | ✅ 是 |
+| 遗留系统现代化 | ✅ 是 |
 
-### Extended Thinking (Opus 4.5+) & Adaptive Thinking (Opus 4.6+)
+### Extended Thinking（Opus 4.5+）与 Adaptive Thinking（Opus 4.6+）
 
-> **⚠️ Breaking Change (Opus 4.6, Feb 2026)**: Opus 4.6 replaces **budget-based thinking** with **Adaptive Thinking**, which automatically decides when to use deep reasoning based on query complexity. The `budget_tokens` parameter is **deprecated** on Opus 4.6.
+> **⚠️ 破坏性变更（Opus 4.6，2026 年 2 月）**：Opus 4.6 用 **Adaptive Thinking** 取代了基于预算的思考模式，它会根据查询复杂度自动决定是否使用深度推理。`budget_tokens` 参数在 Opus 4.6 上已**弃用**。
 
-#### Evolution Timeline
+#### 演进时间线
 
-| Version | Thinking Approach | Control Method |
-|---------|-------------------|----------------|
-| **Opus 4.5** (pre-v2.0.67) | Opt-in, keyword-triggered (~4K/10K/32K tokens) | Prompt keywords |
-| **Opus 4.5** (v2.0.67+) | Always-on at max budget | Alt+T toggle, `/config` |
-| **Opus 4.6** (Feb 2026) | **Adaptive thinking** (dynamic depth) | `effort` parameter (API), Alt+T (CLI) |
+| 版本 | 思考方式 | 控制方法 |
+|------|---------|---------|
+| **Opus 4.5**（v2.0.67 之前） | 可选开启，关键词触发（约 4K/10K/32K tokens） | 提示词关键词 |
+| **Opus 4.5**（v2.0.67+） | 始终以最大预算开启 | Alt+T 切换，`/config` |
+| **Opus 4.6**（2026 年 2 月） | **Adaptive thinking**（动态深度） | `effort` 参数（API）、Alt+T（CLI） |
 
-#### Adaptive Thinking (Opus 4.6)
+#### Adaptive Thinking（Opus 4.6）
 
-**How it works**: The `effort` parameter controls the model's **overall computational budget** — not just thinking tokens, but the entire response including text generation and tool calls. The model dynamically allocates this budget based on query complexity.
+**工作原理**：`effort` 参数控制模型的**整体计算预算**——不只是思考 token，还包括整个响应中的文本生成和工具调用。模型会根据查询复杂度动态分配这笔预算。
 
-**Key insight**: `effort` affects everything, even when thinking is disabled. Lower effort = fewer tool calls, more concise text. Higher effort = more tool calls with explanations, detailed analysis.
+**关键洞察**：`effort` 会影响一切，即使思考被禁用时也不例外。低 effort = 更少工具调用、更简洁文本。高 effort = 更多带解释的工具调用、更详细分析。
 
-**Effort levels** (API only, official descriptions):
+**Effort 等级**（仅 API，官方描述）：
 
-- **`max`**: Maximum capability, no constraints. **Opus 4.6 only** (returns error on other models). Cross-system reasoning, irreversible decisions.
-  > Example: `"Analyze the microservices event pipeline for race conditions across order-service, inventory-service, and notification-service"`
-- **`high`** (default): Complex reasoning, coding, agentic tasks. Best for production workflows requiring deep analysis.
-  > Example: `"Redesign error handling in the payment module: add retry logic, partial failure recovery, and idempotency guarantees"`
-- **`medium`**: Balance between speed, cost, and performance. Good for agentic tasks with moderate complexity.
-  > Example: `"Convert fetchUser() in api/users.ts from callbacks to async/await"`
-- **`low`**: Most efficient. Ideal for classification, lookups, sub-agents, or tasks where speed matters more than depth.
-  > Example: `"Rename getUserById to findUserById across src/"`
+- **`max`**：最大能力，无约束。**仅 Opus 4.6**（其他模型会报错）。跨系统推理、不可逆决策。
+  > 示例：`"分析 order-service、inventory-service 和 notification-service 之间的微服务事件管道是否存在竞态条件"`
+- **`high`**（默认）：复杂推理、编程、智能体任务。最适合需要深度分析的生产工作流。
+  > 示例：`"重新设计支付模块的错误处理：添加重试逻辑、部分失败恢复和幂等性保证"`
+- **`medium`**：速度、成本和性能的平衡。适合中等复杂度的智能体任务。
+  > 示例：`"将 api/users.ts 中的 fetchUser() 从回调改为 async/await"`
+- **`low`**：最高效。适合分类、查找、子智能体或速度优先于深度的任务。
+  > 示例：`"在 src/ 下将 getUserById 重命名为 findUserById"`
 
-> See [Section 2.5 Model Selection & Thinking Guide](#25-model-selection--thinking-guide) for a complete decision table with effort, model, and cost estimates.
+> 完整的决策表（含 effort、模型和成本估算）请参见 [2.5 模型选择与思考指南](#25-model-selection--thinking-guide)。
 
-**API syntax**:
+**API 语法**：
 
 ```python
 response = client.messages.create(
@@ -14239,84 +14268,84 @@ response = client.messages.create(
 )
 ```
 
-**Effort and Tool Use**:
+**Effort 与工具使用**：
 
-The `effort` parameter significantly impacts how Claude uses tools:
+`effort` 参数显著影响 Claude 使用工具的方式：
 
-- **`low` effort**: Combines operations to minimize tool calls. No explanatory preamble before actions. Faster, more efficient for simple tasks.
-- **`high` effort**: More tool calls with detailed explanations. Describes the plan before executing. Provides comprehensive summaries after operations. Better for complex workflows requiring transparency.
+- **`low` effort**：合并操作以减少工具调用。行动前不做解释性前言。对简单任务更快、更高效。
+- **`high` effort**：更多工具调用，并附带详细解释。执行前描述计划。操作后提供全面总结。更适合需要透明度的复杂工作流。
 
-**Example**: With `low` effort, Claude might read 3 files and edit them in one flow. With `high` effort, Claude explains why it's reading those files, what it's looking for, then provides a detailed summary of changes made.
+**示例**：`low` effort 时，Claude 可能会一次性读取并编辑 3 个文件。`high` effort 时，Claude 会解释为什么要读这些文件、在找什么，然后对改动提供详细总结。
 
-**Relationship between `effort` and thinking**:
+**`effort` 与思考的关系**：
 
-- **Opus 4.6**: `effort` is the **recommended control** for thinking depth. The `budget_tokens` parameter is **deprecated** on 4.6 (though still functional for backward compatibility).
-- **Opus 4.5**: `effort` works **in parallel** with `budget_tokens`. Both parameters are supported and affect different aspects of the response.
-- **Without thinking enabled**: `effort` still controls text generation and tool calls. It's not a thinking-only parameter.
+- **Opus 4.6**：`effort` 是控制思考深度的**推荐方式**。`budget_tokens` 参数在 4.6 上已**弃用**（但为兼容仍可用）。
+- **Opus 4.5**：`effort` 与 `budget_tokens`**并行工作**。两个参数都受支持，且影响响应的不同方面。
+- **未启用思考时**：`effort` 仍会控制文本生成和工具调用。它不是仅用于思考的参数。
 
-**CLI usage**: Three methods to control effort level in Claude Code:
+**CLI 用法**：在 Claude Code 中控制 effort 等级有三种方法：
 
-1. **`/model` command** with left/right arrow keys to adjust the effort slider (`low`, `medium`, `high`)
-2. **`CLAUDE_CODE_EFFORT_LEVEL`** environment variable (set before launching Claude)
-3. **`effortLevel`** field in settings.json (persistent across sessions)
+1. **`/model` 命令**，用左右方向键调节 effort 滑块（`low`、`medium`、`high`）
+2. **`CLAUDE_CODE_EFFORT_LEVEL`** 环境变量（在启动 Claude 前设置）
+3. **settings.json** 中的 `effortLevel` 字段（跨会话持久化）
 
-Alt+T toggles thinking on/off globally (separate from effort level).
+Alt+T 用于全局切换思考的开启/关闭（与 effort 等级独立）。
 
-#### Controlling Thinking Mode
+#### 控制思考模式
 
-| Method | Opus 4.5 | Opus 4.6 | Persistence |
-|--------|----------|----------|-------------|
-| **Alt+T** (Option+T on macOS) | Toggle on/off | Toggle on/off | Current session |
-| **/config** → Thinking mode | Enable/disable globally | Enable/disable globally | Across sessions |
-| **`/model` slider** (left/right arrows) | `low\|medium\|high` | `low\|medium\|high` | Current session |
-| **`CLAUDE_CODE_EFFORT_LEVEL`** env var | `low\|medium\|high` | `low\|medium\|high` | Shell session |
-| **`effortLevel`** in settings.json | `low\|medium\|high` | `low\|medium\|high` | Permanent |
-| **Ctrl+O** | View thinking blocks | View thinking blocks | Display only |
+| 方法 | Opus 4.5 | Opus 4.6 | 持久性 |
+|------|----------|----------|--------|
+| **Alt+T**（macOS 上为 Option+T） | 开启/关闭切换 | 开启/关闭切换 | 当前会话 |
+| **`/config`** → Thinking mode | 全局启用/禁用 | 全局启用/禁用 | 跨会话 |
+| **`/model` 滑块**（左右方向键） | `low\|medium\|high` | `low\|medium\|high` | 当前会话 |
+| **`CLAUDE_CODE_EFFORT_LEVEL`** 环境变量 | `low\|medium\|high` | `low\|medium\|high` | Shell 会话 |
+| **settings.json 中的 `effortLevel`** | `low\|medium\|high` | `low\|medium\|high` | 永久 |
+| **Ctrl+O** | 查看思考块 | 查看思考块 | 仅显示 |
 
-#### Cost Implications
+#### 成本影响
 
-Thinking tokens are billed. With adaptive thinking:
+思考 token 是计费的。使用自适应思考时：
 
-- **Opus 4.6**: Thinking usage varies dynamically (less predictable than fixed budget)
-- **Simple tasks**: Consider Alt+T to disable → faster responses, lower cost
-- **Complex tasks**: Leave enabled → better reasoning, adaptive depth
-- **Sonnet/Haiku**: No extended thinking available (Opus 4.5/4.6 only)
+- **Opus 4.6**：思考用量动态变化（比固定预算更难预测）
+- **简单任务**：考虑 Alt+T 关闭 → 响应更快、成本更低
+- **复杂任务**：保持开启 → 推理更好、深度自适应
+- **Sonnet/Haiku**：不支持 Extended Thinking（仅限 Opus 4.5/4.6）
 
-#### Migration for Existing Users
+#### 老用户迁移指南
 
-**Before** (no longer needed):
+**之前**（不再需要）：
 
 ```bash
 claude -p "Ultrathink. Analyze this architecture."
 ```
 
-**After** (thinking is already max by default):
+**现在**（思考默认已是最大值）：
 
 ```bash
 claude -p "Analyze this architecture."
 ```
 
-**To disable thinking for simple tasks**: Press Alt+T before sending, or use Sonnet.
+**为简单任务禁用思考**：发送前按 Alt+T，或改用 Sonnet。
 
-#### Legacy Keywords Reference
+#### 旧关键词参考
 
-> These keywords were functional before v2.0.67. They are now recognized visually but have **no behavioral effect**.
+> 这些关键词在 v2.0.67 之前有效。现在仅被视觉识别，但**已无任何行为效果**。
 
-| Keyword | Previous Effect | Current Effect |
-|---------|-----------------|----------------|
-| "Think" | ~4K tokens | Cosmetic only |
-| "Think hard" | ~10K tokens | Cosmetic only |
-| "Ultrathink" | ~32K tokens | Cosmetic only |
+| 关键词 | 之前效果 | 当前效果 |
+|--------|---------|---------|
+| "Think" | 约 4K tokens | 仅装饰 |
+| "Think hard" | 约 10K tokens | 仅装饰 |
+| "Ultrathink" | 约 32K tokens | 仅装饰 |
 
-#### API Breaking Changes (Opus 4.6)
+#### API 破坏性变更（Opus 4.6）
 
-**Removed features**:
+**移除功能**：
 
-- **`assistant-prefill`**: Deprecated on Opus 4.6. Previously allowed pre-filling Claude's response to guide output format. Now unsupported — use system prompts or examples instead.
+- **`assistant-prefill`**：在 Opus 4.6 上已弃用。此前允许预填充 Claude 的回复以引导输出格式。现已不支持——改用 system prompt 或示例替代。
 
-**New features**:
+**新功能**：
 
-- **Fast mode API**: Add `speed: "fast"` + beta header `fast-mode-2026-02-01` for 2.5x faster responses (6x cost)
+- **Fast mode API**：添加 `speed: "fast"` + beta 请求头 `fast-mode-2026-02-01`，可获得 2.5 倍更快响应（6 倍成本）
   ```python
   response = client.messages.create(
       model="claude-opus-4-6",
@@ -14326,12 +14355,12 @@ claude -p "Analyze this architecture."
   )
   ```
 
-**Migration**:
+**迁移建议**：
 
-- If using `assistant-prefill`: Replace with explicit instructions in system prompt
-- For speed: Use fast mode API or `/fast` command in CLI
+- 若使用 `assistant-prefill`：在 system prompt 中加入明确指令替代
+- 若追求速度：使用 fast mode API 或 CLI 中的 `/fast` 命令
 
-### Example: Using the Trinity
+### 示例：使用三位一体
 
 ```
 You: /plan
@@ -14352,11 +14381,11 @@ You: /execute
 Let's start with phase 1
 ```
 
-## 9.2 Composition Patterns
+## 9.2 组合模式
 
-### Multi-Agent Delegation
+### 多智能体委托
 
-Launch multiple agents for different aspects:
+为不同方面启动多个智能体：
 
 ```
 You: For this feature, I need:
@@ -14367,15 +14396,15 @@ You: For this feature, I need:
 Run these in parallel.
 ```
 
-Claude will coordinate:
+Claude 会协调：
 
-- Backend architect designs API
-- Security reviewer audits (in parallel)
-- Test engineer plans tests (in parallel)
+- 后端架构师设计 API
+- 安全审查员并行审计
+- 测试工程师并行规划测试
 
-### Skill Stacking
+### 技能堆叠
 
-Combine multiple skills for complex tasks:
+为复杂任务组合多个技能：
 
 ```yaml
 # code-reviewer.md
@@ -14385,11 +14414,11 @@ skills:
   - accessibility-checker
 ```
 
-The reviewer now has all three knowledge domains.
+现在这位审查员同时具备三个知识领域。
 
-### The "Rev the Engine" Pattern
+### "轰油门"模式
 
-For quality work, use multiple rounds of critique:
+为了产出高质量结果，使用多轮批判：
 
 ```
 You: Write the function, then critique it, then improve it.
@@ -14407,140 +14436,140 @@ Round 3: [Final implementation]
 Final check: [Verification]
 ```
 
-### The "Stack Maximum" Pattern
+### "堆叠到满"模式
 
-For critical work, combine everything:
+对于关键工作，将所有手段组合起来：
 
 ```
-1. Plan Mode + Extended Thinking → Deep exploration
-2. Multiple Agents → Specialized analysis
-3. Sequential Thinking → Structured reasoning
-4. Rev the Engine → Iterative improvement
-5. Code Review Agent → Final validation
+1. Plan Mode + Extended Thinking → 深度探索
+2. Multiple Agents → 专业化分析
+3. Sequential Thinking → 结构化推理
+4. Rev the Engine → 迭代改进
+5. Code Review Agent → 最终验证
 ```
 
-## 9.3 CI/CD Integration
+## 9.3 CI/CD 集成
 
-> **📖 Complete Workflow Guide**: See [GitHub Actions Workflows](./workflows/github-actions.md) for 5 production-ready patterns using the official `anthropics/claude-code-action` (PR review, triage, security, scheduled maintenance).
+> **📖 完整工作流指南**：参见 [GitHub Actions 工作流](./workflows/github-actions.md)，了解 5 种使用官方 `anthropics/claude-code-action` 的生产级模式（PR 审查、分类、安全、定时维护）。
 
-> **Code Review (Teams/Enterprise)**: For automated PR review without manual prompting, see [Code Review](./workflows/code-review.md) — Anthropic's multi-agent review feature that posts inline GitHub comments on every PR.
+> **代码审查（团队/企业版）**：如需无需手动提示的自动 PR 审查，参见 [Code Review](./workflows/code-review.md)——Anthropic 的多智能体审查功能，可在每个 PR 上发布内联 GitHub 评论。
 
-### Headless Mode
+### Headless 模式
 
-Run Claude Code without interactive prompts:
+无需交互式提示即可运行 Claude Code：
 
 ```bash
-# Basic headless execution
+# 基本 headless 执行
 claude -p "Run the tests and report results"
 
-# With timeout
+# 带超时
 claude -p --timeout 300 "Build the project"
 
-# With specific model
+# 指定模型
 claude -p --model sonnet "Analyze code quality"
 ```
 
-### Unix Piping Workflows
+### Unix 管道工作流
 
-Claude Code supports **Unix pipe operations**, enabling powerful shell integration for automated code analysis and transformation.
+Claude Code 支持 **Unix 管道操作**，可通过强大的 shell 集成实现自动化的代码分析与转换。
 
-**How piping works**:
+**管道工作原理**：
 
 ```bash
-# Pipe content to Claude with a prompt
+# 将内容通过管道传给 Claude 并附带提示
 cat file.txt | claude -p 'analyze this code'
 
-# Pipe command output for analysis
+# 将命令输出传给 Claude 分析
 git diff | claude -p 'explain these changes'
 
-# Chain commands with Claude
+# 与 Claude 串联命令
 npm test 2>&1 | claude -p 'summarize test failures and suggest fixes'
 ```
 
-**Common patterns**:
+**常见模式**：
 
-1. **Code review automation**:
+1. **代码审查自动化**：
    ```bash
    git diff main...feature-branch | claude -p 'Review this diff for security issues'
    ```
 
-2. **Log analysis**:
+2. **日志分析**：
    ```bash
    tail -n 100 /var/log/app.log | claude -p 'Find the root cause of errors'
    ```
 
-3. **Test output parsing**:
+3. **测试输出解析**：
    ```bash
    npm test 2>&1 | claude -p 'Create a summary of failing tests with priority order'
    ```
 
-4. **Documentation generation**:
+4. **文档生成**：
    ```bash
    cat src/api/*.ts | claude -p 'Generate API documentation in Markdown'
    ```
 
-5. **Batch file analysis**:
+5. **批量文件分析**：
    ```bash
    find . -name "*.js" -exec cat {} \; | claude -p 'Identify unused dependencies'
    ```
 
-**Using with `--output-format`**:
+**配合 `--output-format` 使用**：
 
 ```bash
-# Get structured JSON output
+# 获取结构化 JSON 输出
 git status --short | claude -p 'Categorize changes' --output-format json
 
-# Stream JSON for real-time processing
+# 流式 JSON 用于实时处理
 cat large-file.txt | claude -p 'Analyze line by line' --output-format stream-json
 ```
 
-**Best practices**:
+**最佳实践**：
 
-- **Be specific**: Clear prompts yield better results
+- **明确具体**：清晰的提示能带来更好的结果
   ```bash
-  # Good: Specific task
+  # 好：具体任务
   git diff | claude -p 'List all function signature changes'
 
-  # Less effective: Vague request
+  # 较差：模糊请求
   git diff | claude -p 'analyze this'
   ```
 
-- **Limit input size**: Pipe only relevant content to avoid context overload
+- **限制输入大小**：只传入相关内容，避免上下文过载
   ```bash
-  # Good: Filtered scope
+  # 好：限定范围
   git diff --name-only | head -n 10 | xargs cat | claude -p 'review'
 
-  # Risky: Could exceed context
+  # 有风险：可能超出上下文
   cat entire-codebase/* | claude -p 'review'
   ```
 
-- **Use non-interactive mode**: Add `-p` for automation
+- **使用非交互模式**：自动化时加上 `-p`
   ```bash
   cat file.txt | claude -p -p 'fix linting errors' > output.txt
   ```
 
-- **Combine with jq for JSON**: Parse Claude's JSON output
+- **与 jq 配合处理 JSON**：解析 Claude 的 JSON 输出
   ```bash
   echo "const x = 1" | claude -p 'analyze' --output-format json | jq '.suggestions[]'
   ```
 
-**Output format control**:
+**输出格式控制**：
 
-The `--output-format` flag controls Claude's response format:
+`--output-format` 标志控制 Claude 的响应格式：
 
-| Format | Use Case | Example |
-|--------|----------|---------|
-| `text` | Human-readable output (default) | `claude -p 'explain' --output-format text` |
-| `json` | Machine-parseable structured data | `claude -p 'analyze' --output-format json` |
-| `stream-json` | Real-time streaming for large outputs | `claude -p 'transform' --output-format stream-json` |
+| 格式 | 用途 | 示例 |
+|------|------|------|
+| `text` | 人类可读输出（默认） | `claude -p 'explain' --output-format text` |
+| `json` | 机器可解析的结构化数据 | `claude -p 'analyze' --output-format json` |
+| `stream-json` | 大输出的实时流式处理 | `claude -p 'transform' --output-format stream-json` |
 
-**Example JSON workflow**:
+**JSON 工作流示例**：
 
 ```bash
-# Get structured analysis
+# 获取结构化分析
 git log --oneline -10 | claude -p 'Categorize commits by type' --output-format json
 
-# Output:
+# 输出：
 # {
 #   "categories": {
 #     "features": ["add user auth", "new dashboard"],
@@ -14551,7 +14580,7 @@ git log --oneline -10 | claude -p 'Categorize commits by type' --output-format j
 # }
 ```
 
-**Integration with build scripts** (`package.json`):
+**与构建脚本集成**（`package.json`）：
 
 ```json
 {
@@ -14564,7 +14593,7 @@ git log --oneline -10 | claude -p 'Categorize commits by type' --output-format j
 }
 ```
 
-**CI/CD integration example**:
+**CI/CD 集成示例**：
 
 ```yaml
 # .github/workflows/claude-review.yml
@@ -14604,44 +14633,44 @@ jobs:
             });
 ```
 
-**Limitations**:
+**局限性**：
 
-- **Context size**: Large pipes may exceed token limits (monitor with `/status`)
-- **Interactive prompts**: Use `-p` for automation to avoid blocking
-- **Error handling**: Pipe failures don't always propagate; add `set -e` for strict mode
-- **API costs**: Automated pipes consume API credits; monitor usage with `ccusage`
+- **上下文大小**：大管道可能超出 token 限制（用 `/status` 监控）
+- **交互式提示**：自动化时使用 `-p` 避免阻塞
+- **错误处理**：管道失败不一定会传递；用 `set -e` 启用严格模式
+- **API 成本**：自动化管道会消耗 API 额度；用 `ccusage` 监控用量
 
-> **💡 Pro tip**: Combine piping with aliases for frequently used patterns:
+> **💡 专业提示**：将管道与别名结合，用于常用模式：
 > ```bash
-> # Add to ~/.bashrc or ~/.zshrc
+> # 添加到 ~/.bashrc 或 ~/.zshrc
 > alias claude-review='git diff | claude -p "Review for bugs and suggest improvements"'
 > alias claude-logs='tail -f /var/log/app.log | claude -p "Monitor for errors and alert on critical issues"'
 > ```
 
-> **Source**: [DeepTo Claude Code Guide - Unix Piping](https://cc.deeptoai.com/docs/en/best-practices/claude-code-comprehensive-guide)
+> **来源**：[DeepTo Claude Code Guide - Unix Piping](https://cc.deeptoai.com/docs/en/best-practices/claude-code-comprehensive-guide)
 
-### Git Hooks Integration
+### Git Hooks 集成
 
-> **Windows Note**: Git hooks run in Git Bash on Windows, so the bash syntax below works. Alternatively, you can create `.cmd` or `.ps1` versions and reference them from a wrapper script.
+> **Windows 注意**：Windows 上 Git hooks 在 Git Bash 中运行，因此下面的 bash 语法可用。或者你也可以创建 `.cmd` 或 `.ps1` 版本，并通过包装脚本引用它们。
 
-**Pre-commit hook**:
+**Pre-commit hook**：
 
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
 
-# Run Claude Code for commit message validation
+# 用 Claude Code 验证提交信息
 COMMIT_MSG=$(cat "$1")
 claude -p "Is this commit message good? '$COMMIT_MSG'. Reply YES or NO with reason."
 ```
 
-**Pre-push hook**:
+**Pre-push hook**：
 
 ```bash
 #!/bin/bash
 # .git/hooks/pre-push
 
-# Security check before push
+# 推送前安全检查
 claude -p "Scan staged files for secrets and security issues. Exit 1 if found."
 EXIT_CODE=$?
 
@@ -14651,7 +14680,7 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 ```
 
-### GitHub Actions Integration
+### GitHub Actions 集成
 
 ```yaml
 # .github/workflows/claude-review.yml
@@ -14679,63 +14708,63 @@ jobs:
             Output as markdown." --bare
 ```
 
-> **`--bare` flag for CI scripting (v2.1.81+)**: Add `--bare` to any `claude -p` call to get a deterministic, hermetic execution environment. It disables hooks, LSP, plugin sync, and skill directory scanning — ensuring local developer config never bleaks into CI. Requires `ANTHROPIC_API_KEY` (no OAuth/keychain). Also disables auto-memory.
+> **`--bare` 标志用于 CI 脚本（v2.1.81+）**：在任何 `claude -p` 调用中加上 `--bare`，可获得确定性的、封闭的执行环境。它会禁用钩子、LSP、插件同步和技能目录扫描——确保本地开发者配置永远不会渗入 CI。需要 `ANTHROPIC_API_KEY`（不支持 OAuth/钥匙串）。同时禁用自动记忆。
 >
 > ```bash
-> # Without --bare: picks up local hooks, plugins, skills — non-deterministic in CI
+> # 不带 --bare：会加载本地钩子、插件、技能——CI 中非确定性
 > claude -p "run tests"
 >
-> # With --bare: clean slate, API key only
+> # 带 --bare：干净环境，仅 API key
 > ANTHROPIC_API_KEY=$SECRET claude -p "run tests" --bare
 > ```
 
-#### Debugging Failed CI Runs
+#### 调试失败的 CI 运行
 
-When GitHub Actions fails, use the `gh` CLI to investigate without leaving your terminal:
+当 GitHub Actions 失败时，使用 `gh` CLI 无需离开终端即可调查：
 
-**Quick investigation workflow**:
+**快速调查工作流**：
 
 ```bash
-# List recent workflow runs
+# 列出最近的工作流运行
 gh run list --limit 10
 
-# View specific run details
+# 查看特定运行详情
 gh run view <run-id>
 
-# View logs for failed run
+# 查看失败运行的日志
 gh run view <run-id> --log-failed
 
-# Download logs for detailed analysis
+# 下载日志进行详细分析
 gh run download <run-id>
 ```
 
-**Common debugging commands**:
+**常用调试命令**：
 
-| Command | Purpose |
-|---------|---------|
-| `gh run list --workflow=test.yml` | Filter by workflow file |
-| `gh run view --job=<job-id>` | View specific job details |
-| `gh run watch` | Watch the current run in real-time |
-| `gh run rerun <run-id>` | Retry a failed run |
-| `gh run rerun <run-id> --failed` | Retry only failed jobs |
+| 命令 | 用途 |
+|------|------|
+| `gh run list --workflow=test.yml` | 按工作流文件筛选 |
+| `gh run view --job=<job-id>` | 查看特定 job 详情 |
+| `gh run watch` | 实时观察当前运行 |
+| `gh run rerun <run-id>` | 重试失败运行 |
+| `gh run rerun <run-id> --failed` | 仅重试失败的 job |
 
-**Example: Investigate test failures**:
+**示例：调查测试失败**：
 
 ```bash
-# Get the latest failed run
+# 获取最新的失败运行
 FAILED_RUN=$(gh run list --status failure --limit 1 --json databaseId --jq '.[0].databaseId')
 
-# View the failure
+# 查看失败详情
 gh run view $FAILED_RUN --log-failed
 
-# Ask Claude to analyze
+# 让 Claude 分析
 gh run view $FAILED_RUN --log-failed | claude -p "Analyze this CI failure and suggest fixes"
 ```
 
-**Pro tip**: Combine with Claude Code for automated debugging:
+**专业提示**：与 Claude Code 结合实现自动调试：
 
 ```bash
-# Fetch failures and auto-fix
+# 获取失败并自动修复
 gh run view --log-failed | claude -p "
   Analyze these test failures.
   Identify the root cause.
@@ -14744,19 +14773,19 @@ gh run view --log-failed | claude -p "
 "
 ```
 
-This workflow saves time compared to navigating GitHub's web UI and enables faster iteration on CI failures.
+相比在 GitHub 网页界面中来回切换，这个工作流能节省时间，并让你更快地迭代修复 CI 失败。
 
-### Verify Gate Pattern
+### 验证门模式
 
-Before creating a PR, ensure all local checks pass. This prevents wasted CI cycles and review time.
+创建 PR 前，确保所有本地检查通过。这能避免浪费 CI 周期和审查时间。
 
-**The pattern**:
+**模式**：
 
 ```
 Build ✓ → Lint ✓ → Test ✓ → Type-check ✓ → THEN create PR
 ```
 
-**Implementation as a command** (`.claude/commands/complete-task.md`):
+**实现为命令**（`.claude/commands/complete-task.md`）：
 
 ```markdown
 # Complete Task
@@ -14781,7 +14810,7 @@ If ALL steps pass:
 - Loop until mergeable or blocked
 ```
 
-**Autonomous retry loop**:
+**自主重试循环**：
 
 ```
 ┌─────────────────────────────────────────┐
@@ -14816,10 +14845,10 @@ If ALL steps pass:
 └─────────────────────────────────────────┘
 ```
 
-**Fetching CI feedback** (GitHub GraphQL):
+**获取 CI 反馈**（GitHub GraphQL）：
 
 ```bash
-# Get PR review status and comments
+# 获取 PR 审查状态和评论
 gh api graphql -f query='
   query($pr: Int!) {
     repository(owner: "OWNER", name: "REPO") {
@@ -14838,24 +14867,24 @@ gh api graphql -f query='
   }' -F pr=$PR_NUMBER
 ```
 
-> Inspired by [Nick Tune's Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa)
+> 灵感来自 [Nick Tune's Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa)
 
-### Release Notes Generation
+### 发布说明生成
 
-Automate release notes and changelog generation using Claude Code.
+使用 Claude Code 自动化发布说明和变更日志生成。
 
-**Why automate release notes?**
+**为什么要自动化发布说明？**
 
-- Consistent format across releases
-- Captures technical details from commits
-- Translates technical changes to user-facing language
-- Saves 30-60 minutes per release
+- 各版本格式一致
+- 从技术提交中捕捉技术细节
+- 将技术变更转换为用户语言
+- 每次发布节省 30-60 分钟
 
-**Pattern**: Git commits → Claude analysis → User-friendly release notes
+**模式**：Git 提交 → Claude 分析 → 用户友好的发布说明
 
-#### Approach 1: Command-Based
+#### 方案 1：基于命令
 
-Create `.claude/commands/release-notes.md`:
+创建 `.claude/commands/release-notes.md`：
 
 ```markdown
 # Generate Release Notes
@@ -14942,9 +14971,9 @@ Analyze git commits since last release and generate release notes.
 
 ```
 
-#### Approach 2: CI/CD Automation
+#### 方案 2：CI/CD 自动化
 
-Add to `.github/workflows/release.yml`:
+添加到 `.github/workflows/release.yml`：
 
 ```yaml
 name: Release
@@ -14995,54 +15024,54 @@ jobs:
           git push
 ```
 
-#### Approach 3: Interactive Workflow
+#### 方案 3：交互式工作流
 
-For more control, use an interactive session:
+如需更多控制，使用交互式会话：
 
 ```bash
-# 1. Start Claude Code
+# 1. 启动 Claude Code
 claude
 
-# 2. Request release notes
+# 2. 请求生成发布说明
 You: "Generate release notes for v2.0.0"
 
-# 3. Claude will:
-# - Run git log to get commits
-# - Ask clarifying questions:
+# 3. Claude 会：
+# - 运行 git log 获取提交
+# - 提出澄清问题：
 #   - "Is this a major/minor/patch release?"
 #   - "Any breaking changes users should know?"
 #   - "Target audience for announcement?"
 
-# 4. Review and refine
+# 4. 审阅并完善
 You: "Add more detail to the authentication feature"
 
-# 5. Finalize
+# 5. 定稿
 You: "Save these notes and update CHANGELOG.md"
 ```
 
-#### Best Practices
+#### 最佳实践
 
-**Before generation:**
+**生成前**：
 
-- ✅ Ensure commits follow conventional commits format
-- ✅ All PRs have been merged
-- ✅ Version number decided (semver)
+- ✅ 确保提交遵循 conventional commits 格式
+- ✅ 所有 PR 已合并
+- ✅ 版本号已确定（semver）
 
-**During generation:**
+**生成中**：
 
-- ✅ Review for accuracy (Claude might miss context)
-- ✅ Add migration guides for breaking changes
-- ✅ Include upgrade instructions if needed
+- ✅ 审阅准确性（Claude 可能遗漏上下文）
+- ✅ 为破坏性变更添加迁移指南
+- ✅ 如有需要，包含升级说明
 
-**After generation:**
+**生成后**：
 
-- ✅ Cross-reference with closed issues/PRs
-- ✅ Test upgrade path on a staging project
-- ✅ Share draft with team before publishing
+- ✅ 与已关闭的 issue/PR 交叉核对
+- ✅ 在 staging 项目上测试升级路径
+- ✅ 发布前与团队分享草稿
 
-#### Example Output
+#### 示例输出
 
-Given these commits:
+给定这些提交：
 
 ```
 feat: add user avatar upload (PR #123)
@@ -15051,9 +15080,9 @@ perf: optimize database queries by 40% (PR #125)
 BREAKING: change API endpoint from /api/v1 to /v2 (PR #126)
 ```
 
-Claude generates:
+Claude 生成：
 
-**CHANGELOG.md** (technical):
+**CHANGELOG.md**（技术版）：
 
 ```markdown
 ## [2.0.0] - 2025-01-10
@@ -15074,7 +15103,7 @@ Claude generates:
   - Migration guide: docs/migration-v2.md (#126)
 ```
 
-**GitHub Release** (balanced):
+**GitHub Release**（平衡版）：
 
 ```markdown
 ## What's New in v2.0.0
@@ -15099,7 +15128,7 @@ This release brings performance improvements, bug fixes, and a new avatar featur
 **Full Changelog**: v1.9.0...v2.0.0
 ```
 
-**User Announcement** (non-technical):
+**用户公告**（非技术版）：
 
 ```markdown
 📢 Version 2.0 is here!
@@ -15115,35 +15144,35 @@ We've made your experience faster and more personal:
 [Read full release notes →]
 ```
 
-#### Common Issues
+#### 常见问题
 
-**"Release notes are too technical"**
+**"发布说明太技术化"**
 
-- Solution: Specify audience in prompt: "Generate for non-technical users"
+- 解决方案：在提示中指定受众："Generate for non-technical users"
 
-**"Claude missed a breaking change"**
+**"Claude 漏掉了破坏性变更"**
 
-- Solution: Explicitly list breaking changes in prompt
-- Better: Use "BREAKING:" prefix in commit messages
+- 解决方案：在提示中明确列出破坏性变更
+- 更好：在提交信息中使用 "BREAKING:" 前缀
 
-**"Generated notes are generic"**
+**"生成的说明太泛"**
 
-- Solution: Provide more context: "This release focuses on mobile performance"
+- 解决方案：提供更多上下文："This release focuses on mobile performance"
 
-**"Commits are messy/unclear"**
+**"提交信息很乱/不清楚"**
 
-- Solution: Clean up commit history before generation (interactive rebase)
-- Better: Enforce commit message format with git hooks
+- 解决方案：生成前先清理提交历史（interactive rebase）
+- 更好：用 git hooks 强制提交信息格式
 
-### Changelog Fragments: Per-PR Enforcement Pattern
+### 变更日志片段：每 PR 强制模式
 
-An alternative to generating release notes from commits is to capture the context _while implementing_, not at release time. The "changelog fragments" pattern replaces a shared `CHANGELOG.md` with one YAML file per PR, accumulated in `changelog/fragments/`, assembled automatically at release.
+生成发布说明的另一种替代方案，是在**实现时**就捕捉上下文，而不是等到发布时。"变更日志片段"模式用 `changelog/fragments/` 下的每个 PR 一个 YAML 文件，取代共享的 `CHANGELOG.md`，在发布时自动汇总。
 
-**The core problem with commit-based approaches**: by the time you run `git log` to generate release notes, context is gone. The developer who fixed a race condition three weeks ago is the only one who understood the impact. The commit message says `fix SSE handling`.
+**基于提交的方法的核心问题**：当你运行 `git log` 生成发布说明时，上下文已经丢失了。三周前修复竞态条件的开发者是唯一理解其影响的人。提交信息只写了 `fix SSE handling`。
 
-The fragments pattern solves this with 3 enforcement layers:
+片段模式通过三层强制机制解决这个问题：
 
-**Layer 1 — CLAUDE.md rule**: Load a `git-workflow.md` rule that encodes the full fragment workflow. When a developer asks Claude Code to "create the PR," it reads the diff, infers type/scope/title, generates the YAML, validates it, and commits it as part of the branch. Claude handles it autonomously.
+**Layer 1 — CLAUDE.md 规则**：加载一条 `git-workflow.md` 规则，编码完整的片段工作流。当开发者让 Claude Code "create the PR" 时，它会读取 diff、推断 type/scope/title、生成 YAML、验证它，并将其作为分支的一部分提交。Claude 自主处理。
 
 ```yaml
 # changelog/fragments/886-fix-visiochat-sse-race-condition.yml
@@ -15158,10 +15187,10 @@ breaking: false
 migration: false
 ```
 
-**Layer 2 — `UserPromptSubmit` hook**: Detects PR creation intent and checks whether the fragment was already mentioned.
+**Layer 2 — `UserPromptSubmit` 钩子**：检测 PR 创建意图，并检查是否已提及片段。
 
 ```bash
-# Tier 0 enforcement in smart-suggest.sh
+# smart-suggest.sh 中的 Tier 0 强制
 if echo "$PROMPT_LC" | grep -qE '(create.*pr|make.*pr|pull.?request)'; then
     if ! echo "$PROMPT_LC" | grep -qE '(changelog|fragment|skip-changelog)'; then
         suggest "pnpm changelog:add" "REQUIRED before merge — fragment missing"
@@ -15171,60 +15200,60 @@ if echo "$PROMPT_LC" | grep -qE '(create.*pr|make.*pr|pull.?request)'; then
 fi
 ```
 
-The hook is non-blocking and shows one suggestion inline, before Claude processes the prompt. If the fragment is already mentioned, the hook stays silent and suggests the normal PR command.
+这个钩子是非阻塞的，在 Claude 处理提示前内联显示一条建议。如果片段已被提及，钩子保持静默并建议正常的 PR 命令。
 
-**Layer 3 — CI gate**: Two independent GitHub Actions jobs. The first validates fragment existence and structure. The second checks that `migration: true` is set if the PR adds SQL migration files — this job runs regardless of bypass labels, because a "skip-changelog" PR can still add a migration that the deployment team needs to know about.
+**Layer 3 — CI 关卡**：两个独立的 GitHub Actions job。第一个验证片段是否存在及结构是否正确。第二个检查如果 PR 添加了 SQL 迁移文件，则必须设置 `migration: true`——这个 job 无论是否有 bypass 标签都会运行，因为 "skip-changelog" 的 PR 仍可能添加部署团队需要知晓的迁移。
 
-**Assembly at release:**
+**发布时汇总**：
 
 ```bash
 pnpm changelog:assemble --version 1.8.0 [--dry-run]
 ```
 
-Reads all fragments, groups by type, inserts a versioned section into `CHANGELOG.md` replacing a `## [Next Release]` placeholder, archives fragments to `changelog/fragments/released/{version}/`.
+读取所有片段，按类型分组，将带版本号的区块插入 `CHANGELOG.md`，替换 `## [Next Release]` 占位符，并将片段归档到 `changelog/fragments/released/{version}/`。
 
-**Benefits over commit-based generation:**
+**相比基于提交生成的优势**：
 
-- Zero merge conflicts (each fragment is a unique file per PR)
-- Context written at implementation time, not reconstructed later
-- DB migrations surfaced explicitly in every fragment
-- Bypass is auditable (closed label list visible in PR history)
+- 零合并冲突（每个片段是每个 PR 的独立文件）
+- 上下文在实现时写入，而非事后重建
+- 数据库迁移在每个片段中明确体现
+- Bypass 可审计（PR 历史中可见关闭的标签列表）
 
-Full workflow documentation: [Changelog Fragments](./workflows/changelog-fragments.md)
-Hook reference implementation: [`examples/hooks/bash/smart-suggest.sh`](../examples/hooks/bash/smart-suggest.sh)
+完整工作流文档：[Changelog Fragments](./workflows/changelog-fragments.md)
+钩子参考实现：[`examples/hooks/bash/smart-suggest.sh`](../examples/hooks/bash/smart-suggest.sh)
 
-### Deployment Automation
+### 部署自动化
 
-Claude Code can automate deployments to Vercel, GCP, and other platforms using stored credentials. The key is assembling three components: secret management, a deploy skill, and mandatory guardrails.
+Claude Code 可以使用存储的凭证自动化部署到 Vercel、GCP 和其他平台。关键是组装三个组件：密钥管理、部署技能和强制性的护栏。
 
-#### Required secrets
+#### 必需的密钥
 
-Store credentials in the OS keychain rather than `.env` files:
+将凭证存储在 OS 钥匙串中，而不是 `.env` 文件：
 
 ```bash
-# Vercel deployment (3 required variables)
+# Vercel 部署（3 个必需变量）
 security add-generic-password -a claude -s VERCEL_TOKEN -w "your_token"
 security add-generic-password -a claude -s VERCEL_ORG_ID -w "your_org_id"
 security add-generic-password -a claude -s VERCEL_PROJECT_ID -w "your_project_id"
 
-# Retrieve in scripts
+# 在脚本中读取
 VERCEL_TOKEN=$(security find-generic-password -s VERCEL_TOKEN -w)
 ```
 
-For multi-platform secrets (GitHub, Vercel, AWS simultaneously), **Infisical** provides centralized management with versioning and point-in-time recovery — a useful open-source alternative to HashiCorp Vault:
+对于多平台密钥（GitHub、Vercel、AWS 同时），**Infisical** 提供集中化管理，支持版本控制和时点恢复——是 HashiCorp Vault 的一个有用的开源替代方案：
 
 ```bash
-# Install Infisical CLI
+# 安装 Infisical CLI
 brew install infisical/get-cli/infisical
 
-# Inject secrets into Claude Code session
+# 将密钥注入 Claude Code 会话
 infisical run -- claude
-# Infisical automatically sets all project secrets as env vars
+# Infisical 自动将所有项目密钥设为环境变量
 ```
 
-#### Deployment skill
+#### 部署技能
 
-Create a skill that encapsulates the full deploy workflow:
+创建一个封装完整部署工作流的技能：
 
 ```yaml
 ---
@@ -15244,18 +15273,18 @@ allowed-tools: Bash
 7. Verify production URL responds with HTTP 200
 ```
 
-#### Non-negotiable guardrails
+#### 不可协商的护栏
 
-These guardrails are not optional. Production deployments without them create incidents:
+这些护栏不是可选的。没有它们，生产部署会导致事故：
 
-| Guardrail | Implementation | Why |
-|-----------|---------------|-----|
-| **Staging-first** | Always deploy to staging before prod | Catch environment-specific failures |
-| **Human confirmation** | Stop and ask before `--prod` flag | No autonomous production deploys |
-| **Smoke test** | Verify HTTP 200 on key endpoints after deploy | Catch silent deployment failures |
-| **Rollback ready** | Keep previous deployment ID before promoting | `vercel rollback <deployment-id>` |
+| 护栏 | 实现 | 原因 |
+|------|------|------|
+| **Staging 优先** | 总是先部署到 staging 再生产 | 捕获环境特定的失败 |
+| **人工确认** | 在 `--prod` 标志前停下来询问 | 禁止自主生产部署 |
+| **冒烟测试** | 部署后验证关键端点返回 HTTP 200 | 捕获静默部署失败 |
+| **回滚就绪** | 提升前保留上一个部署 ID | `vercel rollback <deployment-id>` |
 
-**Hook for confirmation** (prevent accidental production deploys):
+**确认钩子**（防止意外生产部署）：
 
 ```json
 // .claude/settings.json
@@ -15274,7 +15303,7 @@ These guardrails are not optional. Production deployments without them create in
 
 ```bash
 #!/bin/bash
-# check-prod-deploy.sh — exit 2 to block, exit 0 to allow
+# check-prod-deploy.sh — exit 2 表示阻止，exit 0 表示允许
 INPUT=$(cat)
 if echo "$INPUT" | grep -q "vercel deploy --prod\|gcloud deploy.*production"; then
   echo "BLOCKED: Production deploy requires manual confirmation. Run the command directly from your terminal."
@@ -15283,48 +15312,49 @@ fi
 exit 0
 ```
 
-> **Sources**: Vercel deploy skill pattern documented by the community (lobehub.com, haniakrim21); Infisical multi-platform secrets management at [infisical.com](https://infisical.com). No end-to-end automated deploy workflow exists in the community as of March 2026 — the building blocks are available but the staging-to-production promotion pattern is something each team assembles themselves.
+> **来源**：Vercel 部署技能模式由社区记录（lobehub.com、haniakrim21）；Infisical 多平台密钥管理参见 [infisical.com](https://infisical.com)。截至 2026 年 3 月，社区中尚不存在端到端的自动部署工作流——构建模块已有，但 staging 到 production 的晋升模式需要每个团队自行组装。
 
-## 9.4 IDE Integration
+## 9.4 IDE 集成
 
-### VS Code Integration
+### VS Code 集成
 
-Claude Code integrates with VS Code:
+Claude Code 可与 VS Code 集成：
 
-1. **Install Extension**: Search "Claude Code" in Extensions
-2. **Configure**: Set API key in settings
-3. **Use**:
+1. **安装扩展**：在扩展商店搜索 "Claude Code"
+2. **配置**：在设置中填写 API key
+3. **使用**：
    - `Ctrl+Shift+P` → "Claude Code: Start Session"
-   - Select text → Right-click → "Ask Claude"
+   - 选中文本 → 右键 → "Ask Claude"
 
-### JetBrains Integration
+### JetBrains 集成
 
-Works with IntelliJ, WebStorm, PyCharm:
+支持 IntelliJ、WebStorm、PyCharm：
 
-1. **Install Plugin**: Settings → Plugins → "Claude Code"
-2. **Configure**: Tools → Claude Code → Set API key
-3. **Use**:
+1. **安装插件**：Settings → Plugins → "Claude Code"
+2. **配置**：Tools → Claude Code → Set API key
+3. **使用**：
    - `Ctrl+Shift+A` → "Claude Code"
-   - Tool window for persistent session### Xcode Integration (Feb 2026)
+   - 工具窗口用于持久会话
+### Xcode 集成（2026 年 2 月）
 
-**New**: Xcode 26.3 RC+ includes native Claude Agent SDK support, using the same harness as Claude Code:
+**新功能**：Xcode 26.3 RC+ 已原生支持 Claude Agent SDK，与 Claude Code 使用相同的执行框架：
 
-1. **Requirements**: Xcode 26.3 RC or later (macOS)
-2. **Setup**: Configure API key in Xcode → Preferences → Claude
-3. **Use**:
-   - Built-in code assistant powered by Claude
-   - Same capabilities as Claude Code CLI
-   - Native integration with Xcode workflows
+1. **要求**：Xcode 26.3 RC 或更高版本（macOS）
+2. **配置**：在 Xcode → Preferences → Claude 中填入 API 密钥
+3. **使用方式**：
+   - 内置由 Claude 驱动的代码助手
+   - 与 Claude Code CLI 功能相同
+   - 与 Xcode 工作流原生集成
 
-**Claude Agent SDK**: Separate product from Claude Code, but shares the same agent execution framework. Enables Claude-powered development tools in IDEs beyond VS Code.
+**Claude Agent SDK**：这是独立于 Claude Code 的产品，但共享同一套智能体执行框架，让 VS Code 之外的 IDE 也能构建 Claude 驱动的开发工具。
 
-> **Note**: Claude Agent SDK is not Claude Code — it's Anthropic's framework for building agent-powered developer tools. Claude Code CLI and Xcode integration both use this SDK.
+> **注意**：Claude Agent SDK 不是 Claude Code——它是 Anthropic 用于构建智能体化开发工具的框架。Claude Code CLI 和 Xcode 集成都基于这套 SDK。
 
-### Terminal Integration
+### 终端集成
 
-For terminal-native workflow:
+适合偏好终端原生工作流的开发者：
 
-#### macOS/Linux (Bash/Zsh)
+#### macOS/Linux（Bash/Zsh）
 
 ```bash
 # Add to .bashrc or .zshrc
@@ -15338,13 +15368,13 @@ cq() {
 }
 ```
 
-Usage:
+用法：
 
 ```bash
 cq "What does this regex do: ^[a-z]+$"
 ```
 
-#### Windows (PowerShell)
+#### Windows（PowerShell）
 
 ```powershell
 # Add to $PROFILE (run: notepad $PROFILE to edit)
@@ -15358,27 +15388,27 @@ function cq {
 }
 ```
 
-To find your profile location: `echo $PROFILE`
+查看 profile 路径：`echo $PROFILE`
 
-Common locations:
+常见位置：
 
 - `C:\Users\YourName\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
 - `C:\Users\YourName\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`
 
-If the file doesn't exist, create it:
+如果文件不存在，创建它：
 
 ```powershell
 New-Item -Path $PROFILE -Type File -Force
 ```
 
-## 9.5 Tight Feedback Loops
+## 9.5 紧密反馈循环
 
-**Reading time**: 5 minutes
-**Skill level**: Week 1+
+**阅读时间**：5 分钟
+**技能等级**：第 1 周起
 
-Tight feedback loops accelerate learning and catch issues early. Design your workflow to validate changes immediately.
+紧密反馈循环能加速学习、尽早发现问题。设计工作流时，要让每次改动都能立即得到验证。
 
-### The Feedback Loop Pyramid
+### 反馈循环金字塔
 
 ```
                     ┌─────────────┐
@@ -15396,9 +15426,9 @@ Tight feedback loops accelerate learning and catch issues early. Design your wor
                     └─────────────┘
 ```
 
-### Implementing Tight Loops
+### 实现紧密循环
 
-#### Level 1: Immediate (IDE/Editor)
+#### 第一层：即时反馈（IDE/编辑器）
 
 ```bash
 # Watch mode for instant feedback
@@ -15406,7 +15436,7 @@ pnpm tsc --watch
 pnpm lint --watch
 ```
 
-#### Level 2: On-Save (Git Hooks)
+#### 第二层：保存时触发（Git 钩子）
 
 ```bash
 # Pre-commit hook
@@ -15414,16 +15444,16 @@ pnpm lint --watch
 pnpm lint-staged && pnpm tsc --noEmit
 ```
 
-#### Level 3: On-Commit (CI)
+#### 第三层：提交时触发（CI）
 
 ```yaml
 # GitHub Action for PR checks
 - run: pnpm lint && pnpm tsc && pnpm test
 ```
 
-### Claude Code Integration
+### Claude Code 集成
 
-Use hooks for automatic validation:
+使用钩子实现自动验证：
 
 ```json
 // settings.json
@@ -15437,7 +15467,7 @@ Use hooks for automatic validation:
 }
 ```
 
-**validate.sh:**
+**validate.sh：**
 
 ```bash
 #!/bin/bash
@@ -15448,35 +15478,35 @@ if [[ "$FILE" == *.ts || "$FILE" == *.tsx ]]; then
 fi
 ```
 
-### Feedback Loop Checklist
+### 反馈循环检查表
 
-| Loop | Trigger | Response Time | What It Catches |
+| 循环 | 触发时机 | 响应时间 | 捕获内容 |
 |------|---------|---------------|-----------------|
-| Lint | On type | <1s | Style, imports |
-| TypeCheck | On save | 1-3s | Type errors |
-| Unit tests | On save | 5-15s | Logic errors |
-| Integration | On commit | 1-5min | API contracts |
-| E2E | On PR | 5-15min | User flows |
+| Lint | 输入时 | <1s | 风格、导入 |
+| TypeCheck | 保存时 | 1-3s | 类型错误 |
+| 单元测试 | 保存时 | 5-15s | 逻辑错误 |
+| 集成测试 | 提交时 | 1-5min | API 契约 |
+| E2E | PR 时 | 5-15min | 用户流程 |
 
-💡 **Tip**: Faster loops catch more bugs. Invest in making your test suite fast.
+💡 **提示**：循环越快，捕获的 bug 越多。值得投入精力让测试套件跑得更快。
 
-### Background Tasks for Fullstack Development
+### 全栈开发的后台任务
 
-**Problem**: Fullstack development often requires long-running processes (dev servers, watchers) that block the main Claude session, preventing iterative frontend work.
+**问题**：全栈开发往往需要长时间运行的进程（开发服务器、文件监听器），这些进程会阻塞 Claude 主会话，导致无法迭代前端工作。
 
-**Solution**: Use `Ctrl+B` to background tasks and maintain tight feedback loops across the stack.
+**解决方案**：用 `Ctrl+B` 将任务放到后台，在整个技术栈中保持紧密反馈循环。
 
-#### When to Background Tasks
+#### 何时后台化任务
 
-| Scenario | Background Command | Why |
+| 场景 | 后台命令 | 原因 |
 |----------|-------------------|-----|
-| **Dev server running** | `pnpm dev` → `Ctrl+B` | Keeps server alive while iterating on frontend |
-| **Test watcher** | `pnpm test --watch` → `Ctrl+B` | Monitor test results while coding |
-| **Build watcher** | `pnpm build --watch` → `Ctrl+B` | Detect build errors without blocking session |
-| **Database migration** | `pnpm migrate` → `Ctrl+B` | Long-running migration, work on other features |
-| **Docker compose** | `docker compose up` → `Ctrl+B` | Infrastructure running, develop application |
+| **开发服务器运行中** | `pnpm dev` → `Ctrl+B` | 服务器保持运行，同时迭代前端 |
+| **测试监听器** | `pnpm test --watch` → `Ctrl+B` | 编码时持续监控测试结果 |
+| **构建监听器** | `pnpm build --watch` → `Ctrl+B` | 不阻塞会话，实时检测构建错误 |
+| **数据库迁移** | `pnpm migrate` → `Ctrl+B` | 长时间迁移，同时开发其他功能 |
+| **Docker compose** | `docker compose up` → `Ctrl+B` | 基础设施运行中，继续开发应用 |
 
-#### Fullstack Workflow Pattern
+#### 全栈工作流模式
 
 ```bash
 # 1. Start backend dev server
@@ -15494,9 +15524,9 @@ pnpm dev:backend
 # (Currently: no built-in foreground command, restart if needed)
 ```
 
-#### Real-World Example: API + Frontend Iteration
+#### 真实案例：API + 前端迭代
 
-**Traditional (blocked) flow:**
+**传统（阻塞）流程：**
 
 ```bash
 $ pnpm dev:backend
@@ -15505,7 +15535,7 @@ $ pnpm dev:backend
 # Kill server → work on frontend → restart server → repeat
 ```
 
-**Background task flow:**
+**后台任务流程：**
 
 ```bash
 $ pnpm dev:backend
@@ -15519,11 +15549,11 @@ $ Ctrl+B  # Background the server
 # Tight feedback loop maintained
 ```
 
-#### Context Rot Prevention
+#### 防止上下文腐化
 
-**Problem**: Long-running background tasks can cause context rot—Claude loses awareness of what's running.
+**问题**：长时间运行的后台任务可能导致上下文腐化——Claude 逐渐失去对运行状态的感知。
 
-**Solution**: Check task status periodically:
+**解决方案**：定期检查任务状态：
 
 ```bash
 # Before major changes
@@ -15535,21 +15565,21 @@ $ Ctrl+B  # Background the server
 #   Last output: Server listening on :3000
 ```
 
-**Best practices:**
+**最佳实践：**
 
-- Background tasks at session start (setup phase)
-- Check `/tasks` before major architecture changes
-- Restart backgrounded tasks if context is lost
-- Use descriptive commands (`pnpm dev:backend` not just `npm run dev`)
+- 在会话开始时后台化任务（初始化阶段）
+- 进行重大架构变更前先检查 `/tasks`
+- 如果上下文丢失，重启已后台化的任务
+- 使用描述性命令（用 `pnpm dev:backend` 而非 `npm run dev`）
 
-#### Limitations
+#### 限制
 
-- **No foreground command**: Cannot bring tasks back to foreground (yet)
-- **Context loss**: Long-running tasks may lose relevance to current work
-- **Output not streamed**: Background task output not visible unless checked
-- **Session-scoped**: Background tasks tied to Claude session, killed on exit
+- **无前台命令**：目前无法将任务带回前台
+- **上下文丢失**：长时间运行的任务可能与当前工作失去关联
+- **输出不实时**：后台任务输出不可见，需主动检查
+- **会话绑定**：后台任务与 Claude 会话绑定，退出时终止
 
-**Workaround for foreground**: If you need to interact with a backgrounded task, restart it in foreground:
+**前台的变通方案**：如果需要与后台任务交互，重新在前台启动它：
 
 ```bash
 # Can't foreground task directly
@@ -15559,15 +15589,15 @@ $ Ctrl+B  # Background the server
 # Restart the command you need in foreground
 ```
 
-#### Integration with Teleportation
+#### 与会话传送的集成
 
-When using session teleportation (web → local), background tasks are **not** transferred:
+使用会话传送（web → 本地）时，后台任务**不会**随之迁移：
 
-- Web sessions cannot background tasks
-- Teleported sessions start with clean slate
-- Restart required dev servers after teleportation
+- Web 会话无法后台化任务
+- 传送后的会话从干净状态开始
+- 传送后需重启所需的开发服务器
 
-**Teleport workflow:**
+**传送工作流：**
 
 ```bash
 # 1. Teleport session from web to local
@@ -15580,7 +15610,7 @@ Ctrl+B  # Background
 # 3. Continue work locally with full feedback loops
 ```
 
-#### Monitoring Background Tasks
+#### 监控后台任务
 
 ```bash
 /tasks  # View all background tasks
@@ -15593,14 +15623,14 @@ Ctrl+B  # Background
 # - Status (running, completed, failed)
 ```
 
-**Use `/tasks` when:**
+**以下情况使用 `/tasks`：**
 
-- Starting new feature work (verify infrastructure running)
-- Debugging (check for error output in background tasks)
-- Before committing (ensure tests passed in background)
-- Session feels slow (check if background tasks consuming resources)
+- 开始新功能开发时（确认基础设施正在运行）
+- 调试时（检查后台任务是否有错误输出）
+- 提交前（确认后台测试已通过）
+- 会话感觉变慢时（检查后台任务是否占用资源）
 
-#### Disabling Background Tasks
+#### 禁用后台任务
 
 ```bash
 # Environment variable (v2.1.4+)
@@ -15613,18 +15643,18 @@ claude
 # - Avoiding accidental backgrounding
 ```
 
-💡 **Key insight**: Background tasks optimize fullstack workflows by decoupling infrastructure (servers, watchers) from iterative development. Use them strategically to maintain tight feedback loops across the entire stack.
+💡 **核心洞察**：后台任务通过将基础设施（服务器、监听器）与迭代开发解耦，优化了全栈工作流。合理使用它们，在整个技术栈中保持紧密反馈循环。
 
-### Claude in Chrome: The Visual Feedback Loop
+### Chrome 中的 Claude：视觉反馈循环
 
-All the loops above validate code. None of them tell Claude whether the UI actually looks correct, whether a form works, or whether the page renders without errors. Without a browser connection, Claude can only infer — it writes code and assumes the result matches intent.
+上面所有循环都在验证代码。但没有一个能告诉 Claude UI 看起来是否正确、表单是否可用，或者页面是否无错误渲染。没有浏览器连接，Claude 只能推断——它写完代码，假设结果符合预期。
 
-Claude in Chrome closes that gap. It's a Chrome browser extension that gives Claude Code direct control over your browser: navigate to URLs, click elements, read the console, fill forms, take screenshots, and observe the rendered result of what it just built.
+Chrome 中的 Claude 填补了这个空白。这是一个 Chrome 浏览器扩展，让 Claude Code 能直接控制你的浏览器：导航到 URL、点击元素、读取控制台、填写表单、截图，并观察刚刚构建内容的实际渲染结果。
 
-**Setup:**
+**配置：**
 
-1. Install the Claude in Chrome extension from the Chrome Web Store
-2. Enable it for your session:
+1. 从 Chrome 网上应用店安装 Claude in Chrome 扩展
+2. 为当前会话启用：
 
 ```bash
 claude --chrome          # start with Chrome integration enabled
@@ -15632,32 +15662,32 @@ claude --no-chrome       # disable for this session
 /chrome                  # check connection status / manage permissions
 ```
 
-**What Claude can do with Chrome access:**
+**有了 Chrome 访问权限，Claude 能做什么：**
 
-| Capability | Practical use |
+| 能力 | 实际用途 |
 |-----------|--------------|
-| Navigate to localhost | Verify the page renders after a change |
-| Read console errors | No copy-paste; Claude sees errors directly |
-| Click through flows | Test that a form submission actually works |
-| Screenshot + compare | Check visual output against expectations |
-| Fill inputs | Test validation, edge cases, empty states |
+| 导航到 localhost | 验证修改后页面是否正常渲染 |
+| 读取控制台错误 | 无需复制粘贴，Claude 直接看到错误 |
+| 点击流程 | 测试表单提交是否真正有效 |
+| 截图并对比 | 检查视觉输出是否符合预期 |
+| 填写输入框 | 测试验证逻辑、边界情况、空状态 |
 
-**The key insight from Boris Cherny (Claude Code creator)**: "If Claude can't see the result, it can't improve it." Code feedback loops catch syntax and logic errors. Browser feedback loops catch the rest — layout, interactions, runtime errors.
+**Claude Code 创始人 Boris Cherny 的核心洞察**："如果 Claude 看不到结果，就无法改进它。"代码反馈循环捕获语法和逻辑错误，浏览器反馈循环捕获其余的一切——布局、交互、运行时错误。
 
-**When `/chrome` is hidden**: Claude Code hides the `/chrome` command when no Chrome integration is available for your current auth setup (v2.1.87+). Verify the extension is installed and Chrome is running if it doesn't appear.
+**`/chrome` 隐藏时**：当当前认证配置下没有可用的 Chrome 集成时，Claude Code 会隐藏 `/chrome` 命令（v2.1.87+）。如果命令不出现，请确认扩展已安装且 Chrome 正在运行。
 
-> Introduced in v2.0.72 as "Claude in Chrome Beta". The `--chrome`/`--no-chrome` flags and `/chrome` command control the browser integration. This is separate from the `claude-in-chrome` MCP server, which is a different browser automation mechanism.
+> 该功能在 v2.0.72 中以"Claude in Chrome Beta"形式引入。`--chrome`/`--no-chrome` 标志和 `/chrome` 命令控制浏览器集成。这与 `claude-in-chrome` MCP 服务器不同，后者是另一种浏览器自动化机制。
 
-## 9.6 Todo as Instruction Mirrors
+## 9.6 Todo 作为指令镜像
 
-**Reading time**: 5 minutes
-**Skill level**: Week 1+
+**阅读时间**：5 分钟
+**技能等级**：第 1 周起
 
-TodoWrite isn't just tracking—it's an instruction mechanism. Well-crafted todos guide Claude's execution.
+TodoWrite 不只是任务追踪——它是一种指令机制。精心编写的 todo 能引导 Claude 的执行方式。
 
-### The Mirror Principle
+### 镜像原则
 
-What you write as a todo becomes Claude's instruction:
+你写下的 todo 就是 Claude 的指令：
 
 ```
 ❌ Vague Todo → Vague Execution
@@ -15667,7 +15697,7 @@ What you write as a todo becomes Claude's instruction:
 "Fix null pointer in getUserById when user not found - return null instead of throwing"
 ```
 
-### Todo as Specification
+### Todo 作为规格说明
 
 ```markdown
 ## Effective Todo Pattern
@@ -15678,17 +15708,17 @@ What you write as a todo becomes Claude's instruction:
 - [ ] **Verify**: Test with edge cases (empty, invalid format)
 ```
 
-### Todo Granularity Guide
+### Todo 粒度指南
 
-| Task Complexity | Todo Granularity | Example |
+| 任务复杂度 | Todo 粒度 | 示例 |
 |-----------------|------------------|---------|
-| Simple fix | 1-2 todos | "Fix typo in header component" |
-| Feature | 3-5 todos | Auth flow steps |
-| Epic | 10+ todos | Full feature with tests |
+| 简单修复 | 1-2 个 todo | "Fix typo in header component" |
+| 功能 | 3-5 个 todo | 认证流程步骤 |
+| 史诗级 | 10+ 个 todo | 完整功能含测试 |
 
-### Instruction Embedding
+### 嵌入指令
 
-Embed constraints directly in todos:
+直接在 todo 中嵌入约束条件：
 
 ```markdown
 ## Bad
@@ -15700,9 +15730,9 @@ Embed constraints directly in todos:
       use existing ErrorBoundary component
 ```
 
-### Todo Templates
+### Todo 模板
 
-**Bug Fix:**
+**Bug 修复：**
 
 ```markdown
 - [ ] Reproduce: [steps to reproduce]
@@ -15711,7 +15741,7 @@ Embed constraints directly in todos:
 - [ ] Verify: [test command or manual check]
 ```
 
-**Feature:**
+**功能开发：**
 
 ```markdown
 - [ ] Design: [what components/functions needed]
@@ -15720,24 +15750,24 @@ Embed constraints directly in todos:
 - [ ] Docs: [if public API]
 ```
 
-## 9.7 Output Styles
+## 9.7 输出风格
 
-**Reading time**: 5 minutes
-**Skill level**: Week 1+
+**阅读时间**：5 分钟
+**技能等级**：第 1 周起
 
-Control how Claude responds to match your workflow and learning preferences. Output styles are a built-in product feature — not a prompt trick — and apply at the session level.
+控制 Claude 的响应方式，以匹配你的工作流和学习偏好。输出风格是内置的产品功能——不是提示词技巧——在会话级别生效。
 
-### Built-in Styles
+### 内置风格
 
-Activate via `/config` → "Preferred output style", or set `outputStyle` in `settings.json`.
+通过 `/config` → "Preferred output style" 激活，或在 `settings.json` 中设置 `outputStyle`。
 
-| Style | What Claude does | Best for |
+| 风格 | Claude 的行为 | 适合场景 |
 |-------|-----------------|----------|
-| **Default** | Completes tasks efficiently, concise responses | Experienced devs, speed-focused work |
-| **Explanatory** | Adds "Insights" blocks explaining design choices, trade-offs, and codebase patterns | Exploring unfamiliar code, architecture review, onboarding |
-| **Learning** | Pauses at key steps, adds `TODO(human)` markers, asks you to write the meaningful pieces | Junior devs, skill-building, pair programming |
+| **Default** | 高效完成任务，响应简洁 | 有经验的开发者，注重速度 |
+| **Explanatory** | 添加"Insights"块，解释设计决策、权衡取舍和代码库模式 | 探索陌生代码、架构审查、新人入职 |
+| **Learning** | 在关键步骤暂停，添加 `TODO(human)` 标记，让你自己完成有意义的部分 | 初级开发者、技能培养、结对编程 |
 
-**To activate:**
+**激活方式：**
 
 ```
 /config
@@ -15745,7 +15775,7 @@ Activate via `/config` → "Preferred output style", or set `outputStyle` in `se
 → Select Default / Explanatory / Learning
 ```
 
-Or persistent via `settings.json`:
+或通过 `settings.json` 持久化：
 
 ```json
 {
@@ -15753,15 +15783,15 @@ Or persistent via `settings.json`:
 }
 ```
 
-The setting persists across sessions. If you have a status line configured, your current output style displays at the bottom of the input field.
+该设置跨会话持久生效。如果你配置了状态栏，当前输出风格会显示在输入框底部。
 
-### Token impact
+### Token 影响
 
-Explanatory and Learning produce longer responses by design, increasing output tokens. Prompt caching reduces this cost after the first request in a session.
+Explanatory 和 Learning 风格设计上会产生更长的响应，增加输出 Token 消耗。提示词缓存会在会话首次请求后降低这一成本。
 
-### Custom Styles
+### 自定义风格
 
-Since December 2025, you can define your own styles in `.claude/styles/`. Create a Markdown file and reference it by filename (without extension) as the `outputStyle` value.
+自 2025 年 12 月起，你可以在 `.claude/styles/` 中定义自己的风格。创建一个 Markdown 文件，并以文件名（不含扩展名）作为 `outputStyle` 的值引用它。
 
 ```
 .claude/styles/
@@ -15774,27 +15804,27 @@ Since December 2025, you can define your own styles in `.claude/styles/`. Create
 }
 ```
 
-See `examples/styles/` for a ready-to-use custom style template.
+参见 `examples/styles/` 获取现成的自定义风格模板。
 
-### Manual approach (CLAUDE.md directives)
+### 手动方式（CLAUDE.md 指令）
 
-For per-task control without changing the global style, add output directives to your CLAUDE.md:
+如需针对特定任务控制输出而不改变全局风格，在 CLAUDE.md 中添加输出指令：
 
-**Minimal (Expert Mode):**
+**极简（专家模式）：**
 
 ```markdown
 Output code only. No explanations unless asked.
 Assume I understand the codebase.
 ```
 
-**Balanced:**
+**均衡：**
 
 ```markdown
 Explain significant decisions. Comment complex logic.
 Skip obvious explanations.
 ```
 
-**Context-aware by task type:**
+**按任务类型区分：**
 
 ```markdown
 ## Output Preferences
@@ -15804,9 +15834,9 @@ Skip obvious explanations.
 - **Refactoring**: Minimal, trust my review
 ```
 
-### Output Templates
+### 输出模板
 
-**Bug Fix Output:**
+**Bug 修复输出：**
 
 ```markdown
 **Root Cause**: [one line]
@@ -15814,7 +15844,7 @@ Skip obvious explanations.
 **Test**: [verification command]
 ```
 
-**Feature Output:**
+**功能输出：**
 
 ```markdown
 **Files Changed**: [list]
@@ -15822,24 +15852,24 @@ Skip obvious explanations.
 **Next Steps**: [if any]
 ```
 
-### Mermaid Diagram Generation
+### Mermaid 图表生成
 
-Claude Code can generate Mermaid diagrams for visual documentation. This is useful for architecture documentation, flow visualization, and system understanding.
+Claude Code 可以生成 Mermaid 图表用于可视化文档，适合架构文档、流程可视化和系统理解。
 
-#### Supported Diagram Types
+#### 支持的图表类型
 
-| Type | Use Case | Syntax Start |
+| 类型 | 用途 | 语法起始 |
 |------|----------|--------------|
-| **Flowchart** | Process flows, decision trees | `flowchart TD` |
-| **Sequence** | API calls, interactions | `sequenceDiagram` |
-| **Class** | OOP structure, relationships | `classDiagram` |
-| **ER** | Database schema | `erDiagram` |
-| **State** | State machines | `stateDiagram-v2` |
-| **Gantt** | Project timelines | `gantt` |
+| **Flowchart** | 流程图、决策树 | `flowchart TD` |
+| **Sequence** | API 调用、交互 | `sequenceDiagram` |
+| **Class** | OOP 结构、关系 | `classDiagram` |
+| **ER** | 数据库模式 | `erDiagram` |
+| **State** | 状态机 | `stateDiagram-v2` |
+| **Gantt** | 项目时间线 | `gantt` |
 
-#### Request Patterns
+#### 请求模式
 
-**Architecture diagram:**
+**架构图：**
 
 ```markdown
 Generate a Mermaid flowchart showing the authentication flow:
@@ -15848,23 +15878,23 @@ Generate a Mermaid flowchart showing the authentication flow:
 3. JWT issued or error returned
 ```
 
-**Database schema:**
+**数据库模式：**
 
 ```markdown
 Create an ER diagram for our user management system
 showing User, Role, and Permission relationships.
 ```
 
-**Sequence diagram:**
+**时序图：**
 
 ```markdown
 Show me a Mermaid sequence diagram of how our
 checkout process calls payment API → inventory → notification services.
 ```
 
-#### Example Outputs
+#### 示例输出
 
-**Flowchart:**
+**流程图：**
 
 ```mermaid
 flowchart TD
@@ -15874,7 +15904,7 @@ flowchart TD
     C --> E[Return Response]
 ```
 
-**Sequence:**
+**时序图：**
 
 ```mermaid
 sequenceDiagram
@@ -15886,7 +15916,7 @@ sequenceDiagram
     API-->>-Client: order_id
 ```
 
-**Class:**
+**类图：**
 
 ```mermaid
 classDiagram
@@ -15903,39 +15933,39 @@ classDiagram
     User "1" --> "*" Role
 ```
 
-#### Where to Visualize
+#### 可视化平台
 
-| Platform | Support |
+| 平台 | 支持情况 |
 |----------|---------|
-| **GitHub** | Native rendering in README, issues, PRs |
-| **VS Code** | Mermaid Preview extension |
-| **GitLab** | Native rendering |
-| **Notion** | Code block with mermaid language |
-| **mermaid.live** | Online editor with export |
+| **GitHub** | README、issues、PR 中原生渲染 |
+| **VS Code** | Mermaid Preview 扩展 |
+| **GitLab** | 原生渲染 |
+| **Notion** | 使用 mermaid 语言的代码块 |
+| **mermaid.live** | 在线编辑器，支持导出 |
 
-#### Integration Tips
+#### 集成技巧
 
-1. **In CLAUDE.md**: Ask Claude to document architecture decisions with diagrams
-2. **In PRs**: Include sequence diagrams for complex flows
-3. **In docs/**: Generate architecture.md with embedded diagrams
-4. **Export**: Use mermaid.live to export as PNG/SVG for presentations
+1. **在 CLAUDE.md 中**：让 Claude 用图表记录架构决策
+2. **在 PR 中**：为复杂流程附上时序图
+3. **在 docs/ 中**：生成带嵌入图表的 architecture.md
+4. **导出**：使用 mermaid.live 导出为 PNG/SVG 用于演示
 
-## 9.8 Vibe Coding & Skeleton Projects
+## 9.8 凭感觉编程与骨架项目
 
-**Reading time**: 5 minutes
-**Skill level**: Month 1
+**阅读时间**：5 分钟
+**技能等级**：第 1 个月
 
-### Vibe Coding
+### 凭感觉编程
 
-"Vibe Coding" is rapid prototyping through natural conversation—exploring ideas before committing to implementation.
+"凭感觉编程"是通过自然对话快速原型化的方式——在正式实现之前先探索想法。
 
-#### When to Vibe Code
+#### 何时凭感觉编程
 
-- **Early exploration**: Testing if an approach works
-- **Proof of concept**: Quick validation before full implementation
-- **Learning**: Understanding a new library or pattern
+- **早期探索**：验证某种方案是否可行
+- **概念验证**：在完整实现前快速验证
+- **学习**：理解新库或新模式
 
-#### Vibe Coding Session
+#### 凭感觉编程会话
 
 ```markdown
 User: Let's explore how we could add real-time updates to the dashboard.
@@ -15960,42 +15990,42 @@ User: Let's vibe on option 2. Show me a minimal SSE setup.
 Claude: [Provides minimal example for exploration]
 ```
 
-#### Vibe Coding Rules
+#### 凭感觉编程规则
 
-1. **No production code**: This is exploration only
-2. **Throw away freely**: No attachment to vibe code
-3. **Focus on learning**: Understand the approach
-4. **Signal clearly**: "This is vibe code, not for production"
+1. **不用于生产代码**：这只是探索
+2. **随时丢弃**：不要对凭感觉写的代码产生依恋
+3. **专注于学习**：理解这种方案
+4. **明确标注**："This is vibe code, not for production"
 
-#### Anti-Pattern: Context Overload
+#### 反模式：上下文过载
 
-[Jens Rusitschka](https://kickboost.substack.com/p/are-you-still-vibe-coding-or-are) identifies "context overload" as the primary failure mode of vibe coding: dumping entire codebases into context, hoping Claude will figure it out.
+[Jens Rusitschka](https://kickboost.substack.com/p/are-you-still-vibe-coding-or-are) 将"上下文过载"定义为凭感觉编程的主要失败模式：把整个代码库塞进上下文，指望 Claude 自己搞定。
 
-**Symptoms:**
+**症状：**
 
-- Pasting 5K+ lines of code in first prompt
+- 在第一条提示词中粘贴 5000+ 行代码
 - "Read the entire repo and implement X"
-- Expecting Claude to maintain context across 20+ file changes
-- Performance degradation after context pollution (see §2.2 Fresh Context Pattern)
+- 期望 Claude 在 20+ 个文件变更中保持上下文
+- 上下文污染后性能下降（参见 §2.2 新鲜上下文模式）
 
-**Why it fails:**
+**为什么会失败：**
 
-- Attention dilution across too many files and concerns
-- Lost architectural reasoning in noise
-- Failed attempts accumulate, further degrading quality
-- Context bleeding between unrelated tasks
+- 注意力被过多文件和关注点稀释
+- 架构推理淹没在噪音中
+- 失败尝试不断积累，进一步降低质量
+- 不相关任务之间的上下文渗漏
 
-**The Phased Context Strategy:**
+**分阶段上下文策略：**
 
-Instead of big-bang context dump, use a **staged approach** that leverages Claude Code's native features:
+与其一次性倾倒大量上下文，不如使用充分利用 Claude Code 原生功能的**分阶段方法**：
 
-| Phase | Tool | Purpose | Context Size |
+| 阶段 | 工具 | 目的 | 上下文大小 |
 |-------|------|---------|--------------|
-| 1. Exploration | `/plan` mode | Read-only analysis, safe investigation | Controlled (plan writes findings) |
-| 2. Implementation | Normal mode | Execute planned changes | Focused (plan guides scope) |
-| 3. Fresh Start | Session handoff | Reset when context >75% | Minimal (handoff doc only) |
+| 1. 探索 | `/plan` 模式 | 只读分析，安全调查 | 受控（计划写入发现结果） |
+| 2. 实现 | 普通模式 | 执行计划中的变更 | 聚焦（计划引导范围） |
+| 3. 新鲜开始 | 会话交接 | 上下文 >75% 时重置 | 最小（仅交接文档） |
 
-**Practical workflow:**
+**实际工作流：**
 
 ```bash
 # Phase 1: Exploration (read-only, safe)
@@ -16014,21 +16044,21 @@ Claude: [writes handoff to claudedocs/handoffs/oauth-implementation.md]
 # New session: cat claudedocs/handoffs/oauth-implementation.md | claude -p
 ```
 
-**Cross-references:**
+**交叉引用：**
 
-- Full `/plan` workflow: See [§2.3 Plan Mode](#23-plan-mode) (line 2100)
-- Fresh context pattern: See [§2.2 Fresh Context Pattern](#22-fresh-context-pattern) (line 1525)
-- Session handoffs: See [Session Handoffs](#session-handoffs) (line 2278)
+- 完整 `/plan` 工作流：参见 [§2.3 计划模式](#23-plan-mode)（第 2100 行）
+- 新鲜上下文模式：参见 [§2.2 新鲜上下文模式](#22-fresh-context-pattern)（第 1525 行）
+- 会话交接：参见 [会话交接](#session-handoffs)（第 2278 行）
 
-**The insight:** Rusitschka's "Vibe Coding, Level 2" is Claude Code's native workflow — it just needed explicit framing as an anti-pattern antidote. Plan mode prevents context pollution during exploration, fresh context prevents accumulation during implementation, and handoffs enable clean phase transitions.
+**洞察**：Rusitschka 的"凭感觉编程，第 2 级"正是 Claude Code 的原生工作流——只是需要明确将其定义为反模式的解药。计划模式防止探索阶段的上下文污染，新鲜上下文防止实现阶段的积累，交接文档实现干净的阶段切换。
 
-### Fighting Vibe Code Degradation
+### 对抗凭感觉编程的代码腐化
 
-Vibe coding gets things built fast. The codebases it produces tend to rot in ways that are hard to see: abstractions drift, naming becomes inconsistent, error handling gets done three different ways. The code still works, but working in it gets progressively worse.
+凭感觉编程能快速构建东西。但它产生的代码库往往以难以察觉的方式腐化：抽象漂移、命名不一致、错误处理用了三种不同方式。代码仍然能跑，但在其中工作会越来越难受。
 
-"Slop" — a term [coined by Simon Willison](https://simonwillison.net/2024/May/8/slop/) in 2024 for unwanted, unreviewed AI-generated content — is the quality problem that vibe coding at scale inevitably produces.
+"Slop"——[Simon Willison](https://simonwillison.net/2024/May/8/slop/) 在 2024 年创造的术语，指不受欢迎的、未经审查的 AI 生成内容——是大规模凭感觉编程必然产生的质量问题。
 
-**Desloppify** ([github.com/peteromallet/desloppify](https://github.com/peteromallet/desloppify)) is a community tool that directly addresses this. It installs a workflow guide into Claude Code as a skill, then runs a prioritized fix loop: scan → get next issue → fix → resolve → repeat until a quality score target is hit. The scoring is designed to resist gaming — improving the number requires actually improving the code.
+**Desloppify**（[github.com/peteromallet/desloppify](https://github.com/peteromallet/desloppify)）是一个直接解决这个问题的社区工具。它将工作流指南作为技能安装到 Claude Code 中，然后运行一个优先级修复循环：扫描 → 获取下一个问题 → 修复 → 解决 → 重复，直到达到质量分数目标。评分设计上能抵抗刷分——提高数字需要真正改善代码。
 
 ```bash
 pip install --upgrade "desloppify[full]"
@@ -16045,17 +16075,17 @@ desloppify resolve <issue-id>
 desloppify next                  # repeat
 ```
 
-The loop handles both mechanical issues (dead code, duplication, complexity) and structural ones (naming clarity, abstraction design, module boundaries). A score above 98 is meant to correlate with what a senior engineer would call a clean codebase.
+该循环处理机械性问题（死代码、重复、复杂度）和结构性问题（命名清晰度、抽象设计、模块边界）。98 分以上的分数意味着代码库达到了高级工程师所说的"干净"水准。
 
-> **Status**: Early-stage (released February 2026, ~2K GitHub stars). Promising native Claude Code integration but not yet battle-tested at scale. Evaluate token cost before running on large codebases — multi-pass LLM review across a full codebase can be substantial.
+> **状态**：早期阶段（2026 年 2 月发布，约 2K GitHub stars）。原生 Claude Code 集成很有前景，但尚未在大规模场景中经过充分验证。在大型代码库上运行前请评估 Token 成本——对整个代码库进行多轮 LLM 审查可能相当可观。
 
 ---
 
-### Skeleton Projects
+### 骨架项目
 
-Skeleton projects are minimal, working templates that establish patterns before full implementation.
+骨架项目是最小化的可运行模板，在完整实现之前先建立模式。
 
-#### Skeleton Structure
+#### 骨架结构
 
 ```
 project/
@@ -16073,14 +16103,14 @@ project/
 └── package.json           # Dependencies defined
 ```
 
-#### Skeleton Principles
+#### 骨架原则
 
-1. **It must run**: `pnpm dev` works from day 1
-2. **One complete vertical**: Full stack for one feature
-3. **Patterns, not features**: Shows HOW, not WHAT
-4. **Minimal dependencies**: Only what's needed
+1. **必须能运行**：从第一天起 `pnpm dev` 就能工作
+2. **一个完整的垂直切片**：一个功能的完整技术栈
+3. **模式，而非功能**：展示怎么做，而非做什么
+4. **最小依赖**：只包含必要的内容
 
-#### Creating a Skeleton
+#### 创建骨架
 
 ```markdown
 User: Create a skeleton for our new microservice. Include:
@@ -16093,7 +16123,7 @@ User: Create a skeleton for our new microservice. Include:
 Claude: [Creates minimal, working skeleton with these elements]
 ```
 
-#### Skeleton Expansion
+#### 骨架扩展
 
 ```
 Skeleton (Day 1)     →    MVP (Week 1)    →    Full (Month 1)
@@ -16104,25 +16134,25 @@ Basic config         →    Env-based       →    Full config
 Local DB             →    Docker DB       →    Production DB
 ```
 
-## 9.9 Batch Operations Pattern
+## 9.9 批量操作模式
 
-**Reading time**: 5 minutes
-**Skill level**: Week 1+
+**阅读时间**：5 分钟
+**技能等级**：第 1 周起
 
-Batch operations improve efficiency and reduce context usage when making similar changes across files.
+批量操作能在对多个文件进行类似变更时提升效率、减少上下文消耗。
 
-### When to Batch
+### 何时批量操作
 
-| Scenario | Batch? | Why |
+| 场景 | 批量？ | 原因 |
 |----------|--------|-----|
-| Same change in 5+ files | ✅ Yes | Efficiency |
-| Related changes in 3 files | ✅ Yes | Coherence |
-| Unrelated fixes | ❌ No | Risk of errors |
-| Complex refactoring | ⚠️ Maybe | Depends on pattern |
+| 5+ 个文件做相同变更 | ✅ 是 | 效率 |
+| 3 个文件做相关变更 | ✅ 是 | 一致性 |
+| 不相关的修复 | ❌ 否 | 出错风险 |
+| 复杂重构 | ⚠️ 视情况 | 取决于模式 |
 
-### Batch Patterns
+### 批量模式
 
-#### 1. Import Updates
+#### 1. 导入更新
 
 ```markdown
 User: Update all files in src/components to use the new Button import:
@@ -16130,7 +16160,7 @@ User: Update all files in src/components to use the new Button import:
       - New: import { Button } from "~/components/ui/button"
 ```
 
-#### 2. API Migration
+#### 2. API 迁移
 
 ```markdown
 User: Migrate all API calls from v1 to v2:
@@ -16139,7 +16169,7 @@ User: Migrate all API calls from v1 to v2:
       - Files: src/services/*.ts
 ```
 
-#### 3. Pattern Application
+#### 3. 模式应用
 
 ```markdown
 User: Add error boundaries to all page components:
@@ -16148,7 +16178,7 @@ User: Add error boundaries to all page components:
       - Files: src/pages/**/*.tsx
 ```
 
-### Batch Execution Strategy
+### 批量执行策略
 
 ```
 1. Identify scope   → List all affected files
@@ -16158,7 +16188,7 @@ User: Add error boundaries to all page components:
 5. Verify all       → Run tests, typecheck
 ```
 
-### Batch with Claude
+### 与 Claude 批量操作
 
 ```markdown
 ## Effective Batch Request
@@ -16173,17 +16203,17 @@ User: Add error boundaries to all page components:
 List affected files first, then make changes."
 ```
 
-## 9.10 Continuous Improvement Mindset
+## 9.10 持续改进心态
 
-The goal isn't just to use AI for coding — it's to **continuously improve the workflow** so AI produces better results with less intervention.
+目标不只是用 AI 写代码——而是**持续改进工作流**，让 AI 以更少的干预产出更好的结果。
 
-### The Key Question
+### 关键问题
 
-After every manual intervention, ask yourself:
+每次手动干预后，问自己：
 
-> "How can I improve the process so this error or manual fix can be avoided next time?"
+> "如何改进流程，让这个错误或手动修复下次不再发生？"
 
-### Improvement Pipeline
+### 改进流水线
 
 ```
 Error or manual intervention detected
@@ -16204,58 +16234,58 @@ rule            │
        or ADRs
 ```
 
-### Practical Examples
+### 实际案例
 
-| Problem | Solution | Where to Add |
+| 问题 | 解决方案 | 添加位置 |
 |---------|----------|--------------|
-| Agent forgets to run tests | Add to workflow command | `.claude/commands/complete-task.md` |
-| Code review catches style issue | Add ESLint rule | `.eslintrc.js` |
-| Same architecture mistake repeated | Document decision | `docs/conventions/architecture.md` |
-| Agent uses wrong import pattern | Add example | `CLAUDE.md` |
+| 智能体忘记运行测试 | 添加到工作流命令 | `.claude/commands/complete-task.md` |
+| 代码审查发现风格问题 | 添加 ESLint 规则 | `.eslintrc.js` |
+| 反复出现相同架构错误 | 记录决策 | `docs/conventions/architecture.md` |
+| 智能体使用错误的导入模式 | 添加示例 | `CLAUDE.md` |
 
-### The Mindset Shift
+### 思维转变
 
-Traditional: *"I write code, AI helps"*
+传统：*"我写代码，AI 帮忙"*
 
-AI-native: *"I improve the workflow and context so AI writes better code"*
+AI 原生：*"我改进工作流和上下文，让 AI 写出更好的代码"*
 
-> "Software engineering might be more workflow + context engineering."
+> "软件工程可能更多是工作流 + 上下文工程。"
 > — Nick Tune
 
-This is the meta-skill: instead of fixing code, **fix the system that produces the code**.
+这是元技能：不是修复代码，而是**修复产生代码的系统**。
 
-> Inspired by [Nick Tune's Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa)
+> 灵感来源：[Nick Tune 的编码智能体开发工作流](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa)
 
-> **See also**: [§2.5 From Chatbot to Context System](#from-chatbot-to-context-system) — the four-layer framework (CLAUDE.md, skills, hooks, memory) that makes this mindset operational.
+> **另见**：[§2.5 从聊天机器人到上下文系统](#from-chatbot-to-context-system)——让这种心态落地的四层框架（CLAUDE.md、技能、钩子、记忆）。
 
-## 9.11 Common Pitfalls & Best Practices
+## 9.11 常见陷阱与最佳实践
 
-Learn from common mistakes to avoid frustration and maximize productivity.
+从常见错误中学习，避免挫折，最大化生产力。
 
-### Security Pitfalls
+### 安全陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Use `--dangerously-skip-permissions` on production systems or sensitive codebases
-- Hard-code secrets in commands, config files, or CLAUDE.md
-- Grant overly broad permissions like `Bash(*)` without restrictions
-- Run Claude Code with elevated privileges (sudo/Administrator) unnecessarily
-- Commit `.claude/settings.local.json` to version control (contains API keys)
-- Share session IDs or logs that may contain sensitive information
-- Disable security hooks during normal development
+- 在生产系统或敏感代码库上使用 `--dangerously-skip-permissions`
+- 在命令、配置文件或 CLAUDE.md 中硬编码密钥
+- 授予过于宽泛的权限，如不加限制的 `Bash(*)`
+- 不必要地以提升权限（sudo/Administrator）运行 Claude Code
+- 将 `.claude/settings.local.json` 提交到版本控制（包含 API 密钥）
+- 分享可能包含敏感信息的会话 ID 或日志
+- 在正常开发中禁用安全钩子
 
-**✅ Do:**
+**✅ 要：**
 
-- Store secrets in environment variables or secure vaults
-- Start from minimal permissions and expand gradually as needed
-- Audit regularly with `claude config list` to review active permissions
-- Isolate risky operations in containers, VMs, or separate environments
-- Use `.gitignore` to exclude sensitive configuration files
-- Review all diffs before accepting changes, especially in security-critical code
-- Implement PreToolUse hooks to catch accidental secret exposure
-- Use Plan Mode for exploring unfamiliar or sensitive codebases
+- 将密钥存储在环境变量或安全保险库中
+- 从最小权限开始，按需逐步扩展
+- 定期用 `claude config list` 审查当前权限
+- 在容器、虚拟机或独立环境中隔离高风险操作
+- 使用 `.gitignore` 排除敏感配置文件
+- 接受变更前审查所有差异，尤其是安全关键代码
+- 实现 PreToolUse 钩子以捕获意外的密钥暴露
+- 对陌生或敏感代码库使用计划模式
 
-**Example Security Hook:**
+**安全钩子示例：**
 
 ```bash
 #!/bin/bash
@@ -16280,95 +16310,95 @@ fi
 exit 0  # Allow
 ```
 
-### Performance Pitfalls
+### 性能陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Load entire monorepo when you only need one package
-- Max out thinking/turn budgets for simple tasks (wastes time and money)
-- Ignore session cleanup - old sessions accumulate and slow down Claude Code
-- Use deep thinking prompts for trivial edits like typo fixes
-- Keep context at 90%+ for extended periods
-- Load large binary files or generated code into context
-- Run expensive MCP operations in tight loops
+- 只需要一个包时加载整个 monorepo
+- 对简单任务用满思考/轮次预算（浪费时间和金钱）
+- 忽视会话清理——旧会话积累会拖慢 Claude Code
+- 对拼写错误等琐碎编辑使用深度思考提示词
+- 长时间将上下文保持在 90%+
+- 将大型二进制文件或生成的代码加载到上下文中
+- 在紧密循环中运行昂贵的 MCP 操作
 
-**✅ Do:**
+**✅ 要：**
 
-- Use `--add-dir` to allow tool access to directories outside the current working directory
-- Manage thinking mode for cost efficiency:
-  - Simple tasks: Alt+T to disable thinking → faster, cheaper
-  - Complex tasks: Leave thinking enabled (default in Opus 4.6)
-  - `ultrathink` keyword forces high effort for the next turn specifically (re-introduced in v2.1.68)
-- Set `cleanupPeriodDays` in config to prune old sessions automatically
-- Re-enable thinking summaries if needed: add `"showThinkingSummaries": true` to settings.json (off by default in interactive sessions since v2.1.89)
-- Use `/compact` proactively when context reaches 70%
-- Block sensitive files with `permissions.deny` in settings.json
-- Monitor cost with `/status` and adjust model/thinking levels accordingly
-- Cache expensive computations in memory with Serena MCP
+- 使用 `--add-dir` 允许工具访问当前工作目录之外的目录
+- 管理思考模式以控制成本：
+  - 简单任务：Alt+T 禁用思考 → 更快、更便宜
+  - 复杂任务：保持思考启用（Opus 4.6 默认）
+  - `ultrathink` 关键词专门为下一轮强制高强度思考（v2.1.68 重新引入）
+- 在配置中设置 `cleanupPeriodDays` 自动清理旧会话
+- 如需重新启用思考摘要：在 settings.json 中添加 `"showThinkingSummaries": true`（自 v2.1.89 起交互会话默认关闭）
+- 上下文达到 70% 时主动使用 `/compact`
+- 用 `permissions.deny` 在 settings.json 中屏蔽敏感文件
+- 用 `/status` 监控成本，相应调整模型/思考级别
+- 用 Serena MCP 在内存中缓存昂贵的计算结果
 
-**Context Management Strategy:**
+**上下文管理策略：**
 
-| Context Level | Action | Why |
+| 上下文级别 | 操作 | 原因 |
 |--------------|--------|-----|
-| 0-50% | Work freely | Optimal performance |
-| 50-70% | Be selective | Start monitoring |
-| 70-85% | `/compact` now | Prevent degradation |
-| 85-95% | `/compact` or `/clear` | Significant slowdown |
-| 95%+ | `/clear` required | Risk of errors |
+| 0-50% | 自由工作 | 最佳性能 |
+| 50-70% | 有选择性 | 开始监控 |
+| 70-85% | 现在 `/compact` | 防止性能下降 |
+| 85-95% | `/compact` 或 `/clear` | 明显变慢 |
+| 95%+ | 必须 `/clear` | 出错风险 |
 
-### Workflow Pitfalls
+### 工作流陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Skip project context (`CLAUDE.md`) - leads to repeated corrections
-- Use vague prompts like "fix this" or "check my code"
-- Ignore errors in logs or dismiss warnings
-- Automate workflows without testing in safe environments first
-- Accept changes blindly without reviewing diffs
-- Work without version control or backups
-- Mix multiple unrelated tasks in one session
-- Forget to commit after completing tasks
+- 跳过项目上下文（`CLAUDE.md`）——会导致反复纠正
+- 使用模糊提示词，如"fix this"或"check my code"
+- 忽略日志中的错误或忽视警告
+- 在安全环境测试之前就自动化工作流
+- 不审查差异就盲目接受变更
+- 在没有版本控制或备份的情况下工作
+- 在一个会话中混合多个不相关的任务
+- 完成任务后忘记提交
 
-**✅ Do:**
+**✅ 要：**
 
-- Maintain and update `CLAUDE.md` regularly with:
-  - Tech stack and versions
-  - Coding conventions and patterns
-  - Architecture decisions
-  - Common gotchas specific to your project
-- Be specific and goal-oriented in prompts using WHAT/WHERE/HOW/VERIFY format
-- Monitor via logs or OpenTelemetry when appropriate
-- Test automation in dev/staging environments first
-- Always review agent outputs before accepting — especially polished ones (see Artifact Paradox below)
-- Use git branches for experimental changes
-- Break complex tasks into focused sessions
-- Commit frequently with descriptive messages
+- 定期维护和更新 `CLAUDE.md`，包含：
+  - 技术栈和版本
+  - 编码规范和模式
+  - 架构决策
+  - 项目特有的常见坑
+- 使用 WHAT/WHERE/HOW/VERIFY 格式编写具体、目标导向的提示词
+- 在适当时通过日志或 OpenTelemetry 监控
+- 先在开发/预发布环境测试自动化
+- 始终在接受前审查智能体输出——尤其是看起来很完美的输出（见下方制品悖论）
+- 使用 git 分支进行实验性变更
+- 将复杂任务拆分为聚焦的会话
+- 频繁提交，附上描述性消息
 
-> **⚠️ The Artifact Paradox — Anthropic AI Fluency Index (Feb 2026)**
+> **⚠️ 制品悖论——Anthropic AI 流畅度指数（2026 年 2 月）**
 >
-> Anthropic research on 9,830 Claude conversations reveals a critical counter-intuitive finding: **when Claude produces a polished artifact (code, files, configs), users become measurably less critical**, not more.
+> Anthropic 对 9,830 次 Claude 对话的研究揭示了一个关键的反直觉发现：**当 Claude 产出精美的制品（代码、文件、配置）时，用户反而变得更不挑剔**，而非更挑剔。
 >
-> Compared to sessions without artifact production:
-> - **−5.2pp** likelihood of identifying missing context
-> - **−3.7pp** likelihood of fact-checking the output
-> - **−3.1pp** likelihood of questioning the reasoning
+> 与没有制品产出的会话相比：
+> - **−5.2pp** 识别缺失上下文的可能性
+> - **−3.7pp** 核实输出内容的可能性
+> - **−3.1pp** 质疑推理过程的可能性
 >
-> Users *do* become more directive (+14.7pp clarifying goals, +14.5pp specifying format) — but their **critical evaluation drops precisely when the output looks finished**.
+> 用户确实变得更有指导性（+14.7pp 澄清目标，+14.5pp 指定格式）——但**批判性评估恰恰在输出看起来完成时下降**。
 >
-> **For Claude Code, this is the nominal case.** Every generated file, every written test, every created config is an artifact. The polished compile-and-run output is exactly when you should apply the most scrutiny — not the least.
+> **对于 Claude Code，这是常态。** 每个生成的文件、每个写好的测试、每个创建的配置都是制品。编译运行的精美输出，正是你应该施加最多审查的时候——而不是最少。
 >
-> **Counter-measures:**
-> - Run tests *before* accepting generated code, not after
-> - Explicitly ask: "What edge cases or requirements did you not address?"
-> - Use the [`output-validator` hook](../examples/hooks/bash/output-validator.sh) for automated checks
-> - Apply the VERIFY step of the WHAT/WHERE/HOW/VERIFY format even when output looks complete
-> - In Plan Mode: challenge the plan *before* executing, not after seeing the result
+> **应对措施：**
+> - 在接受生成代码*之前*运行测试，而非之后
+> - 明确询问："你没有处理哪些边界情况或需求？"
+> - 使用 [`output-validator` 钩子](../examples/hooks/bash/output-validator.sh) 进行自动检查
+> - 即使输出看起来完整，也要执行 WHAT/WHERE/HOW/VERIFY 格式的 VERIFY 步骤
+> - 在计划模式中：在执行*之前*质疑计划，而非看到结果之后
 >
-> *Source: Swanson et al., "The AI Fluency Index", Anthropic (2026-02-23) — [anthropic.com/research/AI-fluency-index](https://www.anthropic.com/research/AI-fluency-index)*
+> *来源：Swanson 等，"The AI Fluency Index"，Anthropic（2026-02-23）— [anthropic.com/research/AI-fluency-index](https://www.anthropic.com/research/AI-fluency-index)*
 >
-> 📊 Visual: [AI Fluency — High vs Low Fluency Paths](../guide/diagrams/06-development-workflows.md#ai-fluency--high-vs-low-fluency-paths)
+> 📊 可视化：[AI 流畅度——高流畅度与低流畅度路径](../guide/diagrams/06-development-workflows.md#ai-fluency--high-vs-low-fluency-paths)
 
-**Effective Prompt Format:**
+**有效提示词格式：**
 
 ```markdown
 ## Task Template
@@ -16390,29 +16420,29 @@ VERIFY:
 - Valid inputs clear errors and allow submission
 ```
 
-### Collaboration Pitfalls
+### 协作陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Commit personal API keys or local settings to shared repos
-- Override team conventions in personal `.claude/` without discussion
-- Use non-standard agents/skills without team alignment
-- Modify shared hooks without testing across team
-- Skip documentation for custom commands/agents
-- Use different Claude Code versions across team without coordinating
+- 将个人 API 密钥或本地设置提交到共享仓库
+- 未经讨论就在个人 `.claude/` 中覆盖团队规范
+- 未与团队对齐就使用非标准智能体/技能
+- 未经跨团队测试就修改共享钩子
+- 跳过自定义命令/智能体的文档
+- 未协调就在团队中使用不同版本的 Claude Code
 
-**✅ Do:**
+**✅ 要：**
 
-- Use `.gitignore` for `.claude/settings.local.json` and personal configs
-- Document team-wide conventions in project `CLAUDE.md` (committed)
-- Share useful agents/skills via team repository or wiki
-- Test hooks in isolation before committing
-- Maintain README for `.claude/agents/` and `.claude/commands/`
-- Coordinate Claude Code updates and test compatibility
-- Use consistent naming conventions for custom components
-- Share useful prompts and patterns in team knowledge base
+- 在 `.gitignore` 中排除 `.claude/settings.local.json` 和个人配置
+- 在项目 `CLAUDE.md`（已提交）中记录团队规范
+- 通过团队仓库或 wiki 共享有用的智能体/技能
+- 提交前单独测试钩子
+- 为 `.claude/agents/` 和 `.claude/commands/` 维护 README
+- 协调 Claude Code 更新并测试兼容性
+- 为自定义组件使用一致的命名规范
+- 在团队知识库中分享有用的提示词和模式
 
-**Recommended .gitignore:**
+**推荐的 .gitignore：**
 
 ```gitignore
 # Claude Code - Personal
@@ -16431,29 +16461,29 @@ VERIFY:
 .env.*.local
 ```
 
-### Codebase Structure Pitfalls
+### 代码库结构陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Use abbreviated variable/function names (`usr`, `evt`, `calcDur`) - agents can't find them
-- Write obvious comments that waste tokens (`// Import React`)
-- Keep large monolithic files (>500 lines) that agents must read in chunks
-- Hide business logic in tribal knowledge - agents need explicit documentation
-- Assume agents know your custom patterns without documentation (ADRs)
-- Delegate test writing to agents - they'll write tests that match their (potentially flawed) implementation
+- 使用缩写的变量/函数名（`usr`、`evt`、`calcDur`）——智能体找不到它们
+- 写浪费 Token 的显而易见的注释（`// Import React`）
+- 保留智能体必须分块读取的大型单体文件（>500 行）
+- 将业务逻辑藏在部落知识中——智能体需要明确的文档
+- 假设智能体无需文档就知道你的自定义模式（ADR）
+- 将测试编写委托给智能体——它们会写出与其（可能有缺陷的）实现相匹配的测试
 
-**✅ Do:**
+**✅ 要：**
 
-- Use complete, searchable terms (`user`, `event`, `calculateDuration`)
-- Add synonyms in comments for discoverability ("member, subscriber, customer")
-- Split large files by concern (validation, sync, business logic)
-- Embed domain knowledge in CLAUDE.md, ADRs, and code comments
-- Document custom architectures with Architecture Decision Records (ADRs)
-- Write tests manually first (TDD), then have agents implement to pass tests
-- Use standard design patterns (Singleton, Factory, Repository) that agents know from training
-- Add cross-references between related modules
+- 使用完整、可搜索的术语（`user`、`event`、`calculateDuration`）
+- 在注释中添加同义词以提高可发现性（"member, subscriber, customer"）
+- 按关注点拆分大文件（验证、同步、业务逻辑）
+- 在 CLAUDE.md、ADR 和代码注释中嵌入领域知识
+- 用架构决策记录（ADR）记录自定义架构
+- 先手动编写测试（TDD），再让智能体实现以通过测试
+- 使用智能体从训练中了解的标准设计模式（单例、工厂、仓储）
+- 在相关模块之间添加交叉引用
 
-**Agent-hostile example**:
+**对智能体不友好的示例**：
 
 ```typescript
 // usr-mgr.ts
@@ -16462,7 +16492,7 @@ class UsrMgr {
 }
 ```
 
-**Agent-friendly example**:
+**对智能体友好的示例**：
 
 ```typescript
 // user-manager.ts
@@ -16481,240 +16511,242 @@ class UserManager {
 }
 ```
 
-> **Comprehensive guide**: For complete codebase optimization strategies including token efficiency, testing approaches, and guardrails, see [Section 9.18: Codebase Design for Agent Productivity](#918-codebase-design-for-agent-productivity).### Cost Optimization Pitfalls
+> **完整指南**：关于代码库优化策略（包括 Token 效率、测试方法和护栏），参见 [第 9.18 节：为智能体生产力设计代码库](#918-codebase-design-for-agent-productivity)。
+```
+### 成本优化陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Use Opus for simple tasks that Sonnet can handle
-- Use deep thinking prompts for every task by default
-- Ignore the cost metrics in `/status`
-- Use MCP servers that make external API calls excessively
-- Load entire codebase for focused tasks
-- Re-analyze unchanged code repeatedly
+- 用 Opus 处理 Sonnet 就能搞定的简单任务
+- 默认给每个任务都上深度思考提示词
+- 忽视 `/status` 里的成本指标
+- 使用频繁调用外部 API 的 MCP 服务器
+- 为专注型任务加载整个代码库
+- 反复分析没有变动的代码
 
-**✅ Do:**
+**✅ 要：**
 
-- Use OpusPlan mode: Opus for planning, Sonnet for execution
-- Match model to task complexity:
-  - Haiku: Code review, simple fixes
-  - Sonnet: Most development tasks
-  - Opus: Architecture, complex debugging
-- Monitor cost with `/status` regularly
-- Set budget alerts if using API directly
-- Use Serena memory to avoid re-analyzing code
-- Leverage context caching with `/compact`
-- Batch similar operations together
+- 使用 OpusPlan 模式：Opus 负责规划，Sonnet 负责执行
+- 根据任务复杂度匹配模型：
+  - Haiku：代码审查、简单修复
+  - Sonnet：大多数开发任务
+  - Opus：架构设计、复杂调试
+- 定期用 `/status` 监控成本
+- 如果直接调用 API，设置预算告警
+- 用 Serena 记忆避免重复分析代码
+- 利用 `/compact` 进行上下文缓存
+- 把相似操作批量处理
 
-**Cost-Effective Model Selection:**
+**高性价比的模型选择：**
 
-> See [Section 2.5 Model Selection & Thinking Guide](#25-model-selection--thinking-guide) for the canonical decision table with effort levels and cost estimates.
+> 参见 [2.5 模型选择与思考指南](#25-model-selection--thinking-guide) 中的权威决策表，包含工作量级别和成本估算。
 
-### Learning & Adoption Pitfalls
+### 学习与上手陷阱
 
-**❌ Don't:**
+**❌ 不要：**
 
-- Try to learn everything at once - overwhelming and inefficient
-- Skip the basics and jump to advanced features
-- Expect perfection from AI - it's a tool, not magic
-- Blame Claude for errors without reviewing your prompts
-- Work in isolation without checking community resources
-- Give up after first frustration
-- **Trust AI output without proportional verification** - AI code has 1.75× more logic errors than human-written code ([source](https://dl.acm.org/doi/10.1145/3716848)). Match verification effort to risk level (see [Section 1.7](#17-trust-calibration-when-and-how-much-to-verify))
+- 试图一次性学会所有东西——既压垮自己，效率也低
+- 跳过基础，直接扑向高级功能
+- 对 AI 期望完美——它是工具，不是魔法
+- 出了问题只怪 Claude，不检查自己的提示词
+- 闭门造车，不看社区资源
+- 第一次受挫就放弃
+- **不对 AI 输出做与风险相称的验证**——AI 写的代码逻辑错误率比人类代码高 1.75 倍（[来源](https://dl.acm.org/doi/10.1145/3716848)）。验证投入要与风险级别匹配（参见 [1.7 节](#17-trust-calibration-when-and-how-much-to-verify)）
 
-**✅ Do:**
+**✅ 要：**
 
-- Follow progressive learning path:
-  1. Week 1: Basic commands, context management
-  2. Week 2: CLAUDE.md, permissions
-  3. Week 3: Agents and commands
-  4. Month 2+: MCP servers, advanced patterns
-- Start with simple, low-risk tasks
-- Iterate on prompts based on results
-- Review this guide and community resources regularly
-- Join Claude Code communities (Discord, GitHub discussions)
-- Share learnings and ask questions
-- Celebrate small wins and track productivity gains
+- 遵循渐进式学习路径：
+  1. 第 1 周：基础命令、上下文管理
+  2. 第 2 周：CLAUDE.md、权限设置
+  3. 第 3 周：智能体和命令
+  4. 第 2 个月起：MCP 服务器、高级模式
+- 从简单、低风险的任务开始
+- 根据结果迭代优化提示词
+- 定期回顾本指南和社区资源
+- 加入 Claude Code 社区（Discord、GitHub discussions）
+- 分享心得、主动提问
+- 庆祝小胜利，记录效率提升
 
-**Learning Checklist:**
+**学习清单：**
 
 ```
-□ Week 1: Installation & Basic Usage
-  □ Install Claude Code successfully
-  □ Complete first task (simple edit)
-  □ Understand context management (use /compact)
-  □ Learn permission modes (try Plan Mode)
+□ 第 1 周：安装与基础使用
+  □ 成功安装 Claude Code
+  □ 完成第一个任务（简单编辑）
+  □ 理解上下文管理（使用 /compact）
+  □ 了解权限模式（尝试计划模式）
 
-□ Week 2: Configuration & Memory
-  □ Create project CLAUDE.md
-  □ Set up .gitignore correctly
-  □ Configure permissions in settings.local.json
-  □ Use @file references effectively
+□ 第 2 周：配置与记忆
+  □ 创建项目级 CLAUDE.md
+  □ 正确设置 .gitignore
+  □ 在 settings.local.json 中配置权限
+  □ 有效使用 @file 引用
 
-□ Week 3-4: Customization
-  □ Create first custom agent
-  □ Create first custom command
-  □ Set up at least one hook
-  □ Explore one MCP server (suggest: Context7)
+□ 第 3-4 周：个性化定制
+  □ 创建第一个自定义智能体
+  □ 创建第一个自定义命令
+  □ 设置至少一个钩子
+  □ 探索一个 MCP 服务器（推荐：Context7）
 
-□ Month 2+: Advanced Patterns
-  □ Implement Trinity pattern (Git + TodoWrite + Agent)
-  □ Set up CI/CD integration
-  □ Configure OpusPlan mode
-  □ Build team workflow patterns
+□ 第 2 个月+：高级模式
+  □ 实现三位一体模式（Git + TodoWrite + Agent）
+  □ 设置 CI/CD 集成
+  □ 配置 OpusPlan 模式
+  □ 搭建团队工作流模式
 ```
 
-### Enterprise Anti-Patterns (2026 Industry Data)
+### 企业级反模式（2026 行业数据）
 
-> **Source**: [Anthropic 2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)
+> **来源**：[Anthropic 2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)
 
-Based on Anthropic research across 5000+ organizations, these anti-patterns emerged as the most costly mistakes in agentic coding adoption.
+基于 Anthropic 对 5000+ 家机构的调研，以下反模式是智能体化编码推广过程中代价最高的错误。
 
-#### ❌ Over-Delegation (>5 Agents)
+#### ❌ 过度委托（>5 个智能体）
 
-**Symptom**: Context switching cost exceeds productivity gain
+**症状**：上下文切换成本超过生产力收益
 
-**Example**:
-
-```
-Team spawns 10 agents simultaneously:
-- 6 agents blocked waiting for each other
-- 3 agents working on conflicting changes
-- 1 agent actually productive
-→ Net result: Slower than 2 well-coordinated agents
-```
-
-**Why it fails**: Coordination overhead grows quadratically (N agents = N² potential conflicts)
-
-**✅ Fix**:
-
-- Start with 2-3 agents maximum
-- Measure productivity gain before scaling
-- Anthropic data: Sweet spot = 3-5 agents for most teams
-- Boris Cherny (creator): 5-15 agents, but with **ideal architecture + resources**
-
-#### ❌ Premature Automation
-
-**Symptom**: Automating workflow not mastered manually first
-
-**Example**:
+**示例**：
 
 ```
-Team automates PR review before:
-- Understanding what good reviews look like
-- Having manual review checklist
-- Testing on 10+ PRs manually
-→ Automated garbage (agent reproduces poor manual practices)
+团队同时启动 10 个智能体：
+- 6 个互相等待，被卡住
+- 3 个在改冲突的代码
+- 1 个真正在产出
+→ 净结果：比 2 个协调良好的智能体还慢
 ```
 
-**Why it fails**: AI amplifies existing patterns (garbage in = garbage out)
+**失败原因**：协调开销呈平方级增长（N 个智能体 = N² 潜在冲突）
 
-**✅ Fix**:
+**✅ 修复**：
 
-- Manual → Semi-auto → Full-auto (progressive)
-- Document manual process first (becomes CLAUDE.md rules)
-- Test automation on 20+ examples before full rollout
-- Anthropic finding: **60% use AI, but only 0-20% fully delegate** (collaboration ≠ replacement)
+- 最多从 2-3 个智能体开始
+- 扩展前先测量生产力收益
+- Anthropic 数据：大多数团队的甜点区是 3-5 个智能体
+- Boris Cherny（创造者）：5-15 个智能体可行，但前提是**理想架构 + 充足资源**
 
-#### ❌ Tool Sprawl (>10 MCP Servers)
+#### ❌ 过早自动化
 
-**Symptom**: Maintenance burden, version conflicts, debugging hell
+**症状**：还没手动跑熟的工作流就急着自动化
 
-**Example**:
-
-```
-Project has 15 MCP servers:
-- 8 unused (installed for one-off task)
-- 4 duplicative (3 different doc lookup servers)
-- 2 conflicting (competing file search implementations)
-- 1 actually needed daily
-→ Startup time: 45 seconds, frequent crashes
-```
-
-**Why it fails**: Each MCP server = additional failure point, dependency, configuration
-
-**✅ Fix**:
-
-- Start core stack: Serena (symbols), Context7 (docs), Sequential (reasoning)
-- Add selectively: One MCP server at a time, measure value
-- Audit quarterly: Remove unused servers (`/mcp list` → usage stats)
-- Anthropic team pattern: **CLI/scripts over MCP** unless bidirectional communication needed
-
-#### ❌ Ignoring Collaboration Paradox
-
-**Symptom**: Expecting 100% delegation, frustrated by constant supervision needed
-
-**Example**:
+**示例**：
 
 ```
-Engineer assumes "AI writes code, I review":
-- Reality: Constant clarification questions
-- Reality: Edge cases require human judgment
-- Reality: Architecture decisions still need human input
-→ Burnout from micromanaging instead of collaborating
+团队在以下事项都没做到之前就自动化了 PR 审查：
+- 理解好的审查长什么样
+- 拥有手动审查清单
+- 在 10+ 个 PR 上手动测试
+→ 自动化垃圾（智能体只会复制糟糕的手动实践）
 ```
 
-**Why it fails**: Current AI state = **collaboration tool**, not autonomous replacement
+**失败原因**：AI 会放大已有模式（垃圾进 = 垃圾出）
 
-**✅ Fix**:
+**✅ 修复**：
 
-- Accept **60% AI usage, 0-20% full delegation** as normal (Anthropic data)
-- Design workflows for collaboration, not delegation
-- Use AI for: Easily verifiable, well-defined, repetitive tasks
-- Keep human: High-level design, organizational context, "taste" decisions
+- 手动 → 半自动 → 全自动（渐进式）
+- 先文档化手动流程（日后变成 CLAUDE.md 规则）
+- 全面推广前，先在 20+ 个样例上测试自动化
+- Anthropic 发现：**60% 使用 AI，但只有 0-20% 完全委托**（协作 ≠ 替代）
 
-#### ❌ No ROI Measurement
+#### ❌ 工具泛滥（>10 个 MCP 服务器）
 
-**Symptom**: Scaling spend without tracking productivity gain
+**症状**：维护负担重、版本冲突、调试地狱
 
-**Example**:
+**示例**：
 
 ```
-Team increases from 3 to 10 Claude instances:
-- Monthly cost: $500 → $2,000
-- Measured output: ??? (no tracking)
-- Actual gain: Unclear if positive ROI
-→ CFO asks "Why $2K/month?" → No answer → Budget cut
+项目装了 15 个 MCP 服务器：
+- 8 个闲置（为了一次性任务安装）
+- 4 个重复（3 个不同的文档查询服务器）
+- 2 个冲突（竞争的文件搜索实现）
+- 1 个真正每天用
+→ 启动时间 45 秒，频繁崩溃
 ```
 
-**Why it fails**: Can't optimize what you don't measure
+**失败原因**：每个 MCP 服务器 = 额外的故障点、依赖、配置项
 
-**✅ Fix**:
+**✅ 修复**：
 
-- Track baseline: PRs/week, features shipped/month, bugs fixed/sprint
-- Measure after scaling: Same metrics
-- Calculate ROI: (Productivity gain × engineer hourly rate) - Claude cost
-- Anthropic validation: **67% more PRs merged/day** = measurable productivity
-- Share metrics with leadership (justify budget, demonstrate value)
+- 从核心栈开始：Serena（符号）、Context7（文档）、Sequential（推理）
+- 有选择地添加：一次只加一个，评估价值
+- 季度审计：移除不用的服务器（`/mcp list` → 使用统计）
+- Anthropic 团队模式：除非需要双向通信，否则优先**CLI/脚本而非 MCP**
 
-#### Quick Reference: Avoiding Anti-Patterns
+#### ❌ 忽视协作悖论
 
-| Anti-Pattern | Limit | Measurement | Fix Trigger |
-|-------------|-------|-------------|-------------|
-| **Over-delegation** | >5 agents | Coordination overhead | Reduce to 2-3, measure |
-| **Tool sprawl** | >10 MCP servers | Startup time, crashes | Quarterly audit, remove unused |
-| **Premature automation** | - | Manual process unclear | Document → Test → Automate |
-| **No ROI tracking** | - | Can't answer "What gain?" | Baseline → Measure → Optimize |
+**症状**：期望 100% 委托，结果因需要持续监督而沮丧
 
-**Industry benchmark** (Anthropic 2026):
+**示例**：
 
-- **3-6 months** adoption timeline for Agent Teams
-- **$500-1K/month** cost for Multi-Instance (positive ROI at >3 instances)
-- **27% new work** (wouldn't be done without AI) = harder to measure but valuable
+```
+工程师以为 "AI 写代码，我负责审"：
+- 现实：不断被澄清问题打断
+- 现实：边界情况需要人类判断
+- 现实：架构决策仍需人类拍板
+→  burnout：不是在协作，而是在微观管理
+```
+
+**失败原因**：当前 AI 的状态 = **协作工具**，不是自主替代
+
+**✅ 修复**：
+
+- 接受 **60% AI 使用率、0-20% 完全委托** 是常态（Anthropic 数据）
+- 为协作设计工作流，而不是为委托
+- 把 AI 用于：容易验证、定义清晰、重复性的任务
+- 把人类留给：高层设计、组织上下文、"品味"决策
+
+#### ❌ 不衡量 ROI
+
+**症状**：不断扩大投入，却不跟踪生产力收益
+
+**示例**：
+
+```
+团队把 Claude 实例从 3 个增加到 10 个：
+- 月度成本：$500 → $2,000
+-  measured 产出：???（没跟踪）
+- 实际收益：不清楚是否正 ROI
+→ CFO 问 "为什么每月 2K？" → 答不上来 → 预算被砍
+```
+
+**失败原因**：无法优化你没测量的东西
+
+**✅ 修复**：
+
+- 跟踪基线：每周 PR 数、每月上线功能数、每轮迭代修复的 bug 数
+- 扩展后测量：同样的指标
+- 计算 ROI：（生产力收益 × 工程师时薪）- Claude 成本
+- Anthropic 验证：**每天合并的 PR 增加 67%** = 可测量的生产力
+- 与领导层分享指标（ justify 预算、证明价值）
+
+#### 快速参考：避开反模式
+
+| 反模式 | 上限 | 测量指标 | 修复触发点 |
+|--------|------|----------|------------|
+| **过度委托** | >5 个智能体 | 协调开销 | 缩减到 2-3 个，再测量 |
+| **工具泛滥** | >10 个 MCP 服务器 | 启动时间、崩溃频率 | 季度审计，移除闲置 |
+| **过早自动化** | - | 手动流程不清晰 | 文档化 → 测试 → 自动化 |
+| **无 ROI 跟踪** | - | 答不上来 "有什么收益？" | 基线 → 测量 → 优化 |
+
+**行业基准**（Anthropic 2026）：
+
+- **3-6 个月**：Agent Teams 的 adoption 周期
+- **$500-1K/月**：Multi-Instance 成本（>3 个实例时 ROI 为正）
+- **27% 新增工作**（没有 AI 就不会做）= 更难量化，但同样有价值
 
 ---
 
-## 9.12 Git Best Practices & Workflows
+## 9.12 Git 最佳实践与工作流
 
-Effective git workflows with Claude Code for professional development.
+与 Claude Code 配合的专业 Git 工作流。
 
-### Commit Message Best Practices
+### Commit Message 最佳实践
 
-Claude Code generates commit messages automatically. Guide it with clear context.
+Claude Code 会自动生成 commit message。用清晰的上下文引导它。
 
-**Default behavior:**
+**默认行为：**
 
 ```bash
-# After changes, Claude creates commits like:
+# 修改后，Claude 会创建类似这样的提交：
 git commit -m "feat: add user authentication middleware
 
 - Implement JWT validation
@@ -16724,17 +16756,17 @@ git commit -m "feat: add user authentication middleware
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
 
-#### AI Attribution Standards
+#### AI 署名规范
 
-For comprehensive AI code attribution beyond Co-Authored-By, including:
+除了 `Co-Authored-By`，如需更全面的 AI 代码溯源，包括：
 
-- LLVM's `Assisted-by:` trailer standard
-- git-ai checkpoint tracking
-- Team and enterprise compliance patterns
+- LLVM 的 `Assisted-by:` trailer 标准
+- git-ai checkpoint 跟踪
+- 团队及企业合规模式
 
-See: [AI Traceability Guide](./ops/ai-traceability.md)
+参见：[AI 可追溯性指南](./ops/ai-traceability.md)
 
-**Customize commit style in CLAUDE.md:**
+**在 CLAUDE.md 中自定义提交风格：**
 
 ```markdown
 ## Git Commit Conventions
@@ -16751,7 +16783,7 @@ Keep first line under 72 characters.
 Include ticket number: [PROJ-123]
 ```
 
-**Example with guidance:**
+**带引导的示例：**
 
 ```markdown
 You: "Implement login endpoint"
@@ -16767,23 +16799,23 @@ git commit -m "feat: implement user login endpoint [AUTH-42]
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
 
-### Git Amend Workflow
+### Git Amend 工作流
 
-**When to amend:**
+**何时 amend：**
 
-- Fix typos in recent commit
-- Add forgotten files to last commit
-- Improve commit message
-- **Only for unpushed commits**
+- 修复最近提交里的拼写错误
+- 把忘掉的文件补进上一次提交
+- 改进 commit message
+- **仅限未 push 的提交**
 
-**Safe amend pattern:**
+**安全的 amend 模式：**
 
 ```bash
-# Check if commit is unpushed
+# 检查提交是否已 push
 git status
 # Output: "Your branch is ahead of 'origin/main' by 1 commit"
 
-# Amend the commit
+# Amend 提交
 You: "Add the missing test file to the last commit"
 
 Claude:
@@ -16791,21 +16823,21 @@ git add tests/auth.test.ts
 git commit --amend --no-edit
 ```
 
-**❌ Never amend pushed commits** (requires force push, breaks team history)
+**❌ 永远不要 amend 已 push 的提交**（需要 force push，会破坏团队历史）
 
-**✅ For pushed commits, create new commit:**
+**✅ 已 push 的提交，创建新提交：**
 
 ```bash
 You: "Fix typo in authentication function"
 
 Claude:
-# Creates new commit instead of amending
+# 创建新提交，而不是 amend
 git commit -m "fix: correct typo in authenticateUser function"
 ```
 
-### Branch Management
+### 分支管理
 
-**Feature branch pattern:**
+**Feature branch 模式：**
 
 ```markdown
 ## CLAUDE.md Git Workflow
@@ -16818,7 +16850,7 @@ Always work on feature branches:
 5. Never commit directly to main/master
 ```
 
-**Branch naming conventions:**
+**分支命名规范：**
 
 ```
 feature/user-authentication
@@ -16828,63 +16860,63 @@ docs/update-readme
 chore/dependency-updates
 ```
 
-**Claude Code with branches:**
+**Claude Code 与分支配合：**
 
 ```bash
-# Start new feature
+# 开始新功能
 You: "Create a new branch for adding search functionality"
 
 Claude:
 git checkout -b feature/search-functionality
 
-# Work on feature...
+# 开发功能...
 # ...
 
-# When complete
+# 完成后
 You: "Create pull request for search feature"
 
 Claude:
 git push -u origin feature/search-functionality
-# Opens PR creation in browser
+# 在浏览器中打开 PR 创建页面
 ```
 
 ### Rewind vs Revert
 
-**`/rewind` (local undo):**
+**`/rewind`（本地撤销）：**
 
-- Undoes Claude's recent changes in current session
-- Does NOT create git commits
-- Works only for uncommitted changes
-- Use when: Claude made a mistake, you want to try different approach
+- 撤销当前会话中 Claude 的最近修改
+- 不会创建 git 提交
+- 只对未提交的更改有效
+- 使用场景：Claude 搞错了，你想换种思路
 
-**Example:**
+**示例：**
 
 ```bash
 You: "Add email validation to login form"
 Claude: [Makes changes]
 You: [Reviews diff] "This breaks the existing flow"
 /rewind
-# Changes are undone, back to previous state
+# 更改被撤销，回到之前状态
 You: "Add email validation but preserve existing flow"
 ```
 
-**`git revert` (committed changes):**
+**`git revert`（已提交更改）：**
 
-- Creates new commit that undoes previous commit
-- Safe for pushed commits (preserves history)
-- Use when: Need to undo committed changes
+- 创建一个新提交来撤销之前的提交
+- 对已 push 的提交安全（保留历史）
+- 使用场景：需要撤销已提交的更改
 
-**Example:**
+**示例：**
 
 ```bash
 You: "Revert the authentication changes from the last commit"
 
 Claude:
 git revert HEAD
-# Creates new commit: "Revert 'feat: add authentication'"
+# 创建新提交："Revert 'feat: add authentication'"
 ```
 
-**Decision tree:**
+**决策树：**
 
 ```
 Changes not committed yet? → Use /rewind
@@ -16892,276 +16924,276 @@ Changes committed but not pushed? → Use git reset (careful!)
 Changes committed and pushed? → Use git revert
 ```
 
-### Git Worktrees for Parallel Development
+### Git Worktrees 并行开发
 
-**What are worktrees?**
+**什么是 worktree？**
 
-Git worktrees (available since Git 2.5.0, July 2015) create multiple working directories from the same repository, each checked out to a different branch.
+Git worktree（自 Git 2.5.0，2015 年 7 月起可用）允许从同一个仓库创建多个工作目录，每个目录检出不同分支。
 
-**Traditional workflow problem:**
-
-```bash
-# Working on feature A
-git checkout feature-a
-# 2 hours of work...
-
-# Urgent hotfix needed
-git stash              # Save current work
-git checkout main
-git checkout -b hotfix
-# Fix the bug...
-git checkout feature-a
-git stash pop          # Resume work
-```
-
-**Worktree solution:**
+**传统工作流的问题：**
 
 ```bash
-# One-time setup
-git worktree add ../myproject-hotfix hotfix
-git worktree add ../myproject-feature-a feature-a
+# 正在开发功能 A
+git checkout feature-a
+# 干了 2 小时...
 
-# Now work in parallel
-cd ../myproject-hotfix    # Terminal 1
-claude                    # Fix the bug
-
-cd ../myproject-feature-a # Terminal 2
-claude                    # Continue feature work
+# 紧急热修
+ git stash              # 保存当前工作
+ git checkout main
+ git checkout -b hotfix
+# 修 bug...
+ git checkout feature-a
+ git stash pop          # 恢复工作
 ```
 
-**When to use worktrees:**
+**Worktree 解决方案：**
 
-✅ **Use worktrees when:**
+```bash
+# 一次性设置
+ git worktree add ../myproject-hotfix hotfix
+ git worktree add ../myproject-feature-a feature-a
 
-- Working on multiple features simultaneously
-- Need to test different approaches in parallel
-- Reviewing code while developing
-- Running long CI/CD builds while coding
-- Maintaining multiple versions (v1 support + v2 development)
+# 现在可以并行工作
+ cd ../myproject-hotfix    # Terminal 1
+ claude                    # 修 bug
 
-❌ **Don't use worktrees when:**
+ cd ../myproject-feature-a # Terminal 2
+ claude                    # 继续开发功能
+```
 
-- Simple branch switching is sufficient
-- Disk space is limited (each worktree = full working directory)
-- Team is unfamiliar with worktrees (adds complexity)
+**何时使用 worktree：**
 
-**Worktree lifecycle commands:**
+✅ **适合用 worktree 的场景：**
 
-The full worktree lifecycle is covered by 4 companion commands:
+- 同时开发多个功能
+- 需要并行测试不同方案
+- 一边 review 代码一边开发
+- 长时间 CI/CD 构建时继续写代码
+- 维护多个版本（v1 支持 + v2 开发）
+
+❌ **不适合用 worktree 的场景：**
+
+- 简单切换分支就够了
+- 磁盘空间有限（每个 worktree = 完整工作目录）
+- 团队不熟悉 worktree（增加复杂度）
+
+**Worktree 生命周期命令：**
+
+完整的 worktree 生命周期由 4 个配套命令覆盖：
 
 | Command | Purpose |
 |---------|---------|
-| `/git-worktree` | Create worktree with branch validation, symlinked deps, background checks |
-| `/git-worktree-status` | Check background verification tasks (type check, tests, build) |
-| `/git-worktree-remove` | Safely remove single worktree with merge checks and DB cleanup |
-| `/git-worktree-clean` | Batch cleanup of stale worktrees with disk usage report |
+| `/git-worktree` | 创建 worktree，含分支验证、依赖软链接、后台检查 |
+| `/git-worktree-status` | 检查后台验证任务（类型检查、测试、构建） |
+| `/git-worktree-remove` | 安全移除单个 worktree，含合并检查和数据库清理 |
+| `/git-worktree-clean` | 批量清理已合并的 stale worktree，附带磁盘使用报告 |
 
 ```bash
-# Create with auto-prefix and symlinked node_modules
+# 创建并自动添加前缀、软链接 node_modules
 You: "/git-worktree auth"
-# → Creates feat/auth branch, symlinks node_modules, runs checks in background
+# → 创建 feat/auth 分支，软链接 node_modules，后台运行检查
 
-# Check background verification status
+# 检查后台验证状态
 You: "/git-worktree-status"
 # → Type check: PASS, Tests: PASS (142 tests)
 
-# Remove after merge
+# 合并后移除
 You: "/git-worktree-remove feat/auth"
-# → Removes worktree + branch (local + remote) + DB cleanup reminder
+# → 移除 worktree + 分支（本地 + 远程）+ 数据库清理提醒
 
-# Batch cleanup of all merged worktrees
+# 批量清理所有已合并的 worktree
 You: "/git-worktree-clean --dry-run"
 # → Preview: 3 merged (4.2 MB), 1 unmerged (kept)
 ```
 
-> **💡 Tip — Symlink node_modules**: The `/git-worktree` command symlinks `node_modules` from the main worktree by default, saving ~30s per worktree creation and significant disk space. Use `--isolated` when you need fresh dependencies (e.g., testing upgrades).
+> **💡 小贴士——软链接 node_modules**：`/git-worktree` 命令默认会把 `node_modules` 从主工作树软链接过来，每个 worktree 创建可节省约 30 秒，并显著节省磁盘空间。需要全新依赖时使用 `--isolated`（例如测试升级）。
 
-**Worktree management:**
+**Worktree 管理：**
 
 ```bash
-# List all worktrees
-git worktree list
+# 列出所有 worktree
+ git worktree list
 
-# Remove worktree (after merging feature)
-git worktree remove .worktrees/feature/new-api
+# 移除 worktree（功能合并后）
+ git worktree remove .worktrees/feature/new-api
 
-# Cleanup stale worktree references
-git worktree prune
+# 清理 stale 的 worktree 引用
+ git worktree prune
 ```
 
-> **💡 Team tip — Shell aliases for fast worktree navigation**: The Claude Code team uses single-letter aliases to hop between worktrees instantly:
+> **💡 团队技巧——用 shell alias 快速跳转 worktree**：Claude Code 团队用单字母 alias 在各 worktree 间瞬间切换：
 >
 > ```bash
 > # ~/.zshrc or ~/.bashrc
 > alias za="cd .worktrees/feature-a"
 > alias zb="cd .worktrees/feature-b"
 > alias zc="cd .worktrees/feature-c"
-> alias zlog="cd .worktrees/analysis"  # Dedicated worktree for logs & queries
+> alias zlog="cd .worktrees/analysis"  # 专门用于日志和查询的 worktree
 > ```
 >
-> The dedicated "analysis" worktree is used for reviewing logs and running database queries without polluting active feature branches.
+> 这个专门的 "analysis" worktree 用来 review 日志和跑数据库查询，不会污染活跃的功能分支。
 >
-> **Source**: [10 Tips from Inside the Claude Code Team](https://paddo.dev/blog/claude-code-team-tips/)
+> **来源**：[10 Tips from Inside the Claude Code Team](https://paddo.dev/blog/claude-code-team-tips/)
 
-**Claude Code context in worktrees:**
+**Claude Code 在 worktree 中的上下文：**
 
-Each worktree maintains **independent Claude Code context**:
+每个 worktree 维护**独立的 Claude Code 上下文**：
 
 ```bash
 # Terminal 1 - Worktree A
-cd .worktrees/feature-a
-claude
+ cd .worktrees/feature-a
+ claude
 You: "Implement user authentication"
-# Claude indexes feature-a worktree
+# Claude 索引 feature-a worktree
 
-# Terminal 2 - Worktree B (simultaneous)
-cd .worktrees/feature-b
-claude
+# Terminal 2 - Worktree B（同时）
+ cd .worktrees/feature-b
+ claude
 You: "Add payment integration"
-# Claude indexes feature-b worktree (separate context)
+# Claude 索引 feature-b worktree（独立上下文）
 ```
 
-**Memory files with worktrees:**
+**Worktree 中的记忆文件：**
 
-- **Global memory** (`~/.claude/CLAUDE.md`): Shared across all worktrees
-- **Project memory** (repo root `CLAUDE.md`): Committed, shared
-- **Worktree-local memory** (`.claude/CLAUDE.md` in worktree): Specific to that worktree
+- **全局记忆**（`~/.claude/CLAUDE.md`）：所有 worktree 共享
+- **项目记忆**（仓库根目录 `CLAUDE.md`）：已提交，共享
+- **Worktree 本地记忆**（worktree 内的 `.claude/CLAUDE.md`）：仅该 worktree 专属
 
-**Recommended structure:**
+**推荐结构：**
 
 ```
 ~/projects/
-├── myproject/              # Main worktree (main branch)
-│   ├── CLAUDE.md          # Project conventions (committed)
+├── myproject/              # 主工作树（main 分支）
+│   ├── CLAUDE.md          # 项目规范（已提交）
 │   └── .claude/
-├── myproject-develop/      # develop branch worktree
-│   └── .claude/           # Develop-specific config
-├── myproject-feature-a/    # feature-a branch worktree
-│   └── .claude/           # Feature A context
-└── myproject-hotfix/       # hotfix branch worktree
-    └── .claude/           # Hotfix context
+├── myproject-develop/      # develop 分支 worktree
+│   └── .claude/           # develop 专属配置
+├── myproject-feature-a/    # feature-a 分支 worktree
+│   └── .claude/           # Feature A 上下文
+└── myproject-hotfix/       # hotfix 分支 worktree
+    └── .claude/           # Hotfix 上下文
 ```
 
-**Best practices:**
+**最佳实践：**
 
-1. **Name worktrees clearly:**
+1. **命名清晰：**
    ```bash
-   # Bad
+   # 不好
    git worktree add ../temp feature-x
 
-   # Good
+   # 好
    git worktree add ../myproject-feature-x feature-x
    ```
 
-2. **Add to .gitignore:**
+2. **加入 .gitignore：**
    ```gitignore
    # Worktree directories
    .worktrees/
    worktrees/
    ```
 
-3. **Clean up merged branches:**
+3. **清理已合并分支：**
    ```bash
    git worktree remove myproject-feature-x
-   git branch -d feature-x  # Delete local branch after merge
-   git push origin --delete feature-x  # Delete remote branch
+   git branch -d feature-x  # 合并后删除本地分支
+   git push origin --delete feature-x  # 删除远程分支
    ```
 
-4. **Use consistent location:**
-   - `.worktrees/` (hidden, in project root)
-   - `worktrees/` (visible, in project root)
-   - `../myproject-*` (sibling directories)
+4. **使用统一位置：**
+   - `.worktrees/`（隐藏，在项目根目录）
+   - `worktrees/`（可见，在项目根目录）
+   - `../myproject-*`（同级目录）
 
-5. **Don't commit worktree contents:**
-   - Always ensure worktree directories are in `.gitignore`
-   - The `/git-worktree` command verifies this automatically
+5. **不要把 worktree 内容提交：**
+   - 确保 worktree 目录在 `.gitignore` 中
+   - `/git-worktree` 命令会自动检查这一点
 
-**Advanced: Parallel testing pattern:**
+**高级：并行测试模式：**
 
 ```bash
-# Test feature A while working on feature B
-cd .worktrees/feature-a
-npm test -- --watch &      # Run tests in background
+# 一边测试功能 A，一边开发功能 B
+ cd .worktrees/feature-a
+ npm test -- --watch &      # 后台运行测试
 
-cd .worktrees/feature-b
-claude                      # Continue development
+ cd .worktrees/feature-b
+ claude                      # 继续开发
 You: "Add new API endpoint"
-# Tests for feature A still running in parallel
+# 功能 A 的测试仍在后台并行运行
 ```
 
-**Worktree troubleshooting:**
+**Worktree 故障排查：**
 
-**Problem:** Worktree creation fails with "already checked out"
+**问题：** 创建 worktree 时报 "already checked out"
 
 ```bash
-# Solution: You can't check out the same branch in multiple worktrees
-git worktree list  # See which branches are checked out
-# Use a different branch or remove the existing worktree first
+# 解决方案：同一个分支不能在多个 worktree 中检出
+ git worktree list  # 查看哪些分支已检出
+# 换一个分支，或先移除现有 worktree
 ```
 
-**Problem:** Disk space issues
+**问题：** 磁盘空间不足
 
 ```bash
-# Each worktree is a full working directory
-# Solution: Clean up unused worktrees regularly
-git worktree prune
+# 每个 worktree 都是完整工作目录
+# 解决方案：定期清理不用的 worktree
+ git worktree prune
 ```
 
-**Problem:** Can't delete worktree directory
+**问题：** 无法删除 worktree 目录
 
 ```bash
-# Solution: Use git worktree remove, not rm -rf
-git worktree remove --force .worktrees/old-feature
+# 解决方案：用 git worktree remove，不要 rm -rf
+ git worktree remove --force .worktrees/old-feature
 ```
 
-**Resources:**
+**资源：**
 
 - [Git Worktree Documentation](https://git-scm.com/docs/git-worktree)
-- Worktree lifecycle commands:
-  - [`examples/commands/git-worktree.md`](../examples/commands/git-worktree.md) — Create
-  - [`examples/commands/git-worktree-status.md`](../examples/commands/git-worktree-status.md) — Status
-  - [`examples/commands/git-worktree-remove.md`](../examples/commands/git-worktree-remove.md) — Remove
-  - [`examples/commands/git-worktree-clean.md`](../examples/commands/git-worktree-clean.md) — Clean
+- Worktree 生命周期命令：
+  - [`examples/commands/git-worktree.md`](../examples/commands/git-worktree.md) — 创建
+  - [`examples/commands/git-worktree-status.md`](../examples/commands/git-worktree-status.md) — 状态
+  - [`examples/commands/git-worktree-remove.md`](../examples/commands/git-worktree-remove.md) — 移除
+  - [`examples/commands/git-worktree-clean.md`](../examples/commands/git-worktree-clean.md) — 清理
 
-### Claude Code Native Worktree Features (v2.1.49–v2.1.50)
+### Claude Code 原生 Worktree 功能（v2.1.49–v2.1.50）
 
-Claude Code has built-in worktree integration beyond the manual `git worktree` workflow above.
+除了上面手动的 `git worktree` 工作流，Claude Code 还内置了 worktree 集成。
 
-#### Start Claude in an isolated worktree
+#### 在隔离 worktree 中启动 Claude
 
 ```bash
-# --worktree / -w flag: creates a temporary worktree based on HEAD
+# --worktree / -w 标志：基于 HEAD 创建临时 worktree
 claude --worktree
 claude -w
 ```
 
-The worktree is created automatically, Claude runs inside it, and it is cleaned up on exit (if no changes were made).
+Worktree 自动创建，Claude 在其中运行，退出时自动清理（如果没有修改）。
 
-#### Declarative isolation in agent definitions
+#### 在 Agent 定义中声明隔离
 
-Set `isolation: "worktree"` in an agent's frontmatter to automatically spawn it in a fresh worktree every time (v2.1.50+):
+在 agent 的 frontmatter 中设置 `isolation: "worktree"`，每次调用时自动在全新 worktree 中启动（v2.1.50+）：
 
 ```yaml
 ---
 name: refactoring-agent
 description: Large-scale refactors that must not pollute the main working tree
 model: opus
-isolation: "worktree"   # Each invocation gets its own isolated checkout
+isolation: "worktree"   # 每次调用都获得独立的隔离检出
 ---
 
 Perform the requested refactoring. Commit your changes inside the worktree.
 ```
 
-This replaces the earlier pattern of manually passing `isolation: "worktree"` to each Task tool call.
+这替代了之前每次 Task 工具调用都手动传 `isolation: "worktree"` 的模式。
 
-#### Custom VCS setup with hook events (v2.1.50+)
+#### 用 Hook 事件自定义 VCS 设置（v2.1.50+）
 
-Two new hook events fire around agent worktree lifecycle:
+Agent worktree 生命周期前后会触发两个新 hook 事件：
 
-| Event | Fires | Use case |
-|-------|-------|----------|
-| `WorktreeCreate` | When an agent worktree is created | Set up DB branch, copy .env, install deps |
-| `WorktreeRemove` | When an agent worktree is torn down | Clean up DB branch, delete temp credentials |
+| Event | 触发时机 | 使用场景 |
+|-------|----------|----------|
+| `WorktreeCreate` | Agent worktree 创建时 | 设置数据库分支、复制 .env、安装依赖 |
+| `WorktreeRemove` | Agent worktree 拆除时 | 清理数据库分支、删除临时凭证 |
 
 ```json
 // .claude/settings.json
@@ -17193,11 +17225,11 @@ Two new hook events fire around agent worktree lifecycle:
 }
 ```
 
-Typical `worktree-setup.sh`: create a Neon/PlanetScale DB branch, copy `.env.local`, run `npm install`.
+典型的 `worktree-setup.sh`：创建 Neon/PlanetScale 数据库分支、复制 `.env.local`、运行 `npm install`。
 
-#### Enterprise config auditing with ConfigChange (v2.1.49+)
+#### 企业级配置审计：ConfigChange（v2.1.49+）
 
-The `ConfigChange` hook fires whenever a configuration file changes during a session. Use it to audit or block unauthorized live configuration modifications — particularly useful in enterprise environments with managed policy hooks.
+`ConfigChange` hook 在会话期间配置文件发生变化时触发。可用它来审计或阻止未经授权的实时配置修改——在带有托管策略 hook 的企业环境中特别有用。
 
 ```json
 // .claude/settings.json
@@ -17218,37 +17250,37 @@ The `ConfigChange` hook fires whenever a configuration file changes during a ses
 }
 ```
 
-Example `audit-config-change.sh` (log + optionally block):
+示例 `audit-config-change.sh`（记录日志 + 可选阻止）：
 
 ```bash
 #!/bin/bash
-# Receives JSON on stdin with changed config path
+# 从 stdin 接收 JSON，包含变更的配置路径
 CONFIG=$(cat | jq -r '.config_path // "unknown"')
 echo "[ConfigChange] $(date -u +%Y-%m-%dT%H:%M:%SZ) $CONFIG" >> ~/.claude/logs/config-audit.log
-# Exit 2 to block the change, exit 0 to allow it
+# Exit 2 阻止变更，exit 0 允许变更
 exit 0
 ```
 
-> **Enterprise note**: `disableAllHooks` (v2.1.49+) can no longer bypass *managed* hooks — hooks set via organizational policy always run regardless of this setting. Only non-managed hooks are affected.
+> **企业注意**：`disableAllHooks`（v2.1.49+）无法再绕过*托管* hook——通过组织策略设置的 hook 无论该设置如何都会运行。只有非托管 hook 会受影响。
 
-#### Policy fragment deployment with `managed-settings.d/` (v2.1.83+)
+#### 用 `managed-settings.d/` 部署策略片段（v2.1.83+）
 
-In multi-team organizations, editing a single `managed-settings.json` creates merge conflicts and coordination overhead. The `managed-settings.d/` drop-in directory solves this: each file is an independent policy fragment that Claude Code merges alphabetically at startup.
+在多团队组织中，编辑单个 `managed-settings.json` 会产生合并冲突和协调开销。`managed-settings.d/` 投放目录解决了这个问题：每个文件都是独立的策略片段，Claude Code 启动时按字母顺序合并。
 
 ```
 /etc/claude-code/managed-settings.d/
-├── 00-security-baseline.json     # From security team
-├── 10-allowed-tools.json         # From platform team
-└── 50-team-hooks.json            # From individual team
+├── 00-security-baseline.json     # 安全团队提供
+├── 10-allowed-tools.json         # 平台团队提供
+└── 50-team-hooks.json            # 各业务团队提供
 ```
 
-Each fragment follows the same schema as `managed-settings.json`. Conflicts are resolved by merge order (alphabetical). This lets security provide a global baseline without blocking teams from deploying their own fragments independently.
+每个片段遵循与 `managed-settings.json` 相同的 schema。冲突按合并顺序（字母顺序）解决。这让安全团队可以提供全局基线，同时不阻塞各团队独立部署自己的片段。
 
-#### Sandbox fail-safe: `sandbox.failIfUnavailable` (v2.1.83+)
+#### 沙盒故障保护：`sandbox.failIfUnavailable`（v2.1.83+）
 
-By default, if Claude Code cannot start the sandbox (macOS Seatbelt / Linux seccomp unavailable), it silently falls back to running unsandboxed. In security-sensitive environments this silent fallback is a compliance risk.
+默认情况下，如果 Claude Code 无法启动沙盒（macOS Seatbelt / Linux seccomp 不可用），它会静默回退到无沙盒运行。在安全敏感环境中，这种静默回退是合规风险。
 
-Set `sandbox.failIfUnavailable: true` in `managed-settings.json` to fail hard instead:
+在 `managed-settings.json` 中设置 `sandbox.failIfUnavailable: true`，让它直接失败：
 
 ```json
 {
@@ -17258,251 +17290,251 @@ Set `sandbox.failIfUnavailable: true` in `managed-settings.json` to fail hard in
 }
 ```
 
-**Recommended for**: regulated environments (SOC 2, HIPAA), CI runners where sandbox availability is guaranteed, any context where an unsandboxed fallback is not acceptable.
+**推荐用于**：受监管环境（SOC 2、HIPAA）、已保证沙盒可用的 CI runner、任何不允许无沙盒回退的场景。
 
-#### Subprocess credential isolation: `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` (v2.1.83+)
+#### 子进程凭证隔离：`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`（v2.1.83+）
 
-By default, subprocesses spawned by Claude Code (Bash tool, hooks, MCP stdio) inherit the full shell environment, including Anthropic API keys and cloud provider credentials. Set `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` to strip those credentials before subprocess execution:
+默认情况下，Claude Code 创建的子进程（Bash 工具、hook、MCP stdio）会继承完整的 shell 环境，包括 Anthropic API key 和云厂商凭证。设置 `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` 可在子进程执行前剥离这些凭证：
 
 ```bash
 export CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1
 ```
 
-This scrubs `ANTHROPIC_API_KEY`, `AWS_*`, `GOOGLE_*`, `AZURE_*`, and similar cloud provider variables from the subprocess environment. Claude Code's own API calls are unaffected — only the child processes are restricted.
+这会从子进程环境中清除 `ANTHROPIC_API_KEY`、`AWS_*`、`GOOGLE_*`、`AZURE_*` 等云厂商变量。Claude Code 自身的 API 调用不受影响——只有子进程被限制。
 
-**When to enable**: any hook or MCP script that makes outbound network calls and should not have access to your API credentials.
+**启用场景**：任何会发起出站网络调用的 hook 或 MCP 脚本，且不应访问你的 API 凭证时。
 
-### Database Branch Isolation with Worktrees
+### 用 Worktree 实现数据库分支隔离
 
-**Modern pattern (2024+):** Combine git worktrees with database branches for true feature isolation.
+**现代模式（2024+）：** 将 git worktree 与数据库分支结合，实现真正的功能隔离。
 
-**The Problem:**
-
-```
-Traditional workflow:
-Git branch → Shared dev database → Schema conflicts → Migration hell
-```
-
-**The Solution:**
+**问题：**
 
 ```
-Modern workflow:
-Git worktree + DB branch → Isolated environments → Safe experimentation
+传统工作流：
+Git branch → 共享开发数据库 → Schema 冲突 → Migration 地狱
 ```
 
-**How it works:**
+**解决方案：**
+
+```
+现代工作流：
+Git worktree + DB branch → 隔离环境 → 安全实验
+```
+
+**运作方式：**
 
 ```bash
-# 1. Create worktree (standard)
+# 1. 创建 worktree（标准流程）
 /git-worktree feature/auth
 
-# 2. Claude detects your database and suggests:
+# 2. Claude 检测到你的数据库并建议：
 🔍 Detected Neon database
 💡 DB Isolation: neonctl branches create --name feature-auth --parent main
    Then update .env with new DATABASE_URL
 
-# 3. You run the commands (or skip if not needed)
-# 4. Work in isolated environment
+# 3. 你运行命令（或跳过如果不需要）
+# 4. 在隔离环境中工作
 ```
 
-**Provider detection:**
+**提供商检测：**
 
-The `/git-worktree` command automatically detects:
+`/git-worktree` 命令会自动检测：
 
-- **Neon** → Suggests `neonctl branches create`
-- **PlanetScale** → Suggests `pscale branch create`
-- **Supabase** → Notes lack of branching support
-- **Local Postgres** → Suggests schema-based isolation
-- **Other** → Reminds about isolation options
+- **Neon** → 建议 `neonctl branches create`
+- **PlanetScale** → 建议 `pscale branch create`
+- **Supabase** → 提示不支持分支
+- **本地 Postgres** → 建议基于 schema 的隔离
+- **其他** → 提醒隔离选项
 
-**When to create DB branch:**
+**何时创建 DB 分支：**
 
-| Scenario | Create Branch? |
-|----------|---------------|
-| Adding database migrations | ✅ Yes |
-| Refactoring data model | ✅ Yes |
-| Bug fix (no schema change) | ❌ No |
-| Performance experiments | ✅ Yes |
+| 场景 | 创建分支？ |
+|------|------------|
+| 添加数据库 migration | ✅ 是 |
+| 重构数据模型 | ✅ 是 |
+| Bug 修复（无 schema 变更） | ❌ 否 |
+| 性能实验 | ✅ 是 |
 
-**Prerequisites:**
+**前置条件：**
 
 ```bash
-# For Neon:
+# Neon：
 npm install -g neonctl
 neonctl auth
 
-# For PlanetScale:
+# PlanetScale：
 brew install pscale
 pscale auth login
 
-# For all providers:
-# Ensure .worktreeinclude contains .env
+# 所有提供商：
+# 确保 .worktreeinclude 包含 .env
 echo ".env" >> .worktreeinclude
 echo ".env.local" >> .worktreeinclude
 ```
 
-**Complete workflow:**
+**完整工作流：**
 
 ```bash
-# 1. Create worktree
+# 1. 创建 worktree
 /git-worktree feature/payments
 
-# 2. Follow suggestion to create DB branch
-cd .worktrees/feature-payments
+# 2. 按建议创建 DB 分支
+ cd .worktrees/feature-payments
 neonctl branches create --name feature-payments --parent main
 
-# 3. Update .env with new DATABASE_URL
-# (Get connection string from neonctl output)
+# 3. 用新的 DATABASE_URL 更新 .env
+# （从 neonctl 输出中获取连接字符串）
 
-# 4. Work in isolation
-npx prisma migrate dev
-pnpm test
+# 4. 隔离开发
+ npx prisma migrate dev
+ pnpm test
 
-# 5. After PR merge, cleanup
-git worktree remove .worktrees/feature-payments
+# 5. PR 合并后清理
+ git worktree remove .worktrees/feature-payments
 neonctl branches delete feature-payments
 ```
 
-**See also:**
+**参见：**
 
-- [Database Branch Setup Guide](../examples/workflows/database-branch-setup.md) - Complete provider-specific workflows
-- [Neon Branching](https://neon.tech/docs/guides/branching) - Official Neon documentation
-- [PlanetScale Branching](https://planetscale.com/docs/concepts/branching) - Official PlanetScale guide
+- [数据库分支设置指南](../examples/workflows/database-branch-setup.md) - 各提供商的完整工作流
+- [Neon Branching](https://neon.tech/docs/guides/branching) - Neon 官方文档
+- [PlanetScale Branching](https://planetscale.com/docs/concepts/branching) - PlanetScale 官方指南
 
-### Coordinating Parallel Worktrees: Task Dependencies
+### 协调并行 Worktree：任务依赖
 
-When running multiple agents in parallel worktrees, the hardest problem isn't setup — it's coordination. There is no built-in automatic dependency detection between worktree agents. You manage it explicitly.
+在多个 worktree 中并行运行智能体时，最难的问题不是设置，而是协调。Worktree agent 之间没有内置的自动依赖检测。你需要显式管理。
 
-**The pattern: analyze files touched, then set `blockedBy` manually**
+**模式：先分析触及的文件，再手动设置 `blockedBy`**
 
-Before spawning parallel agents, identify which tasks share files:
+在启动并行智能体之前，识别哪些任务共享文件：
 
 ```bash
-# Quick dependency check: list files each task will touch
+# 快速依赖检查：列出每个任务会触及的文件
 echo "Task A (auth feature):"
 grep -r "UserService\|auth/" src/ --include="*.ts" -l
 
 echo "Task B (payment feature):"
 grep -r "PaymentService\|billing/" src/ --include="*.ts" -l
 
-# No overlap? Safe to parallelize.
-# Overlap detected? Sequence them.
+# 没有重叠？可以安全并行。
+# 检测到重叠？串行执行。
 ```
 
-In the Tasks API, set `blockedBy` for tasks that depend on others completing first:
+在 Tasks API 中，为依赖其他任务的任务设置 `blockedBy`：
 
 ```json
-// Task B cannot start until Task A merges
+// Task B 必须等 Task A 合并后才能开始
 TaskCreate("Implement payment service", { blockedBy: ["task-a-id"] })
 ```
 
-**Decision matrix**:
+**决策矩阵**：
 
-| Scenario | Strategy |
-|----------|----------|
-| Tasks touch different files, different modules | Parallelize freely |
-| Tasks touch same module, different files | Parallelize with explicit conflict resolution step |
-| Tasks touch same files | Sequence them |
-| Task B needs Task A's API contract | Block Task B until Task A's interface is defined |
+| 场景 | 策略 |
+|------|------|
+| 任务触及不同文件、不同模块 | 自由并行 |
+| 任务触及同一模块、不同文件 | 并行，但增加显式冲突解决步骤 |
+| 任务触及同一文件 | 串行执行 |
+| Task B 需要 Task A 的 API 契约 | 阻塞 Task B，直到 Task A 的接口定义完成 |
 
-**Practical rule**: A 5-minute analysis to find file overlaps before spawning agents saves hours of merge conflict resolution.
+**实用法则**：启动智能体前花 5 分钟分析文件重叠，能省下数小时的合并冲突解决时间。
 
-**Tooling**: [coderabbitai/git-worktree-runner](https://github.com/coderabbitai/git-worktree-runner) provides a bash-based worktree manager with basic AI tool integration. It handles the worktree lifecycle but not dependency detection — that stays manual.
+**工具**：[coderabbitai/git-worktree-runner](https://github.com/coderabbitai/git-worktree-runner) 提供了一个基于 bash 的 worktree 管理器，带有基础的 AI 工具集成。它处理 worktree 生命周期，但不处理依赖检测——那部分仍需手动完成。
 
-> **Note**: Fully automatic dependency detection (where the system infers which tasks conflict) doesn't exist in Claude Code or the broader ecosystem as of March 2026. The approaches above are the practical state of the art.
+> **注意**：截至 2026 年 3 月，Claude Code 或更广泛的生态系统中都不存在完全自动的依赖检测（系统自行推断哪些任务会冲突）。上述方法是当前实际可用的最佳实践。
 
 ---
 
-## 9.13 Cost Optimization Strategies
+## 9.13 成本优化策略
 
-Practical techniques to minimize API costs while maximizing productivity.
+在最大化生产力的同时，最小化 API 成本的实用技巧。
 
-### Model Selection Matrix
+### 模型选择矩阵
 
-Choose the right model for each task to balance cost and capability.
+为每个任务选择合适的模型，平衡成本与能力。
 
-> See [Section 2.5 Model Selection & Thinking Guide](#25-model-selection--thinking-guide) for the canonical decision table with effort levels and cost estimates.
+> 参见 [2.5 模型选择与思考指南](#25-model-selection--thinking-guide) 中的权威决策表，包含工作量级别和成本估算。
 
-**OpusPlan mode (recommended):**
+**OpusPlan 模式（推荐）：**
 
-- **Planning**: Opus for high-level thinking
-- **Execution**: Sonnet for implementation
-- **Best of both worlds**: Strategic thinking + cost-effective execution
+- **规划**：Opus 负责高层思考
+- **执行**：Sonnet 负责实现
+- **两全其美**：战略思考 + 高性价比执行
 
 ```bash
-# Activate OpusPlan mode
+# 激活 OpusPlan 模式
 /model opusplan
 
-# Enter Plan Mode (Opus for planning)
+# 进入计划模式（Opus 规划）
 Shift+Tab × 2
 
 You: "Design a caching layer for the API"
-# Opus creates detailed architectural plan
+# Opus 创建详细的架构计划
 
-# Exit Plan Mode (Sonnet for execution)
+# 退出计划模式（Sonnet 执行）
 Shift+Tab
 
 You: "Implement the caching layer following the plan"
-# Sonnet executes the plan at lower cost
+# Sonnet 以更低成本执行计划
 ```
 
-### Token-Saving Techniques
+### 节省 Token 的技巧
 
-> **Important**: Claude Code uses lazy loading - it doesn't "load" your entire codebase at startup. Files are read on-demand when you ask Claude to analyze them. The main context consumers at startup are your CLAUDE.md files and auto-loaded rules.
+> **重要**：Claude Code 使用懒加载——启动时不会"加载"整个代码库。文件是按需读取的，只有当你要求 Claude 分析时才会读。启动时的主要上下文消耗来自 CLAUDE.md 文件和自动加载的规则。
 
-**CLAUDE.md Token Cost Estimation:**
+**CLAUDE.md Token 成本估算：**
 
-| File Size | Approximate Tokens | Impact |
-|-----------|-------------------|--------|
-| 50 lines | 500-1,000 tokens | Minimal (recommended) |
-| 100 lines | 1,000-2,000 tokens | Acceptable |
-| 200 lines | 2,000-3,500 tokens | Upper limit |
-| 500+ lines | 5,000+ tokens | Consider splitting |
+| 文件大小 | 大约 Token 数 | 影响 |
+|----------|---------------|------|
+| 50 行 | 500-1,000 tokens | 极小（推荐） |
+| 100 行 | 1,000-2,000 tokens | 可接受 |
+| 200 行 | 2,000-3,500 tokens | 上限 |
+| 500+ 行 | 5,000+ tokens | 考虑拆分 |
 
-Note: These are loaded **once at session start**, not per request. A 200-line CLAUDE.md costs ~2K tokens upfront but doesn't grow during the session. The concern is the cumulative effect when combined with multiple `@includes` and all files in `.claude/rules/`.
+注意：这些只在**会话开始时加载一次**，不是每次请求都加载。一份 200 行的 CLAUDE.md  upfront 成本约 2K tokens，但不会在会话中增长。需要关注的是它与多个 `@includes` 以及 `.claude/rules/` 中所有文件叠加后的累积效应。
 
-> **Important**: Beyond file size, context files containing non-essential information (style guides, architecture descriptions, general conventions) add **+20-23% inference cost per session** regardless of line count — because agents process and act on every instruction. The same research confirms that LLM-generated context files reduce task success by ~3%, while developer-written files improve it by ~4%. ([Gloaguen et al., 2026](https://arxiv.org/abs/2602.11988))
+> **重要**：除了文件大小，包含非必要信息（风格指南、架构描述、通用规范）的上下文文件会让**每次会话的推理成本增加 20-23%**——与行数无关，因为智能体会处理并执行每一条指令。同一项研究还证实，LLM 生成的上下文文件会降低任务成功率约 3%，而开发者手写的文件能提升约 4%。（[Gloaguen et al., 2026](https://arxiv.org/abs/2602.11988)）
 
-> **See also**: [Memory Loading Comparison](#memory-loading-comparison) for when each method loads.
+> **参见**：[记忆加载方式对比](#memory-loading-comparison) 了解每种方法何时加载。
 
-**1. Keep CLAUDE.md files concise:**
+**1. 保持 CLAUDE.md 精简：**
 
 ```markdown
-# ❌ Bloated CLAUDE.md (wastes tokens on every session)
-- 500+ lines of instructions
-- Multiple @includes importing other files
-- Rarely-used guidelines
+# ❌ 臃肿的 CLAUDE.md（每次会话都浪费 token）
+- 500+ 行指令
+- 多个 @includes 引入其他文件
+- 很少用到的规范
 
-# ✅ Lean CLAUDE.md
-- Essential project context only (<200 lines)
-- Move specialized rules to .claude/rules/ (auto-loaded at session start)
-- Split by concern: team rules in project CLAUDE.md, personal prefs in ~/.claude/CLAUDE.md
+# ✅ 精简的 CLAUDE.md
+- 只保留必要的项目上下文（<200 行）
+- 把专项规则移到 .claude/rules/（会话开始时自动加载）
+- 按关注点拆分：团队规则放在项目 CLAUDE.md，个人偏好放在 ~/.claude/CLAUDE.md
 ```
 
-> **Research note** (Gloaguen et al., ETH Zürich, Feb 2026 — 138 benchmarks, 12 repos): The first empirical study on context files shows developer-written CLAUDE.md improves agent success rate by **+4%**, but LLM-generated files reduce it by **-3%**. Cause: agents faithfully follow all instructions, even those irrelevant to the task, leading to broader file exploration and longer reasoning chains. **Recommendation: include only build/test commands and project-specific tooling.** Style guides and architecture descriptions belong in separate docs. ([Full evaluation](../docs/resource-evaluations/agents-md-empirical-study-2602-11988.md))
+> **研究注记**（Gloaguen et al., ETH Zürich, 2026 年 2 月 — 138 个基准测试，12 个仓库）：首份关于上下文文件的实证研究表明，开发者手写的 CLAUDE.md 能将智能体成功率提升 **+4%**，但 LLM 生成的文件会降低 **-3%**。原因是：智能体会忠实地遵循所有指令，即使与当前任务无关，导致更广泛的文件探索和更长的推理链。**建议：只包含构建/测试命令和项目专属工具。** 风格指南和架构描述应放在单独的文档中。（[完整评估](../docs/resource-evaluations/agents-md-empirical-study-2602-11988.md)）
 
-**2. Use targeted file references:**
+**2. 使用精准的文件引用：**
 
 ```bash
-# ❌ Vague request (Claude reads many files to find context)
+# ❌ 模糊请求（Claude 会读很多文件来找上下文）
 "Fix the authentication bug"
 
-# ✅ Specific request (Claude reads only what's needed)
+# ✅ 具体请求（Claude 只读需要的内容）
 "Fix the JWT validation in @src/auth/middleware.ts line 45"
 ```
 
-**3. Compact proactively:**
+**3. 主动压缩：**
 
 ```bash
-# ❌ Wait until 90% context
-/status  # Context: 92% - Too late, degraded performance
+# ❌ 等到 90% 上下文才动手
+/status  # Context: 92% - 太晚了，性能已经下降
 
-# ✅ Compact at 70%
+# ✅ 70% 就压缩
 /status  # Context: 72%
-/compact  # Frees up context, maintains performance
+/compact  # 释放上下文，保持性能
 ```
 
-**4. Agent specialization:**
+**4. 智能体专业化：**
 
 ```markdown
 ---
@@ -17514,162 +17546,163 @@ model: haiku
 Generate comprehensive unit tests with edge cases.
 ```
 
-**Benefits:**
+**好处：**
 
-- Haiku costs less than Sonnet
-- Focused context (tests only)
-- Faster execution
+- Haiku 比 Sonnet 便宜
+- 上下文更聚焦（只做测试）
+- 执行更快
 
-**5. Batch similar operations:**
+**5. 批量相似操作：**
 
 ```bash
-# ❌ Individual sessions for each fix
+# ❌ 每个修复都开单独会话
 claude -p "Fix typo in auth.ts"
 claude -p "Fix typo in user.ts"
 claude -p "Fix typo in api.ts"
 
-# ✅ Batch in single session
+# ✅ 单个会话批量处理
 claude
 You: "Fix typos in auth.ts, user.ts, and api.ts"
-# Single context load, multiple fixes
+# 一次上下文加载，多个修复
 ```
 
-**6. Pre-structural indexing:**
+**6. 预构建结构索引：**
 
-Instead of letting Claude read files on demand throughout a session, pre-build a structural index of your codebase before starting. Claude queries the index (1 call) rather than reading files sequentially (5-10 reads per task).
+不要让 Claude 在会话中按需逐个读文件，而是在开始前预先构建代码库的结构索引。Claude 查询索引（1 次调用）而不是顺序读取文件（每个任务 5-10 次读取）。
 
 ```bash
-# With CodeXRay (npx setup, SQLite-backed, 15 languages):
-npx codexray        # Interactive setup + first index build
-cxr watch &         # Background sync on file changes
+# 使用 CodeXRay（npx 安装，SQLite 后端，支持 15 种语言）：
+npx codexray        # 交互式安装 + 首次索引构建
+cxr watch &         # 文件变更时后台同步
 
-# Claude Code then queries the graph instead of reading files:
-# "find the payment module" → 1 graph query vs 5-10 file reads
+# Claude Code 随后查询图而不是读取文件：
+# "find the payment module" → 1 次图查询 vs 5-10 次文件读取
 ```
 
-Tools built on this pattern replace 5-10 file reads with 1 structured query — roughly 75% fewer tool calls for discovery tasks.
+基于这种模式的工具把 5-10 次文件读取替换成 1 次结构化查询——发现类任务的工具调用大约减少 75%。
 
-**Dead code and circular dependency detection:**
+**死代码与循环依赖检测：**
 
-A structural index also enables analysis that file-by-file reading cannot surface efficiently:
+结构索引还能实现逐文件阅读难以高效发现的分析：
 
-- **Dead code**: Functions defined but never called — safe to delete, reducing future context noise
-- **Circular dependencies**: Module A imports B imports A — architectural debt that silently inflates Claude's reasoning overhead
-- **Hotspots**: Files with the highest dependency count — prioritize for documentation or refactoring first
+- **死代码**：定义了但从未被调用的函数——可以安全删除，减少未来的上下文噪音
+- **循环依赖**：模块 A 导入 B，B 又导入 A——悄然增加 Claude 推理开销的架构债务
+- **热点**：依赖数最高的文件——优先补充文档或重构
 
 ```bash
-# With grepai (zero callers = dead code candidate):
-grepai trace callers "MyFunction"  # Empty result → safe to investigate for deletion
+# 用 grepai（零调用者 = 死代码候选）：
+grepai trace callers "MyFunction"  # 空结果 → 可安全调查删除
 
-# With a structural MCP tool (if available):
-# Tools like CodeXRay expose: codexray_deadcode, codexray_circular, codexray_hotspots
+# 用结构性 MCP 工具（如有）：
+# 类似 CodeXRay 会暴露：codexray_deadcode, codexray_circular, codexray_hotspots
 ```
 
-> **Community tools**: [CodeXRay](https://github.com/NeuralRays/codexray) (Tree-sitter + SQLite, 16 MCP tools, 15 languages) and [Claudette](https://github.com/nicmarti/Claudette) (Go binary, 4 languages) are early implementations of this approach. Both are alpha-stage as of March 2026 — use grepai for production workflows.### Command Output Optimization with RTK
+> **社区工具**：[CodeXRay](https://github.com/NeuralRays/codexray)（Tree-sitter + SQLite，16 个 MCP 工具，15 种语言）和 [Claudette](https://github.com/nicmarti/Claudette)（Go 二进制，4 种语言）是这种方案的早期实现。截至 2026 年 3 月，两者都处于 alpha 阶段——生产工作流建议使用 grepai。
+### 用 RTK 优化命令输出
 
-**RTK (Rust Token Killer)** filters bash command outputs **before** they reach Claude's context, achieving 60-90% token reduction across git, testing, and development workflows. 446 stars, 38 forks, 700+ upvotes on r/ClaudeAI.
+**RTK（Rust Token Killer）** 会在 bash 命令输出进入 Claude 上下文之前先进行过滤，在 git、测试和日常开发流程中实现 60-90% 的 Token 缩减。GitHub 446 stars，38 forks，Reddit r/ClaudeAI 700+ 赞。
 
-**Repository:** [rtk-ai/rtk](https://github.com/rtk-ai/rtk) | **Website:** [rtk-ai.app](https://www.rtk-ai.app/)
+**仓库：** [rtk-ai/rtk](https://github.com/rtk-ai/rtk) | **官网：** [rtk-ai.app](https://www.rtk-ai.app/)
 
-**Installation:**
+**安装：**
 
 ```bash
-# Option 1: Homebrew (macOS/Linux)
+# 方式 1：Homebrew（macOS/Linux）
 brew install rtk-ai/tap/rtk
 
-# Option 2: Cargo (all platforms)
+# 方式 2：Cargo（全平台）
 cargo install rtk
 
-# Option 3: Install script
+# 方式 3：安装脚本
 curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash
 
-# Verify installation
+# 验证安装
 rtk --version  # v0.28.0+
 ```
 
-**Proven Token Savings (Benchmarked on real output):**
+**实测 Token 节省（基于真实输出）：**
 
-| Command | Baseline | RTK | Reduction |
+| 命令 | 原始输出 | RTK 处理后 | 压缩率 |
 |---------|----------|-----|-----------|
-| `rtk git log` | 13,994 chars | 1,076 chars | **92.3%** |
-| `rtk git status` | 100 chars | 24 chars | **76.0%** |
-| `rtk git diff` | 15,815 chars | 6,982 chars | **55.9%** |
-| `rtk vitest run` | ~50,000 chars | ~5,000 chars | **90.0%** |
-| `rtk pnpm list` | ~8,000 chars | ~2,400 chars | **70.0%** |
-| `rtk cat CHANGELOG.md` | 163,587 chars | 61,339 chars | **62.5%** |
+| `rtk git log` | 13,994 字符 | 1,076 字符 | **92.3%** |
+| `rtk git status` | 100 字符 | 24 字符 | **76.0%** |
+| `rtk git diff` | 15,815 字符 | 6,982 字符 | **55.9%** |
+| `rtk vitest run` | ~50,000 字符 | ~5,000 字符 | **90.0%** |
+| `rtk pnpm list` | ~8,000 字符 | ~2,400 字符 | **70.0%** |
+| `rtk cat CHANGELOG.md` | 163,587 字符 | 61,339 字符 | **62.5%** |
 
-**Average: 60-90% token reduction depending on commands**
+**平均：视命令而定，可节省 60-90% Token**
 
-**Key Features (v0.28.0):**
+**核心功能（v0.28.0）：**
 
 ```bash
-# Git operations
+# Git 操作
 rtk git log
 rtk git status
 rtk git diff HEAD~1
 
-# JS/TS Stack
-rtk vitest run           # Test results condensed
-rtk pnpm list            # Dependency tree optimized
-rtk prisma migrate status # Migration status filtered
+# JS/TS 技术栈
+rtk vitest run           # 测试报告精简
+rtk pnpm list            # 依赖树优化
+rtk prisma migrate status # 迁移状态过滤
 
 # Python
-rtk python pytest        # Python test output condensed
-rtk mypy                 # Type errors grouped by file
+rtk python pytest        # Python 测试输出精简
+rtk mypy                 # 按文件分组显示类型错误
 
 # Go
-rtk go test              # Go test results filtered
+rtk go test              # Go 测试结果过滤
 
 # Rust
-rtk cargo test           # Cargo test output condensed
-rtk cargo nextest        # cargo-nextest failures-only output
-rtk cargo build          # Build output filtered
-rtk cargo clippy         # Lints grouped by severity
+rtk cargo test           # Cargo 测试输出精简
+rtk cargo nextest        # cargo-nextest 仅显示失败项
+rtk cargo build          # 构建输出过滤
+rtk cargo clippy         # 按严重程度分组显示 lint
 
-# Cloud & Database
-rtk aws                  # AWS CLI output filtered
-rtk psql                 # psql query results condensed
-rtk docker               # Docker output condensed
-rtk docker compose       # docker compose support
+# 云与数据库
+rtk aws                  # AWS CLI 输出过滤
+rtk psql                 # psql 查询结果精简
+rtk docker               # Docker 输出精简
+rtk docker compose       # 支持 docker compose
 
-# Version control (extra)
-rtk gt                   # Graphite CLI support
+# 版本控制（额外）
+rtk gt                   # 支持 Graphite CLI
 
-# File & Text Utilities
-rtk tree                 # Project structure condensed
-rtk wc                   # Compact word/line/byte counts
-rtk read file.ts         # File contents condensed
+# 文件与文本工具
+rtk tree                 # 项目结构精简
+rtk wc                   # 紧凑的字/行/字节统计
+rtk read file.ts         # 文件内容精简
 
-# Project Setup & Learning
-rtk init                 # Initialize RTK with hook auto-install
-rtk init --global        # Install hook globally (settings.json auto-patch)
-rtk learn                # Interactive RTK learning
+# 项目初始化与学习
+rtk init                 # 初始化 RTK 并自动安装钩子
+rtk init --global        # 全局安装钩子（自动修改 settings.json）
+rtk learn                # 交互式学习 RTK
 
-# Analytics
-rtk gain                 # Token savings dashboard (SQLite tracking)
-rtk gain -p              # Per-project token savings breakdown
-rtk discover             # Find missed optimization opportunities
+# 数据分析
+rtk gain                 # Token 节省仪表盘（SQLite 追踪）
+rtk gain -p              # 按项目统计节省量
+rtk discover             # 发现遗漏的优化机会
 
-# Hook & Config Management
-rtk rewrite <cmd>        # Single source of truth for hook rewrites
-rtk verify               # Validate TOML filter rules
+# 钩子与配置管理
+rtk rewrite <cmd>        # 钩子重写的单一可信来源
+rtk verify               # 验证 TOML 过滤规则
 ```
 
-**Real-World Impact:**
+**实际影响：**
 
 ```
-30-minute Claude Code session:
-- Without RTK: ~150K tokens (10-15 git commands @ ~10K tokens each)
-- With RTK: ~41K tokens (10-15 git commands @ ~2.7K tokens each)
-- Savings: 109K tokens (72.6% reduction)
+30 分钟的 Claude Code 会话：
+- 不用 RTK：约 150K Token（10-15 条 git 命令，每条约 10K Token）
+- 使用 RTK：约 41K Token（10-15 条 git 命令，每条约 2.7K Token）
+- 节省：109K Token（压缩 72.6%）
 ```
 
-**TOML Filter DSL (v0.28.0 — add filters without writing Rust):**
+**TOML 过滤 DSL（v0.28.0 — 无需写 Rust 即可添加过滤器）：**
 
-RTK now supports a declarative filter engine via TOML config. You can add custom output filters for any command without touching Rust code.
+RTK 现在支持通过 TOML 配置实现声明式过滤引擎。你可以为任意命令添加自定义输出过滤器，完全不用碰 Rust 代码。
 
 ```toml
-# .rtk/filters.toml (project-local) or ~/.config/rtk/filters.toml (user-global)
+# .rtk/filters.toml（项目级）或 ~/.config/rtk/filters.toml（用户全局）
 
 [[filters]]
 match_command = "my-build-tool"
@@ -17677,198 +17710,198 @@ strip_lines_matching = "^(DEBUG|TRACE|INFO):"
 max_lines = 50
 ```
 
-Lookup chain: `.rtk/filters.toml` (project) → `~/.config/rtk/filters.toml` (global) → 33 built-in filters (brew, poetry, dotnet, swift, uv, tofu, ansible, helm, etc.)
+查找链：`.rtk/filters.toml`（项目级）→ `~/.config/rtk/filters.toml`（全局）→ 33 个内置过滤器（brew、poetry、dotnet、swift、uv、tofu、ansible、helm 等）
 
-Available primitives: `strip_ansi`, `replace`, `match_output`, `strip/keep_lines_matching`, `truncate_lines_at`, `head/tail_lines`, `max_lines`, `on_empty`
+可用原语：`strip_ansi`、`replace`、`match_output`、`strip/keep_lines_matching`、`truncate_lines_at`、`head/tail_lines`、`max_lines`、`on_empty`
 
-Debug: `RTK_NO_TOML=1` bypasses all TOML filters. `RTK_TOML_DEBUG=1` shows which filter fires.
+调试：`RTK_NO_TOML=1` 跳过所有 TOML 过滤器。`RTK_TOML_DEBUG=1` 显示触发了哪个过滤器。
 
-**Integration Strategies:**
+**集成策略：**
 
-1. **Hook-first install** (recommended):
+1. **优先使用 Hook 安装**（推荐）：
    ```bash
-   rtk init --global  # Sets up PreToolUse hook + patches settings.json automatically
+   rtk init --global  # 自动设置 PreToolUse 钩子并修改 settings.json
    ```
 
-2. **CLAUDE.md instruction** (manual wrapper):
+2. **CLAUDE.md 指令**（手动包装）：
    ```markdown
-   ## Token Optimization
+   ## Token 优化
 
-   Use RTK for all supported commands:
-   - `rtk git log` (92.3% reduction)
-   - `rtk git status` (76.0% reduction)
-   - `rtk git diff` (55.9% reduction)
+   所有支持的命令都使用 RTK：
+   - `rtk git log`（节省 92.3%）
+   - `rtk git status`（节省 76.0%）
+   - `rtk git diff`（节省 55.9%）
    ```
 
-3. **Skill** (auto-suggestion):
-   - Template: `examples/skills/rtk-optimizer/SKILL.md`
-   - Detects high-verbosity commands
-   - Suggests RTK wrapper automatically
+3. **Skill**（自动建议）：
+   - 模板：`examples/skills/rtk-optimizer/SKILL.md`
+   - 检测高输出量命令
+   - 自动建议 RTK 包装
 
-4. **Hook** (automatic wrapper):
-   - Template: `examples/hooks/bash/rtk-auto-wrapper.sh`
-   - PreToolUse hook intercepts bash commands
-   - Applies RTK wrapper when beneficial
+4. **Hook**（自动包装）：
+   - 模板：`examples/hooks/bash/rtk-auto-wrapper.sh`
+   - PreToolUse 钩子拦截 bash 命令
+   - 在有利时自动应用 RTK 包装
 
-**Configuration Options:**
+**配置选项：**
 
 ```toml
 # ~/.config/rtk/config.toml
-exclude_commands = ["my-interactive-tool", "fzf"]  # Never rewrite these
+exclude_commands = ["my-interactive-tool", "fzf"]  # 永远不要重写这些命令
 ```
 
-**Migration Note (v0.25.0+):**
+**迁移说明（v0.25.0+）：**
 
-After upgrading from v0.24.0 or earlier, run `rtk init --global` to install the new thin-delegator hook. The old hook still works, but won't pick up new command mappings automatically.
+从 v0.24.0 或更早版本升级后，运行 `rtk init --global` 安装新的薄委托钩子。旧钩子仍然可用，但不会自动获取新的命令映射。
 
 ```bash
-cargo install rtk          # Upgrade binary
-rtk init --global          # Replace hook with thin delegator
+cargo install rtk          # 升级二进制文件
+rtk init --global          # 将钩子替换为薄委托器
 ```
 
-**Recommendation:**
+**使用建议：**
 
-- ✅ **Use RTK**: Full-stack projects (JS/TS, Rust, Python, Go), testing workflows, analytics
-- ❌ **Skip RTK**: Small outputs (<100 chars), quick exploration, interactive commands
+- ✅ **推荐使用 RTK**：全栈项目（JS/TS、Rust、Python、Go）、测试工作流、数据分析
+- ❌ **不推荐 RTK**：输出很小（<100 字符）、快速探索、交互式命令
 
-**See also:**
+**另请参阅：**
 
-- Evaluation: `docs/resource-evaluations/rtk-evaluation.md`
-- Templates: `examples/{claude-md,skills,hooks}/rtk-*`
-- GitHub: https://github.com/rtk-ai/rtk
-- Website: https://www.rtk-ai.app/
-- Third-party tools comparison: `guide/third-party-tools.md#rtk-rust-token-killer`
+- 评估报告：`docs/resource-evaluations/rtk-evaluation.md`
+- 模板：`examples/{claude-md,skills,hooks}/rtk-*`
+- GitHub：https://github.com/rtk-ai/rtk
+- 官网：https://www.rtk-ai.app/
+- 第三方工具对比：`guide/third-party-tools.md#rtk-rust-token-killer`
 
-### Progressive Code Exploration (Smart Explore)
+### 渐进式代码探索（Smart Explore）
 
-RTK handles **command outputs** (what you run). Smart explore handles **code reading** (what you read). Together they cover both major token sinks in a Claude Code session.
+RTK 解决的是**命令输出**（你运行了什么）。Smart Explore 解决的是**代码阅读**（你读了什么）。两者联手，覆盖一次 Claude Code 会话中两大主要的 Token 消耗源。
 
-**The problem**: When Claude explores a codebase, it reads files completely — 400 lines when it needed 3 function signatures. A typical 10-file module exploration costs 35,000 tokens. With progressive exploration, the same task costs 3,500.
+**问题所在**：Claude 探索代码库时，往往会完整读取整个文件——明明只需要 3 个函数签名，却读了 400 行。一次典型的 10 文件模块探索要花费 35,000 Token。而使用渐进式探索，同样任务只需 3,500 Token。
 
-**The pattern (3 steps, 86-92% reduction):**
+**模式（三步，节省 86-92%）：**
 
 ```
-Step 1 — Structure (~200 tokens per file)
-  Get function signatures, types, fields only
-  Claude answers "what exists?" without reading any body
+Step 1 — 结构（每文件约 200 Token）
+  只获取函数签名、类型、字段
+  Claude 无需阅读函数体即可回答"这里有什么"
 
-Step 2 — Target (~350 tokens per function)
-  Read one specific function by line offset
-  Not the whole file — just lines 45-90
+Step 2 — 定位（每函数约 350 Token）
+  通过行偏移读取某个具体函数
+  不是整个文件，只是第 45-90 行
 
-Step 3 — Cross-reference (~150 tokens)
-  Find callers of a function
+Step 3 — 交叉引用（约 150 Token）
+  查找某个函数的调用方
   rg "function_name" --type rust -n
 ```
 
-This is the same pattern Aider uses for its repo map (40k+ stars) — validated at scale since 2023.
+这与 Aider 的 repo map（40k+ stars）使用的模式完全一致——自 2023 年起在大规模使用中得到了验证。
 
-**Approach A: No setup — CLAUDE.md discipline**
+**方案 A：零配置 —— CLAUDE.md 自律**
 
-The fastest path. Add to your project's `CLAUDE.md`:
+最快的路径。在你的项目 `CLAUDE.md` 中加入：
 
 ```markdown
-## Code Exploration Protocol
+## 代码探索协议
 
-When exploring a codebase or understanding a module:
+在探索代码库或理解模块时：
 
-1. **Structure first** — run the appropriate command for the language:
+1. **先抓结构** — 根据语言运行对应命令：
 
    Rust: `rg "^\s*(pub\s+)?(async\s+)?fn |^\s*(pub\s+)?(struct|enum|trait|impl)\s" src/ --no-heading -n`
    Python/TS/JS: `rg "^\s*(async\s+)?(def |function |class |export (function|class|const))" src/ --no-heading -n`
 
-   Use `^\s*` not `^` — Rust methods inside impl blocks are indented. The `^` pattern misses ~70% of them.
+   使用 `^\s*` 而不是 `^` —— Rust impl 块内的方法是缩进的。用 `^` 会漏掉约 70%。
 
-2. Identify 2-3 relevant functions from the signatures
-3. Read only those functions with line offset (not the whole file)
-4. Cross-reference callers with Grep if needed
+2. 从签名中找出 2-3 个相关函数
+3. 只通过行偏移读取这些函数（不要读完整文件）
+4. 如需交叉引用，用 Grep 查找调用方
 
-Never read a file end-to-end when exploring. Structure first, drill second.
+探索时永远不要从头到尾读文件。先结构，再钻取。
 ```
 
-**Approach B: tree-sitter CLI + script (50-150 tokens per file)**
+**方案 B：tree-sitter CLI + 脚本（每文件 50-150 Token）**
 
 ```bash
-# Install tree-sitter
+# 安装 tree-sitter
 brew install tree-sitter
 
-# Use the extract-signatures script
-# → Template: examples/skills/smart-explore.md (Approach B section)
+# 使用 extract-signatures 脚本
+# → 模板：examples/skills/smart-explore.md（方案 B 章节）
 python3 ~/.claude/scripts/extract-signatures.py src/
 
-# Sample output for a 500-line Rust file:
+# 一个 500 行 Rust 文件的示例输出：
 # src/auth.rs:
 #   fn  pub async fn login(username: &str, password: &str) -> Result<Session>  (line 28)
 #   fn  pub async fn logout(session_id: Uuid) -> Result<()>  (line 67)
 #   struct  pub struct AuthConfig  (line 110)
 ```
 
-50-150 tokens per file vs 2,000-5,000 for full reads.
+每文件 50-150 Token，对比完整读取的 2,000-5,000 Token。
 
-**Approach C: MCP servers (large codebases, >50 files)**
+**方案 C：MCP 服务器（大型代码库，>50 文件）**
 
-| Use case | Tool | Install |
+| 使用场景 | 工具 | 安装方式 |
 |---|---|---|
-| General exploration | mcp-server-tree-sitter | `pip install mcp-server-tree-sitter` |
-| PR code reviews | code-review-graph (MIT, ~2k stars) | `pip install code-review-graph` |
-| Symbol lookup | jCodeMunch (free non-commercial) | `claude mcp add jcodemunch uvx jcodemunch-mcp` |
+| 通用探索 | mcp-server-tree-sitter | `pip install mcp-server-tree-sitter` |
+| PR 代码审查 | code-review-graph（MIT，约 2k stars） | `pip install code-review-graph` |
+| 符号查找 | jCodeMunch（免费非商用） | `claude mcp add jcodemunch uvx jcodemunch-mcp` |
 
-**code-review-graph** is the strongest standalone option: MIT, Claude Code marketplace, 6.8x average token reduction on PR reviews across real codebases (httpx: 26x, FastAPI: 8x, Next.js: 6x).
+**code-review-graph** 是最强的独立选项：MIT 协议、Claude Code 市场可用、在真实代码库的 PR 审查中平均节省 6.8 倍 Token（httpx: 26 倍，FastAPI: 8 倍，Next.js: 6 倍）。
 
 ```bash
 pip install code-review-graph
 code-review-graph install
-# or
+# 或
 claude plugin marketplace add tirth8205/code-review-graph
 ```
 
-**Honest benchmarks:**
+**真实基准：**
 
-| Task | Without smart-explore | With smart-explore | Savings |
+| 任务 | 不用 smart-explore | 使用 smart-explore | 节省 |
 |---|---|---|---|
-| Understand 5-file module | ~18,000 tokens | ~2,500 tokens | **86%** |
-| Find where to add a feature | ~8,000 tokens | ~800 tokens | **90%** |
-| PR review (10 changed files) | ~25,000 tokens | ~3,500 tokens | **86%** |
-| Single function lookup | ~3,000 tokens | ~350 tokens | **88%** |
+| 理解 5 文件模块 | ~18,000 Token | ~2,500 Token | **86%** |
+| 寻找功能添加位置 | ~8,000 Token | ~800 Token | **90%** |
+| PR 审查（10 个变更文件） | ~25,000 Token | ~3,500 Token | **86%** |
+| 查找单个函数 | ~3,000 Token | ~350 Token | **88%** |
 
-**RTK vs Smart Explore — complete picture:**
+**RTK vs Smart Explore — 完整图景：**
 
 | | RTK | Smart Explore |
 |---|---|---|
-| **What it saves** | Command output tokens | Code reading tokens |
-| **When** | After running git, cargo, npm | Before reading source files |
-| **How** | Regex + text filtering | AST parsing (signatures only) |
-| **Typical savings** | 60-90% on CLI outputs | 86-92% on code exploration |
-| **Setup** | `rtk init --global` (2 min) | CLAUDE.md rule (0 min) or script (5 min) |
+| **节省什么** | 命令输出 Token | 代码阅读 Token |
+| **何时生效** | 运行 git、cargo、npm 之后 | 读取源文件之前 |
+| **如何做到** | 正则 + 文本过滤 | AST 解析（仅签名） |
+| **典型节省** | CLI 输出节省 60-90% | 代码探索节省 86-92% |
+| **配置成本** | `rtk init --global`（2 分钟） | CLAUDE.md 规则（0 分钟）或脚本（5 分钟） |
 
-Use both. A 30-minute session with RTK + smart explore: ~15-20k tokens instead of ~150-200k.
+两者一起用。一个 30 分钟的会话，RTK + smart explore：约 15-20k Token，而不是 150-200k。
 
-**See also:**
+**另请参阅：**
 
-- Skill template: `examples/skills/smart-explore.md`
-- Evaluation: `docs/resource-evaluations/tree-sitter-progressive-code-exploration.md`
-- Reference implementation: https://aider.chat/docs/repomap.html
+- Skill 模板：`examples/skills/smart-explore.md`
+- 评估报告：`docs/resource-evaluations/tree-sitter-progressive-code-exploration.md`
+- 参考实现：https://aider.chat/docs/repomap.html
 
-### Cost Tracking
+### 成本追踪
 
-**Monitor cost with `/status`:**
+**用 `/status` 监控成本：**
 
 ```bash
 /status
 
-# Output:
+# 输出示例：
 Model: Sonnet | Ctx: 45.2k | Cost: $1.23 | Ctx(u): 42.0%
 ```
 
-**Set budget alerts (API usage):**
+**设置预算告警（API 直用）：**
 
 ```python
-# If using Anthropic API directly
+# 如果你直接使用 Anthropic API
 import anthropic
 
 client = anthropic.Anthropic()
 
-# Track spending
+# 追踪花费
 response = client.messages.create(
     model="claude-sonnet-4-5",
     max_tokens=1024,
@@ -17879,175 +17912,175 @@ response = client.messages.create(
     }
 )
 
-# Log cost per request
+# 记录每次请求成本
 cost = calculate_cost(response.usage)
 if cost > BUDGET_THRESHOLD:
     alert_team(f"Budget threshold exceeded: ${cost}")
 ```
 
-**Session cost limits:**
+**会话成本限制：**
 
 ```markdown
-## CLAUDE.md - Cost Awareness
+## CLAUDE.md - 成本意识
 
-**Budget-conscious mode:**
-- Use Haiku for reviews and simple tasks
-- Reserve Sonnet for feature work
-- Use Opus only for critical decisions
-- Compact context at 70% to avoid waste
-- Close sessions after task completion
+**预算敏感模式：**
+- 审查和简单任务使用 Haiku
+- 功能开发保留给 Sonnet
+- 关键决策才用 Opus
+- 上下文用到 70% 时执行 compact，避免浪费
+- 任务完成后关闭会话
 ```
 
-### Economic Workflows
+### 经济型工作流
 
-**Pattern 1: Haiku for tests, Sonnet for implementation**
+**模式 1：Haiku 写测试，Sonnet 写实现**
 
 ```bash
-# Terminal 1: Test generation (Haiku)
+# 终端 1：测试生成（Haiku）
 claude --model haiku
-You: "Generate tests for the authentication module"
+你："为认证模块生成测试"
 
-# Terminal 2: Implementation (Sonnet)
+# 终端 2：功能实现（Sonnet）
 claude --model sonnet
-You: "Implement the authentication module"
+你："实现认证模块"
 ```
 
-**Pattern 2: Progressive model escalation**
+**模式 2：渐进式模型升级**
 
 ```bash
-# Start with Haiku
+# 从 Haiku 开始
 claude --model haiku
-You: "Review this code for obvious issues"
+你："审查这段代码，找出明显问题"
 
-# If complex issues found, escalate to Sonnet
+# 发现复杂问题后升级到 Sonnet
 /model sonnet
-You: "Deep analysis of the race condition"
+你："深入分析这个竞态条件"
 
-# If architectural issue, escalate to Opus
+# 遇到架构级问题时升级到 Opus
 /model opus
-You: "Redesign the concurrency model"
+你："重新设计并发模型"
 ```
 
-**Pattern 3: Context reuse**
+**模式 3：上下文复用**
 
 ```bash
-# Build context once, reuse for multiple tasks
+# 一次性构建上下文，用于多个任务
 claude
-You: "Analyze the authentication flow"
-# Context built: ~20k tokens
+你："分析认证流程"
+# 上下文构建完成：约 20k Token
 
-# Same session - context already loaded
-You: "Now add 2FA to the authentication flow"
-# No context rebuild needed
+# 同一会话 —— 上下文已加载
+你："现在给认证流程加上 2FA"
+# 无需重建上下文
 
-You: "Generate tests for the 2FA feature"
-# Still same context
+你："为 2FA 功能生成测试"
+# 仍然使用同一份上下文
 
-# Commit when done
-You: "Create commit for 2FA implementation"
+# 完成后提交
+你："为 2FA 实现创建 commit"
 ```
 
-### Token Calculation Reference
+### Token 计算参考
 
-**Input tokens:**
+**输入 Token：**
 
-- Source code loaded into context
-- Conversation history
-- Memory files (CLAUDE.md)
-- Agent/skill instructions
+- 加载到上下文的源代码
+- 对话历史
+- 记忆文件（CLAUDE.md）
+- 智能体/技能指令
 
-**Output tokens:**
+**输出 Token：**
 
-- Claude's responses
-- Generated code
-- Explanations
+- Claude 的回复
+- 生成的代码
+- 解释说明
 
-**Rough estimates:**
+**粗略估算：**
 
-- 1 token ≈ 0.75 words (English)
-- 1 token ≈ 4 characters
-- Average function: 50-200 tokens
-- Average file (500 LOC): 2,000-5,000 tokens
+- 1 Token ≈ 0.75 个英文单词
+- 1 Token ≈ 4 个字符
+- 平均函数：50-200 Token
+- 平均文件（500 行）：2,000-5,000 Token
 
-**Example calculation:**
-
-```
-Context loaded:
-- 10 files × 500 LOC × 4 tokens/LOC = 20,000 tokens
-- Conversation history: 5,000 tokens
-- CLAUDE.md: 1,000 tokens
-Total input: 26,000 tokens
-
-Claude response:
-- Generated code: 500 LOC × 4 = 2,000 tokens
-- Explanation: 500 tokens
-Total output: 2,500 tokens
-
-Total cost per request: (26,000 + 2,500) tokens × model price
-```
-
-**Sonnet pricing (approximate):**
-
-- Input: $3 per million tokens
-- Output: $15 per million tokens
-
-**Session cost:**
+**计算示例：**
 
 ```
-Input: 26,000 × $3 / 1,000,000 = $0.078
-Output: 2,500 × $15 / 1,000,000 = $0.0375
-Total: ~$0.12 per interaction
+已加载上下文：
+- 10 文件 × 500 行 × 4 Token/行 = 20,000 Token
+- 对话历史：5,000 Token
+- CLAUDE.md：1,000 Token
+总输入：26,000 Token
+
+Claude 回复：
+- 生成代码：500 行 × 4 = 2,000 Token
+- 解释说明：500 Token
+总输出：2,500 Token
+
+单次请求总成本：(26,000 + 2,500) Token × 模型单价
 ```
 
-### Cost Optimization Checklist
+**Sonnet 定价（约）：**
+
+- 输入：$3 / 百万 Token
+- 输出：$15 / 百万 Token
+
+**会话成本：**
+
+```
+输入：26,000 × $3 / 1,000,000 = $0.078
+输出：2,500 × $15 / 1,000,000 = $0.0375
+总计：单次交互约 $0.12
+```
+
+### 成本优化清单
 
 ```markdown
-Daily practices:
-□ Use /status to monitor context and cost
-□ Compact at 70% context usage
-□ Close sessions after task completion
-□ Use `permissions.deny` to block sensitive files
+日常实践：
+□ 用 /status 监控上下文和成本
+□ 上下文使用到 70% 时执行 compact
+□ 任务完成后关闭会话
+□ 用 `permissions.deny` 屏蔽敏感文件
 
-Model selection:
-□ Default to Sonnet for most work
-□ Use Haiku for reviews and simple fixes
-□ Reserve Opus for architecture and critical debugging
-□ Try OpusPlan mode for strategic work
+模型选择：
+□ 默认用 Sonnet 处理大部分工作
+□ 审查和简单修复用 Haiku
+□ 架构和关键调试保留给 Opus
+□ 战略性工作尝试 OpusPlan 模式
 
-Context management:
-□ Use specific file references (@path/to/file.ts)
-□ Batch similar tasks in single session
-□ Reuse context for multiple related tasks
-□ Create specialized agents with focused context
+上下文管理：
+□ 使用精确的文件引用（@path/to/file.ts）
+□ 在单一会话中批量处理相似任务
+□ 多个相关任务复用同一份上下文
+□ 创建上下文聚焦的专用智能体
 
-Team practices:
-□ Share cost-effective patterns in team wiki
-□ Track spending per project
-□ Set budget alerts for high-cost operations
-□ Review cost metrics in retrospectives
+团队实践：
+□ 在团队 wiki 中分享高性价比模式
+□ 按项目追踪花费
+□ 为高成本操作设置预算告警
+□ 在回顾会议中审查成本指标
 ```
 
-### Alternative: Flat-Rate via Copilot Pro
+### 替代方案：Copilot Pro 包月
 
-For heavy usage, consider **cc-copilot-bridge** to route requests through GitHub Copilot Pro ($10/month) instead of per-token billing.
+对于高频使用者，可以考虑 **cc-copilot-bridge**，将请求路由到 GitHub Copilot Pro（$10/月），替代按 Token 计费。
 
 ```bash
-# Switch to Copilot mode (flat rate)
-ccc  # Uses Copilot Pro subscription
+# 切换到 Copilot 模式（包月）
+ccc  # 使用 Copilot Pro 订阅
 
-# Back to direct Anthropic (per-token)
-ccd  # Uses ANTHROPIC_API_KEY
+# 切回 Anthropic 直付（按 Token）
+ccd  # 使用 ANTHROPIC_API_KEY
 ```
 
-**When this makes sense:**
+**适合场景：**
 
-- You're hitting rate limits frequently
-- Monthly costs exceed $50-100
-- You already have a Copilot Pro subscription
+- 你经常遇到速率限制
+- 每月花费超过 $50-100
+- 你已经订阅了 Copilot Pro
 
-See [Section 11.2: Multi-Provider Setup](#multi-provider-setup-cc-copilot-bridge) for full details.
+详情请见 [11.2 节：多提供商配置](#multi-provider-setup-cc-copilot-bridge)。
 
-### Advanced: Cost-Aware CI/CD
+### 进阶：成本感知的 CI/CD
 
 ```yaml
 # .github/workflows/claude-review.yml
@@ -18061,7 +18094,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Use Haiku for cost-effective reviews
+      # 用 Haiku 做高性价比审查
       - name: Run Claude review
         run: |
           claude --model haiku \
@@ -18069,7 +18102,7 @@ jobs:
                  --add-dir src/ \
                  --output-format json > review.json
 
-      # Only escalate to Sonnet if issues found
+      # 仅当发现问题时才升级到 Sonnet
       - name: Deep analysis (if needed)
         if: ${{ contains(steps.*.outputs.*, 'CRITICAL') }}
         run: |
@@ -18078,544 +18111,544 @@ jobs:
                  --add-dir src/
 ```
 
-**Cost comparison:**
+**成本对比：**
 
 ```
-Haiku review (per PR): ~$0.02
-Sonnet review (per PR): ~$0.10
-Opus review (per PR): ~$0.50
+Haiku 审查（每次 PR）：~$0.02
+Sonnet 审查（每次 PR）：~$0.10
+Opus 审查（每次 PR）：~$0.50
 
-With 100 PRs/month:
-- Haiku: $2/month
-- Sonnet: $10/month
-- Opus: $50/month
+每月 100 个 PR：
+- Haiku：$2/月
+- Sonnet：$10/月
+- Opus：$50/月
 
-Smart escalation (Haiku → Sonnet for 10% of PRs):
-- Base cost: $2 (Haiku for all)
-- Escalation: $1 (Sonnet for 10%)
-- Total: $3/month (vs $10 or $50)
+智能升级（全部用 Haiku，10% PR 升级到 Sonnet）：
+- 基础成本：$2（全部 Haiku）
+- 升级成本：$1（10% Sonnet）
+- 总计：$3/月（对比 $10 或 $50）
 ```
 
-### Cost vs Productivity Trade-offs
+### 成本与生产力的权衡
 
-**Don't be penny-wise, pound-foolish:**
+**不要因小失大：**
 
-❌ **False economy:**
+❌ **虚假节约：**
 
-- Spending 2 hours manually debugging to save $1 in API costs
-- Using Haiku for complex tasks, generating incorrect code
-- Over-compacting context, losing valuable history
+- 花 2 小时手动调试，只为省 $1 API 费用
+- 用 Haiku 处理复杂任务，结果生成错误代码
+- 过度 compact 上下文，丢失宝贵历史
 
-✅ **Smart optimization:**
+✅ **聪明优化：**
 
-- Use right model for the task (time saved >> cost)
-- Invest in good prompts and memory files (reduce iterations)
-- Automate with agents (consistent, efficient)
+- 为任务选择合适模型（省下的时间 >> 成本）
+- 投入写好提示词和记忆文件（减少迭代次数）
+- 用智能体自动化（稳定、高效）
 
-**Perspective on ROI:**
+**ROI 视角：**
 
-Time savings from effective Claude Code usage typically far outweigh API costs for most development tasks. Rather than calculating precise ROI (which depends heavily on your specific context, hourly rate, and task complexity), focus on whether the tool is genuinely helping you ship faster. For team-level measurement, see [Contribution Metrics](#contribution-metrics-january-2026) — Anthropic's GitHub-integrated dashboard for tracking PR and code attribution (Team/Enterprise plans, public beta).
+对于大多数开发任务，高效使用 Claude Code 所节省的时间通常远超 API 成本。与其计算精确的 ROI（这高度依赖你的具体场景、时薪和任务复杂度），不如关注这个工具是否真的帮你更快交付。团队层面的度量可参考 [Contribution Metrics](#contribution-metrics-january-2026) —— Anthropic 的 GitHub 集成仪表盘，用于追踪 PR 和代码归属（Team/Enterprise 计划，公开测试版）。
 
-**When to optimize aggressively:**
+**何时应该激进优化：**
 
-- High-volume operations (>1000 requests/day)
-- Automated pipelines running 24/7
-- Large teams (cost scales with users)
-- Budget-constrained projects
+- 高频操作（>1000 请求/天）
+- 7×24 小时运行的自动化流水线
+- 大型团队（成本随用户数线性增长）
+- 预算紧张的项目
 
-**When productivity matters more:**
+**何时 productivity 更重要：**
 
-- Critical bug fixes
-- Time-sensitive features
-- Learning and experimentation
-- Complex architectural decisions
+- 关键 bug 修复
+- 时间敏感的功能
+- 学习和实验
+- 复杂的架构决策
 
 ---
 
-## 9.14 Development Methodologies
+## 9.14 开发方法论
 
-> **Full reference**: [methodologies.md](./core/methodologies.md) | **Hands-on workflows**: [workflows/](./workflows/)
+> **完整参考**：[methodologies.md](./core/methodologies.md) | **实战工作流**：[workflows/](./workflows/)
 
-15 structured development methodologies have emerged for AI-assisted development (2025-2026). This section provides quick navigation; detailed workflows are in dedicated files.
+2025-2026 年间，AI 辅助开发领域涌现了 15 种结构化开发方法论。本节提供快速导航；详细工作流请查阅独立文件。
 
-### Quick Decision Tree
+### 快速决策树
 
 ```
-┌─ "I want quality code" ────────────→ workflows/tdd-with-claude.md
-├─ "I want to spec before code" ─────→ workflows/spec-first.md
-├─ "I need to plan architecture" ────→ workflows/plan-driven.md
-├─ "I'm iterating on something" ─────→ workflows/iterative-refinement.md
-├─ "Feasibility is unknown" ─────────→ workflows/rpi.md
-└─ "I need methodology theory" ──────→ methodologies.md
+├─ "我想要高质量代码" ────────────→ workflows/tdd-with-claude.md
+├─ "我想先写规范再写代码" ───────→ workflows/spec-first.md
+├─ "我需要规划架构" ─────────────→ workflows/plan-driven.md
+├─ "我在迭代某个功能" ───────────→ workflows/iterative-refinement.md
+├─ "可行性未知" ─────────────────→ workflows/rpi.md
+└─ "我需要方法论理论" ───────────→ methodologies.md
 ```
 
-### The 4 Core Workflows for Claude Code
+### Claude Code 的 4 个核心工作流
 
-| Workflow | When to Use | Key Prompt Pattern |
+| 工作流 | 何时使用 | 关键提示词模式 |
 |----------|-------------|-------------------|
-| **TDD** | Quality-critical code | "Write FAILING tests first, then implement" |
-| **Spec-First** | New features, APIs | Define in CLAUDE.md before asking |
-| **Plan-Driven** | Multi-file changes | Use `/plan` mode |
-| **Iterative** | Refinement | Specific feedback: "Change X because Y" |
+| **TDD** | 质量关键型代码 | "先写 FAILING 测试，再实现" |
+| **Spec-First** | 新功能、API | 先在 CLAUDE.md 中定义，再让 Claude 写代码 |
+| **Plan-Driven** | 多文件改动 | 使用 `/plan` 模式 |
+| **Iterative** | 精修优化 | 给出具体反馈："把 X 改成 Y，因为 Z" |
 
-### The 15 Methodologies (Reference)
+### 15 种方法论（参考）
 
-| Tier | Methodologies | Claude Fit |
+| 层级 | 方法论 | Claude 适配度 |
 |------|--------------|------------|
-| Orchestration | BMAD | ⭐⭐ High-complexity governance |
-| Specification | SDD, Doc-Driven, Req-Driven, DDD | ⭐⭐⭐ Core patterns |
-| Behavior | BDD, ATDD, CDD | ⭐⭐⭐ Testing focus |
-| Delivery | FDD, Context Engineering | ⭐⭐ Process |
-| Implementation | TDD, Eval-Driven, Multi-Agent | ⭐⭐⭐ Core workflows |
-| Optimization | Iterative Loops, Prompt Engineering | ⭐⭐⭐ Foundation |
+| 编排层 | BMAD | ⭐⭐ 高复杂度治理 |
+| 规范层 | SDD、Doc-Driven、Req-Driven、DDD | ⭐⭐⭐ 核心模式 |
+| 行为层 | BDD、ATDD、CDD | ⭐⭐⭐ 测试导向 |
+| 交付层 | FDD、Context Engineering | ⭐⭐ 流程导向 |
+| 实现层 | TDD、Eval-Driven、Multi-Agent | ⭐⭐⭐ 核心工作流 |
+| 优化层 | Iterative Loops、Prompt Engineering | ⭐⭐⭐ 基础能力 |
 
-→ Full descriptions with examples: [methodologies.md](./core/methodologies.md)
+→ 含示例的完整描述：[methodologies.md](./core/methodologies.md)
 
-### SDD Tools (External)
+### SDD 工具（外部）
 
-| Tool | Use Case | Integration |
+| 工具 | 使用场景 | 集成方式 |
 |------|----------|-------------|
-| **Spec Kit** | Greenfield projects | `/speckit.*` slash commands |
-| **OpenSpec** | Brownfield/existing | `/openspec:*` slash commands |
-| **Specmatic** | API contract testing | MCP agent available |
+| **Spec Kit** | 从零开始的项目 | `/speckit.*` 斜杠命令 |
+| **OpenSpec** | 存量/已有项目 | `/openspec:*` 斜杠命令 |
+| **Specmatic** | API 契约测试 | 提供 MCP 智能体 |
 
-→ See official documentation for installation and detailed usage.
+→ 安装和详细用法请参阅官方文档。
 
-### Combination Patterns
+### 组合模式
 
-| Situation | Recommended Stack |
+| 场景 | 推荐组合 |
 |-----------|-------------------|
-| Solo MVP | SDD + TDD |
-| Team 5-10, greenfield | Spec Kit + TDD + BDD |
-| Microservices | CDD + Specmatic |
-| Existing SaaS | OpenSpec + BDD |
-| High-complexity / compliance | BMAD + Spec Kit |
-| LLM-native product | Eval-Driven + Multi-Agent |
+| 个人 MVP | SDD + TDD |
+| 5-10 人团队，从零开始 | Spec Kit + TDD + BDD |
+| 微服务 | CDD + Specmatic |
+| 现有 SaaS | OpenSpec + BDD |
+| 高复杂度 / 合规 | BMAD + Spec Kit |
+| LLM-native 产品 | Eval-Driven + Multi-Agent |
 
 ---
 
-## 9.15 Named Prompting Patterns
+## 9.15 命名提示词模式
 
-**Reading time**: 5 minutes
-**Skill level**: Week 2+
+**阅读时间**：5 分钟  
+**技能水平**：第 2 周+
 
-Memorable named patterns for effective Claude Code interaction. These patterns have emerged from community best practices and help you communicate more effectively.
+这些是社区最佳实践中涌现出的易记命名模式，能帮你更高效地与 Claude Code 沟通。
 
-### The "As If" Pattern
+### "As If" 模式
 
-Set quality expectations by establishing context and standards.
+通过设定上下文和标准来建立质量预期。
 
-**Pattern**: "Implement as if you were a [role] at [high-standard company/context]"
+**模式**："假设你是 [角色]，在 [高标准公司/场景]，来实现这个功能"
 
-**Examples:**
-
-```markdown
-# High quality code
-Implement this authentication system as if you were a senior security engineer at a major bank.
-
-# Production readiness
-Review this code as if preparing for a SOC2 audit.
-
-# Performance focus
-Optimize this function as if it will handle 10,000 requests per second.
-```
-
-**Why it works**: Activates relevant knowledge patterns and raises output quality to match the stated context.
-
-### The Constraint Pattern
-
-Force creative solutions by adding explicit limitations.
-
-**Pattern**: "Solve this [with constraint X] [without using Y]"
-
-**Examples:**
+**示例：**
 
 ```markdown
-# Dependency constraint
-Implement this feature without adding any new dependencies.
+# 高质量代码
+假设你是一家大型银行的高级安全工程师，来实现这个认证系统。
 
-# Size constraint
-Solve this in under 50 lines of code.
+# 生产就绪
+假设你正在准备 SOC2 审计，来审查这段代码。
 
-# Time constraint (execution)
-This must complete in under 100ms.
-
-# Simplicity constraint
-Use only standard library functions.
+# 性能优先
+假设这个函数要处理每秒 10,000 次请求，来优化它。
 ```
 
-**Why it works**: Constraints prevent over-engineering and force focus on the essential solution.
+**为什么有效**：激活与所述上下文相关的知识模式，并将输出质量提升到匹配水平。
 
-### The "Explain First" Pattern
+### 约束模式
 
-Force planning before implementation.
+通过添加明确限制来迫使产生创造性解决方案。
 
-**Pattern**: "Before implementing, explain your approach in [N] sentences"
+**模式**："在 [约束 X 下] 解决这个 [问题]，[且不使用 Y]"
 
-**Examples:**
+**示例：**
 
 ```markdown
-# Simple planning
-Before writing code, explain in 2-3 sentences how you'll approach this.
+# 依赖约束
+实现这个功能，且不添加任何新依赖。
 
-# Detailed planning
-Before implementing, outline:
-1. What components you'll modify
-2. What edge cases you've considered
-3. What could go wrong
+# 体积约束
+在 50 行代码以内解决这个问题。
 
-# Trade-off analysis
-Before choosing an approach, explain 2-3 alternatives and why you'd pick one.
+# 时间约束（执行）
+必须在 100ms 内完成。
+
+# 简洁约束
+只使用标准库函数。
 ```
 
-**Why it works**: Prevents premature coding and catches misunderstandings early. Especially useful for complex tasks.
+**为什么有效**：约束防止过度工程，迫使关注本质解。
 
-### The "Rubber Duck" Pattern
+### "Explain First" 模式
 
-Debug collaboratively by having Claude ask questions.
+强制在实施前先进行规划。
 
-**Pattern**: "I'm stuck on [X]. Ask me questions to help me figure it out."
+**模式**："在实现之前，先用 [N] 句话解释你的思路"
 
-**Examples:**
+**示例：**
 
 ```markdown
-# Debugging
-I'm stuck on why this test is failing. Ask me questions to help diagnose the issue.
+# 简单规划
+在写代码之前，先用 2-3 句话说明你会怎么做。
 
-# Design
-I can't decide on the right architecture. Ask me questions about my requirements.
+# 详细规划
+在实现之前，先列出：
+1. 你会修改哪些组件
+2. 你考虑了哪些边界情况
+3. 可能会出什么问题
 
-# Problem understanding
-I don't fully understand what I need to build. Ask clarifying questions.
+# 权衡分析
+在选择方案之前，先解释 2-3 个替代方案，以及为什么选其中一个。
 ```
 
-**Why it works**: Often the problem is unclear requirements or assumptions. Questions surface hidden constraints.
+**为什么有效**：防止过早编码，尽早发现误解。对复杂任务尤其有用。
 
-### The "Incremental" Pattern
+### "Rubber Duck" 模式
 
-Build complex features step by step with validation.
+让 Claude 通过提问来协作调试。
 
-**Pattern**: "Let's build this incrementally. Start with [minimal version], then we'll add [features]."
+**模式**："我在 [X] 上卡住了。问我一些问题来帮我理清思路。"
 
-**Examples:**
+**示例：**
 
 ```markdown
-# Feature development
-Build the user registration incrementally:
-1. First: Basic form that saves to database
-2. Then: Email validation
-3. Then: Password strength requirements
-4. Finally: Email verification flow
+# 调试
+我搞不清这个测试为什么失败。问我一些问题来帮我诊断。
 
-Show me step 1 first.
+# 设计
+我决定不了正确的架构。问我一些关于需求的问题。
 
-# Refactoring
-Refactor this incrementally. First extract the validation logic,
-run tests, then we'll continue.
+# 理解问题
+我没完全理解我要做什么。问一些澄清问题。
 ```
 
-**Why it works**: Reduces risk, enables validation at each step, maintains working code throughout.
+**为什么有效**：问题往往能揭示隐藏的需求或假设，而问题本身通常就出在需求不清上。
 
-### The "Boundary" Pattern
+### "Incremental" 模式
 
-Define explicit scope to prevent over-engineering.
+逐步构建复杂功能，并在每一步验证。
 
-**Pattern**: "Only modify [X]. Don't touch [Y]."
+**模式**："我们增量式地构建这个。先从 [最小版本] 开始，然后逐步添加 [功能]。"
 
-**Examples:**
+**示例：**
 
 ```markdown
-# File scope
-Only modify auth.ts. Don't change any other files.
+# 功能开发
+增量式地构建用户注册：
+1. 第一步：能保存到数据库的基础表单
+2. 第二步：邮箱验证
+3. 第三步：密码强度要求
+4. 最后：邮箱验证流程
 
-# Function scope
-Fix just the calculateTotal function. Don't refactor surrounding code.
+先给我看第一步。
 
-# Feature scope
-Add the logout button only. Don't add session management or remember-me features.
+# 重构
+增量式重构。先提取验证逻辑，运行测试，然后继续。
 ```
 
-**Why it works**: Prevents scope creep and keeps changes focused and reviewable.
+**为什么有效**：降低风险，每一步都可验证，始终保持代码可运行。
 
-### Pattern Combinations
+### "Boundary" 模式
 
-| Situation | Pattern Combination |
+定义明确范围，防止过度工程。
+
+**模式**："只修改 [X]。不要碰 [Y]。"
+
+**示例：**
+
+```markdown
+# 文件范围
+只修改 auth.ts。不要改其他任何文件。
+
+# 函数范围
+只修复 calculateTotal 函数。不要重构周围代码。
+
+# 功能范围
+只添加退出登录按钮。不要加会话管理或记住我功能。
+```
+
+**为什么有效**：防止范围蔓延，保持改动聚焦、可审查。
+
+### 模式组合
+
+| 场景 | 模式组合 |
 |-----------|---------------------|
-| Critical feature | As If + Explain First + Incremental |
-| Quick fix | Constraint + Boundary |
-| Debugging session | Rubber Duck + Incremental |
-| Architecture decision | Explain First + As If |
-| Refactoring | Boundary + Incremental + Constraint |
+| 关键功能 | As If + Explain First + Incremental |
+| 快速修复 | Constraint + Boundary |
+| 调试会话 | Rubber Duck + Incremental |
+| 架构决策 | Explain First + As If |
+| 重构 | Boundary + Incremental + Constraint |
 
-### Anti-Patterns to Avoid
+### 需要避免的反模式
 
-| Anti-Pattern | Problem | Better Approach |
+| 反模式 | 问题 | 更好做法 |
 |--------------|---------|-----------------|
-| "Make it perfect" | Undefined standard | Use "As If" with specific context |
-| "Fix everything" | Scope explosion | Use "Boundary" pattern |
-| "Just do it" | No validation | Use "Explain First" |
-| "Make it fast" | Vague constraint | Specify: "under 100ms" |
-| Overwhelming detail | Context pollution | Focus on relevant constraints only |
+| "把它做到完美" | 标准不明确 | 用 "As If" 并给出具体上下文 |
+| "全部修掉" | 范围爆炸 | 用 "Boundary" 模式 |
+| "直接做" | 没有验证 | 用 "Explain First" |
+| "让它更快" | 约束模糊 | 明确指定："100ms 以内" |
+| 细节过度堆砌 | 上下文污染 | 只关注相关约束 |
 
 ---
 
-## 9.16 Session Teleportation
+## 9.16 会话传送
 
-**Reading time**: 5 minutes
-**Skill level**: Week 2+
-**Status**: Research Preview (as of January 2026)
+**阅读时间**：5 分钟  
+**技能水平**：第 2 周+  
+**状态**：研究预览版（截至 2026 年 1 月）
 
-Session teleportation allows migrating coding sessions between cloud (claude.ai/code) and local (CLI) environments. This enables workflows where you start work on mobile/web and continue locally with full filesystem access.
+会话传送允许将编码会话在云环境（claude.ai/code）和本地环境（CLI）之间迁移。这意味着你可以在移动设备或网页上开始工作，然后在本地继续，享有完整的文件系统访问权限。
 
-> **Related**: [Ultraplan](#ultraplan) uses the same web ↔ terminal handoff specifically for the planning phase — plan in the cloud with browser-based review, then teleport the approved plan back to your terminal for execution. If your primary goal is collaborative plan review before implementation, see Ultraplan first.
+> **相关**：[Ultraplan](#ultraplan) 使用了同样的 web ↔ terminal 交接机制，专门用于规划阶段——在云端浏览器中完成计划评审，然后将批准的计划传回终端执行。如果你的主要目标是在实施前进行协作式计划评审，请优先查看 Ultraplan。
 
-### Evolution Timeline
+### 演进时间线
 
-| Version | Feature |
+| 版本 | 功能 |
 |---------|---------|
-| **2.0.24** | Initial Web → CLI teleport capability |
-| **2.0.41** | Teleporting auto-sets upstream branch |
-| **2.0.45** | `&` prefix for background tasks to web |
-| **2.1.0** | `/teleport` and `/remote-env` commands |
+| **2.0.24** | 初始 Web → CLI 传送能力 |
+| **2.0.41** | 传送时自动设置上游分支 |
+| **2.0.45** | `&` 前缀用于将后台任务发往 web |
+| **2.1.0** | `/teleport` 和 `/remote-env` 命令 |
 
-### Commands Reference
+### 命令参考
 
-| Command | Usage |
+| 命令 | 用法 |
 |---------|-------|
-| `%` or `&` prefix | Send task to cloud (e.g., `% Fix the auth bug`) |
-| `claude --teleport` | Interactive picker for available sessions |
-| `claude --teleport <id>` | Teleport specific session by ID |
-| `/teleport` | In-REPL command to teleport current session |
-| `/tasks` | Monitor background tasks status |
-| `/remote-env` | Configure cloud environment settings |
-| `Ctrl+B` | Background all running tasks (unified in 2.1.0) |
+| `%` 或 `&` 前缀 | 将任务发送到云端（例如：`% Fix the auth bug`） |
+| `claude --teleport` | 交互式选择可用会话 |
+| `claude --teleport <id>` | 按 ID 传送指定会话 |
+| `/teleport` | REPL 内命令，传送当前会话 |
+| `/tasks` | 监控后台任务状态 |
+| `/remote-env` | 配置云端环境设置 |
+| `Ctrl+B` | 将所有运行中任务转为后台（2.1.0 统一） |
 
-### Prerequisites
+### 前置条件
 
-**Required for teleportation:**
+**传送必需：**
 
-- GitHub account connected + Claude GitHub App installed
-- Clean git state (0 uncommitted changes)
-- Same repository (not a fork)
-- Branch exists on remote
-- Same Claude.ai account on both environments
-- CLI version 2.1.0+
+- 已连接 GitHub 账户 + 安装了 Claude GitHub App
+- 干净的 git 状态（0 个未提交变更）
+- 同一仓库（非 fork）
+- 分支已推送到远程
+- 两端使用同一个 Claude.ai 账户
+- CLI 版本 2.1.0+
 
-### Workflow Example
+### 工作流示例
 
 ```bash
-# 1. Start task on web (claude.ai/code)
-#    "Refactor the authentication middleware"
+# 1. 在网页端（claude.ai/code）启动任务
+#    "重构认证中间件"
 
-# 2. Session works in cloud sandbox
+# 2. 会话在云端沙盒中运行
 
-# 3. Later, on local machine:
+# 3. 之后在本地机器上：
 claude --teleport
-# → Interactive picker shows available sessions
+# → 交互式选择器显示可用会话
 
-# 4. Select session, Claude syncs:
-#    - Conversation context
-#    - File changes (via git)
-#    - Task state
+# 4. 选择会话后，Claude 会同步：
+#    - 对话上下文
+#    - 文件变更（通过 git）
+#    - 任务状态
 
-# 5. Continue work locally with full filesystem access
+# 5. 在本地继续工作，享有完整文件系统访问
 ```
 
-### Environment Support
+### 环境支持
 
-| Environment | Teleport Support |
+| 环境 | 传送支持 |
 |-------------|------------------|
-| CLI/Terminal | Full bidirectional |
-| VS Code | Via terminal (not Chat view) |
-| Cursor | Via terminal |
-| Web (claude.ai/code) | Outbound only (web → local) |
-| iOS app | Monitoring only |
+| CLI/Terminal | 完整双向 |
+| VS Code | 通过终端（不支持 Chat 视图） |
+| Cursor | 通过终端 |
+| Web（claude.ai/code） | 仅出站（web → local） |
+| iOS app | 仅监控 |
 
-### Current Limitations (Research Preview)
+### 当前限制（研究预览版）
 
-> **⚠️ Important**: Session teleportation is in research preview. Expect rough edges.
+> **⚠️ 重要**：会话传送处于研究预览阶段，可能会有一些粗糙边缘。
 
-- **Unidirectional**: Web → local only (cannot teleport local → web)
-- **GitHub only**: No GitLab or Bitbucket support yet
-- **Subscription required**: Pro, Max, Team Premium, or Enterprise Premium
-- **Rate limits**: Parallel sessions consume proportional rate limits
-- **Git dependency**: Requires clean git state for sync
+- **单向**：仅支持 Web → local（无法 local → web）
+- **仅 GitHub**：暂不支持 GitLab 或 Bitbucket
+- **需要订阅**：Pro、Max、Team Premium 或 Enterprise Premium
+- **速率限制**：并行会话会按比例消耗速率限制
+- **依赖 Git**：同步需要干净的 git 状态
 
-### Troubleshooting
+### 故障排查
 
-| Issue | Solution |
+| 问题 | 解决方案 |
 |-------|----------|
-| "Uncommitted changes" | Commit or stash changes before teleporting |
-| "Branch not found" | Push local branch to remote first |
-| "Session not found" | Verify same Claude.ai account on both |
-| "Teleport failed" | Check internet connectivity, try again |
-| Connection timeout | Use `claude --teleport <id>` with explicit ID |
+| "Uncommitted changes" | 传送前先 commit 或 stash |
+| "Branch not found" | 先将本地分支推送到远程 |
+| "Session not found" | 确认两端使用同一个 Claude.ai 账户 |
+| "Teleport failed" | 检查网络连接，重试 |
+| 连接超时 | 使用 `claude --teleport <id>` 指定明确 ID |
 
-### Best Practices
+### 最佳实践
 
-1. **Commit frequently** — Clean git state is required
-2. **Use meaningful branch names** — Helps identify sessions
-3. **Check `/tasks`** — Verify background task status before teleporting
-4. **Same account** — Ensure CLI and web use same Claude.ai login
-5. **Push branches** — Remote must have the branch for sync
+1. **频繁提交** — 干净的 git 状态是必需的
+2. **使用有意义的分支名** — 便于识别会话
+3. **检查 `/tasks`** — 传送前确认后台任务状态
+4. **同一账户** — 确保 CLI 和网页端使用同一 Claude.ai 登录
+5. **推送分支** — 远程必须已有该分支才能同步
 
-### Environment Variables
+### 环境变量
 
-| Variable | Purpose |
+| 变量 | 用途 |
 |----------|---------|
-| `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | Disable background task functionality (v2.1.4+) |
+| `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | 禁用后台任务功能（v2.1.4+） |
 
 ---
 
-## 9.17 Scaling Patterns: Multi-Instance Workflows
+## 9.17 扩展模式：多实例工作流
 
-**Reading time**: 10 minutes
+**阅读时间**：10 分钟
 
-**TL;DR**: Multi-instance orchestration = advanced pattern for teams managing 10+ concurrent features. Requires modular architecture + budget + monitoring. **95% of users don't need this** — sequential workflows with 1-2 instances are more efficient for most contexts.
+**TL;DR**：多实例编排 = 面向需要同时管理 10+ 个功能的团队的高级模式。需要模块化架构 + 预算 + 监控。**95% 的用户不需要**——对大多数场景来说，1-2 个实例的顺序工作流更高效。
 
 ---
 
-### When Multi-Instance Makes Sense
+### 何时适合多实例
 
-Don't scale prematurely. Multi-instance workflows introduce coordination overhead that outweighs benefits for most teams.
+不要过早扩展。多实例工作流会引入协调开销，对大多数团队来说弊大于利。
 
-| Context | Recommendation | Monthly Cost | Reasoning |
+| 场景 | 建议 | 月成本 | 理由 |
 |---------|----------------|--------------|-----------|
-| **Solo dev** | ❌ Don't | - | Overhead > benefit, use Cursor instead |
-| **Startup <10 devs** | ⚠️ Maybe | $400-750 | Only if modular architecture + tests |
-| **Scale-up 10-50 devs** | ✅ Consider | $1,000-2,000 | Headless PM framework + monitoring justified |
-| **Enterprise 50+** | ✅ Yes | $2,000-5,000 | Clear ROI, budget available |
+| **个人开发者** | ❌ 不需要 | - | 开销 > 收益，不如用 Cursor |
+| **<10 人初创团队** | ⚠️ 可能 | $400-750 | 仅当架构模块化 + 有测试时 |
+| **10-50 人成长型公司** | ✅ 可以考虑 | $1,000-2,000 | 无头 PM 框架 + 监控才值得 |
+| **50+ 人企业** | ✅ 值得 | $2,000-5,000 | ROI 清晰，预算充足 |
 
-**Red flags (don't use multi-instance if true)**:
+**红线（如果符合以下情况，不要使用多实例）：**
 
-- Architecture: Legacy monolith, no tests, tight coupling
-- Budget: <$500/month available for API costs
-- Expertise: Team unfamiliar with Claude Code basics
-- Context: Solo dev or <3 people
+- 架构：遗留单体、无测试、紧耦合
+- 预算：每月 API 成本 <$500
+- 能力：团队不熟悉 Claude Code 基础操作
+- 场景：个人开发者或 <3 人团队
 
 ---
 
-### 📊 Industry Validation: Multi-Instance ROI (Anthropic 2026)
+### 📊 行业验证：多实例 ROI（Anthropic 2026）
 
-> **Source**: [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)
+> **来源**：[2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)
 
-**Timeline Compression** (weeks → days):
+**时间压缩**（周 → 天）：
 
-| Pattern | Before AI | With Multi-Instance | Gain |
+| 模式 | AI 之前 | 多实例 | 提升 |
 |---------|-----------|-------------------|------|
-| **Feature implementation** | 2-3 weeks | 3-5 days | 4-6x faster |
-| **Onboarding new codebase** | 2-4 weeks | 4-8 hours | 10-50x faster |
-| **Legacy refactoring** | Months (backlog) | 1-2 weeks | Finally viable |
+| **功能实现** | 2-3 周 | 3-5 天 | 快 4-6 倍 |
+| **新代码库上手** | 2-4 周 | 4-8 小时 | 快 10-50 倍 |
+| **遗留代码重构** | 数月（积压） | 1-2 周 | 终于可行 |
 
-**Productivity Economics** (Anthropic research):
+**生产力经济学**（Anthropic 研究）：
 
-| Metric | Finding | Implications |
+| 指标 | 发现 | 启示 |
 |--------|---------|--------------|
-| **Output volume** | +67% PRs merged/engineer/day | Gain via **more output**, not just speed |
-| **New work** | 27% wouldn't be done without AI | Experimental, nice-to-have, exploratory |
-| **Full delegation** | 0-20% tasks | **Collaboration** > replacement |
-| **Cost multiplier** | 3x (capabilities × orchestration × experience) | Compounds over time |
+| **产出量** | 每位工程师每天合并 PR 数 +67% | 收益来自**更多产出**，不只是速度 |
+| **新工作** | 27% 的工作没有 AI 就不会做 | 实验性、锦上添花、探索性任务 |
+| **完全委托** | 0-20% 的任务 | **协作** > 替代 |
+| **成本倍数** | 3 倍（能力 × 编排 × 经验） | 随时间复利增长 |
 
-**Enterprise Case Studies**:
+**企业案例**：
 
-- **TELUS** (telecom, 50K+ employees): 500K hours saved, 13K custom solutions, 30% faster shipping
-- **Fountain** (workforce platform): 50% faster screening, 40% faster onboarding via hierarchical multi-agent
-- **Rakuten** (tech): 7h autonomous vLLM implementation (12.5M lines code, 99.9% accuracy)
+- **TELUS**（电信，5 万+ 员工）：节省 50 万小时，1.3 万个定制方案，交付速度提升 30%
+- **Fountain**（劳动力平台）：筛选速度提升 50%，通过层级多智能体实现入职速度提升 40%
+- **Rakuten**（科技）：7 小时自主完成 vLLM 实现（1250 万行代码，99.9% 准确率）
 
-**The Boris pattern validation**: Boris's $500-1K/month cost and 259 PRs/month aligns with Anthropic's enterprise data showing positive ROI at >3 parallel instances.
+**Boris 模式验证**：Boris 每月 $500-1K 成本和 259 个 PR 的数据，与 Anthropic 企业数据一致：当并行实例 >3 时呈现正向 ROI。
 
-**Anti-pattern alert** (Anthropic findings):
+**反模式警示**（Anthropic 发现）：
 
-- **Over-delegation** (>5 agents): Coordination overhead > productivity gain
-- **Premature scaling**: Start 1-2 instances, measure ROI, scale progressively
-- **Tool sprawl**: >10 MCP servers = maintenance burden (stick to core stack)
-
----
-
-### Real-World Case: Boris Cherny (Interval)
-
-Boris Cherny, creator of Claude Code, shared his workflow orchestrating 5-15 Claude instances in parallel.
-
-**Setup**:
-
-- **5 instances** in local terminal (iTerm2 tabs, numbered 1-5)
-- **5-10 instances** on claude.ai/code (`--teleport` to sync with local)
-- **Git worktrees** for isolation (each instance = separate checkout)
-- **CLAUDE.md**: 2.5k tokens, team-shared and versioned in git
-- **Model**: Opus 4.6 (slower but fewer corrections needed, adaptive thinking)
-- **Slash commands**: `/commit-push-pr` used "dozens of times per day"
-
-**Results** (30 days, January 2026):
-
-- **259 PRs** merged
-- **497 commits**
-- **40k lines** added, **38k lines** deleted (refactor-heavy)
-
-**Cost**: ~$500-1,000/month API (Opus pricing)
-
-**Critical context**: Boris is the creator of Claude Code, working with perfect architecture, Anthropic resources, and ideal conditions. **This is not representative of average teams.**
-
-**Key insights from Boris**:
-
-> **On multi-clauding**: "I use Cowork as a 'doer,' not a chat: it touches files, browsers, and tools directly. I think about productivity as parallelism: multiple tasks running while I steer outcomes."
-
-> **On CLAUDE.md**: "I treat Claude.md as compounding memory: every mistake becomes a durable rule for the team."
-
-> **On plan-first workflow**: "I run plan-first workflows: once the plan is solid, execution gets dramatically cleaner."
-
-> **On verification loops**: "I give Claude a way to verify output (browser/tests): verification drives quality."
-
-**Why Opus 4.6 with Adaptive Thinking**: Although more expensive per token ($5/1M input vs $3/1M for Sonnet, or $10/1M for 1M context beta), Opus requires fewer correction iterations thanks to adaptive thinking. Net result: faster delivery and lower total cost despite higher unit price.
-
-**The supervision model**: Boris describes his role as "tending to multiple agents" rather than "doing every click yourself." The workflow becomes about **steering outcomes** across 5-10 parallel sessions, unblocking when needed, rather than sequential execution.
-
-**Source**: [InfoQ - Claude Code Creator Workflow (Jan 2026)](https://www.infoq.com/news/2026/01/claude-code-creator-workflow/) | [Interview: I got a private lesson on Claude Cowork & Claude Code](https://www.youtube.com/watch?v=DW4a1Cm8nG4)
-
-**Team patterns** (broader Claude Code team, Feb 2026):
-
-The broader team extends Boris's individual workflow with institutional patterns:
-
-- **Skills as institutional knowledge**: Anything done more than once daily becomes a skill checked into version control. Examples:
-  - `/techdebt` — run at end of session to eliminate duplicate code
-  - Context dump skills — sync 7 days of Slack, Google Drive, Asana, and GitHub into a single context
-  - Analytics agents — dbt-powered skills that query BigQuery; one engineer reports not writing SQL manually for 6+ months
-- **CLI and scripts over MCP**: The team prefers shell scripts and CLI integrations over MCP servers for external tool connections. Rationale: less magic, easier to debug, and more predictable behavior. MCP is reserved for cases where bidirectional communication is genuinely needed.
-- **Re-plan when stuck**: Rather than pushing through a stalled implementation, the team switches back to Plan Mode. One engineer uses a secondary Claude instance to review plans "as a staff engineer" before resuming execution.
-- **Claude writes its own rules**: After each correction, the team instructs Claude to update CLAUDE.md with the lesson learned. Over time, this compounds into a team-specific ruleset that prevents recurring mistakes.
-
-> **Source**: [10 Tips from Inside the Claude Code Team](https://paddo.dev/blog/claude-code-team-tips/) (Boris Cherny thread, Feb 2026)
+- **过度委托**（>5 个智能体）：协调开销 > 生产力收益
+- **过早扩展**：先启动 1-2 个实例，测量 ROI，再逐步扩展
+- **工具泛滥**：>10 个 MCP 服务器 = 维护负担（坚持核心栈）
 
 ---
 
-### Alternative Pattern: Dual-Instance Planning (Vertical Separation)
+### 真实案例：Boris Cherny（Interval）
 
-While Boris's workflow demonstrates **horizontal scaling** (5-15 instances in parallel), an alternative pattern focuses on **vertical separation**: using two Claude instances with distinct roles for quality-focused workflows.
+Claude Code 的创造者 Boris Cherny 分享了他并行编排 5-15 个 Claude 实例的工作流。
 
-**Pattern source**: Jon Williams (Product Designer, UK), transition from Cursor to Claude Code after 6 months. [LinkedIn post, Feb 3, 2026](https://www.linkedin.com/posts/thatjonwilliams_ive-been-using-cursor-for-six-months-now-activity-7424481861802033153-k8bu)
+**配置**：
 
-#### When to Use Dual-Instance Pattern
+- **5 个实例** 在本地终端（iTerm2 标签页，编号 1-5）
+- **5-10 个实例** 在 claude.ai/code（用 `--teleport` 与本地同步）
+- **Git 工作树** 做隔离（每个实例 = 独立 checkout）
+- **CLAUDE.md**：2.5k Token，团队共享并纳入 git 版本管理
+- **模型**：Opus 4.6（较慢但修正更少，具备自适应思考）
+- **斜杠命令**：`/commit-push-pr` 每天使用"数十次"
 
-This pattern is **orthogonal** to Boris's approach: instead of scaling breadth (more features in parallel), it scales depth (separation of planning and execution phases).
+**成果**（30 天，2026 年 1 月）：
 
-| Your Context | Use Dual-Instance? | Monthly Cost |
+- **259 个 PR** 合并
+- **497 个 commit**
+- **新增 4 万行**，**删除 3.8 万行**（以重构为主）
+
+**成本**：约 $500-1,000/月 API 费用（Opus 定价）
+
+**关键背景**：Boris 是 Claude Code 的创造者，拥有完美的架构、Anthropic 资源和理想条件。**这不代表普通团队的平均水平。**
+
+**Boris 的核心洞察**：
+
+> **关于多实例**："我把 Cowork 当作'执行者'，而不是聊天工具：它直接操作文件、浏览器和工具。我把生产力理解为并行度：多个任务同时运行，而我负责把控结果。"
+
+> **关于 CLAUDE.md**："我把 Claude.md 视为复利式记忆：每一次错误都会变成团队的持久规则。"
+
+> **关于计划优先工作流**："我运行计划优先的工作流：一旦计划扎实，执行就会显著更干净。"
+
+> **关于验证闭环**："我给 Claude 提供验证输出的方式（浏览器/测试）：验证驱动质量。"
+
+**为什么选择 Opus 4.6 + Adaptive Thinking**：虽然每 Token 更贵（输入 $5/1M vs Sonnet $3/1M，1M 上下文测试版 $10/1M），但得益于自适应思考，Opus 需要的修正迭代更少。净结果：尽管单价更高，但交付更快、总成本更低。
+
+**监督模式**：Boris 将自己的角色描述为"照料多个智能体"，而不是"每件事都亲自点鼠标"。工作流的核心是在 5-10 个并行会话中**把控结果**，在需要时解除阻塞，而非顺序执行。
+
+**来源**：[InfoQ - Claude Code Creator Workflow (Jan 2026)](https://www.infoq.com/news/2026/01/claude-code-creator-workflow/) | [Interview: I got a private lesson on Claude Cowork & Claude Code](https://www.youtube.com/watch?v=DW4a1Cm8nG4)
+
+**团队模式**（更广泛的 Claude Code 团队，2026 年 2 月）：
+
+更广泛的团队将 Boris 的个人工作流扩展为制度化模式：
+
+- **技能作为制度知识**：任何每天做超过一次的事都会变成纳入版本控制的技能。例如：
+  - `/techdebt` —— 会话结束时运行，消除重复代码
+  - 上下文转储技能 —— 将 7 天的 Slack、Google Drive、Asana 和 GitHub 同步到单一上下文
+  - 分析智能体 —— 基于 dbt 的技能查询 BigQuery；有工程师报告已 6 个月以上没手动写过 SQL
+- **CLI 和脚本优于 MCP**：团队更倾向于用 shell 脚本和 CLI 集成连接外部工具，而非 MCP 服务器。理由：更少黑箱、更易调试、行为更可预测。MCP 仅保留给真正需要双向通信的场景。
+- **卡住时重新规划**：与其硬推停滞的实现，团队会切回 Plan Mode。有工程师用第二个 Claude 实例"以 staff engineer 的视角"审查计划，然后再继续执行。
+- **Claude 自己写规则**：每次纠正后，团队会指示 Claude 将学到的教训更新到 CLAUDE.md。随着时间推移，这复利式增长为团队专属的规则集，防止重复犯错。
+
+> **来源**：[10 Tips from Inside the Claude Code Team](https://paddo.dev/blog/claude-code-team-tips/)（Boris Cherny 线程，2026 年 2 月）
+
+---
+
+### 替代模式：双实例规划（垂直分离）
+
+Boris 的工作流展示了**水平扩展**（5-15 个实例并行），而另一种模式专注于**垂直分离**：用两个职责不同的 Claude 实例来实现质量导向的工作流。
+
+**模式来源**：Jon Williams（英国产品设计师），使用 Cursor 6 个月后转投 Claude Code。[LinkedIn 帖子，2026 年 2 月 3 日](https://www.linkedin.com/posts/thatjonwilliams_ive-been-using-cursor-for-six-months-now-activity-7424481861802033153-k8bu)
+
+#### 何时使用双实例模式
+
+这个模式与 Boris 的方法**正交**：不是扩展广度（并行做更多功能），而是扩展深度（将规划和执行阶段分离）。
+
+| 你的场景 | 使用双实例？ | 月成本 |
 |--------------|-------------------|--------------|
-| **Solo dev, spec-heavy work** | ✅ Yes | $100-200 |
-| **Small team, complex requirements** | ✅ Yes | $150-300 |
-| **Product designers coding** | ✅ Yes | $100-200 |
-| **High-volume parallel features** | ❌ No, use Boris pattern | $500-1K+ |
+| **个人开发者，重规范工作** | ✅ 适合 | $100-200 |
+| **小团队，复杂需求** | ✅ 适合 | $150-300 |
+| **产品设计师写代码** | ✅ 适合 | $100-200 |
+| **高频并行功能开发** | ❌ 不适合，用 Boris 模式 | $500-1K+ |
 
-**Use when**:
+**适合场景**：
 
-- You need plan verification before execution
-- Specs are complex or ambiguous (interview-based clarification helps)
-- Lower budget than Boris pattern ($100-200/month vs $500-1K+)
-- Quality > speed (willing to sacrifice parallelism for better plans)
+- 你需要在执行前验证计划
+- 规范复杂或模糊（基于访谈的澄清有帮助）
+- 预算低于 Boris 模式（$100-200/月 vs $500-1K+）
+- 质量 > 速度（愿意为更好的计划牺牲并行度）
 
-**Don't use when**:
+**不适合场景**：
 
-- You need to ship 10+ features simultaneously (use Boris pattern)
-- Plans are straightforward (single instance with `/plan` is enough)
-- Budget is very limited (<$100/month)#### Setup: Two Instances, Two Roles
+- 你需要同时交付 10+ 个功能（用 Boris 模式）
+- 计划很简单（单实例 + `/plan` 就够了）
+- 预算非常有限（<$100/月）
+#### 搭建：两个实例，两种角色
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -18623,79 +18656,79 @@ This pattern is **orthogonal** to Boris's approach: instead of scaling breadth (
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  ┌──────────────────┐                               │
-│  │  Claude Zero     │  Planning & Review            │
-│  │  (Planner)       │  - Explores codebase          │
-│  └────────┬─────────┘  - Writes plans               │
-│           │            - Reviews implementations    │
-│           │            - NEVER touches code         │
+│  │  Claude Zero     │  规划与审查                   │
+│  │  (Planner)       │  - 探索代码库                 │
+│  └────────┬─────────┘  - 编写计划                   │
+│           │            - 审查实现                   │
+│           │            - 绝不碰代码                 │
 │           ▼                                          │
 │  ┌─────────────────┐                                │
-│  │  Plans/Review/  │  Human review checkpoint       │
+│  │  Plans/Review/  │  人工审查检查点                │
 │  │  Plans/Active/  │                                │
 │  └────────┬────────┘                                │
 │           │                                          │
 │           ▼                                          │
 │  ┌──────────────────┐                               │
-│  │  Claude One      │  Implementation                │
-│  │  (Implementer)   │  - Reads approved plans       │
-│  └──────────────────┘  - Writes code                │
-│                        - Commits changes            │
-│                        - Reports completion         │
+│  │  Claude One      │  实现                         │
+│  │  (Implementer)   │  - 读取已批准的计划           │
+│  └──────────────────┘  - 编写代码                   │
+│                        - 提交变更                   │
+│                        - 汇报完成                   │
 │                                                     │
-│  Key: Separation of concerns = fewer mistakes      │
+│  关键：职责分离 = 更少错误                          │
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
 
-**Setup steps**:
+**搭建步骤**：
 
-1. **Create directory structure**:
+1. **创建目录结构**：
 
 ```bash
 mkdir -p .claude/plans/{Review,Active,Completed}
 ```
 
-2. **Launch Claude Zero** (Terminal 1):
+2. **启动 Claude Zero**（终端 1）：
 
 ```bash
 cd ~/projects/your-project
 claude
-# Set role in first message:
+# 在第一条消息中设定角色：
 # "You are Claude Zero. Your role: explore codebase, write plans,
 #  review implementations. NEVER edit code. Save all plans to
 #  .claude/plans/Review/"
 ```
 
-3. **Launch Claude One** (Terminal 2):
+3. **启动 Claude One**（终端 2）：
 
 ```bash
 cd ~/projects/your-project
 claude
-# Set role in first message:
+# 在第一条消息中设定角色：
 # "You are Claude One. Your role: read plans from .claude/plans/Active/,
 #  implement them, commit changes, report back."
 ```
 
-#### Workflow: 5 Steps
+#### 工作流程：5 个步骤
 
-**Step 1: Planning (Claude Zero)**
+**步骤 1：规划（Claude Zero）**
 
 ```
-You (to Claude Zero): /plan
+你（对 Claude Zero）：/plan
 
-Implement JWT authentication for the API.
-- Support access tokens (15min expiry)
-- Support refresh tokens (7 day expiry)
-- Middleware to validate tokens on protected routes
+为 API 实现 JWT 认证。
+- 支持 access token（15 分钟过期）
+- 支持 refresh token（7 天过期）
+- 在受保护路由上使用中间件验证 token
 ```
 
-Claude Zero explores codebase, interviews you about requirements:
+Claude Zero 探索代码库，并就需求向你提问：
 
 - "Should we support multiple sessions per user?"
 - "Do you want token revocation (logout) capability?"
 - "Which routes should be protected vs public?"
 
-Claude Zero writes plan to `.claude/plans/Review/auth-jwt.md`:
+Claude Zero 将计划写入 `.claude/plans/Review/auth-jwt.md`：
 
 ```markdown
 # Plan: JWT Authentication
@@ -18740,88 +18773,88 @@ Support token revocation for logout.
 - Refresh token storage needs database table
 ```
 
-**Step 2: Human Review**
+**步骤 2：人工审查**
 
-You review `.claude/plans/Review/auth-jwt.md`:
+你审查 `.claude/plans/Review/auth-jwt.md`：
 
-- Is the approach correct?
-- Are all requirements covered?
-- Any security issues?
+- 方案是否正确？
+- 所有需求是否都已覆盖？
+- 是否存在安全问题？
 
-If approved, move to Active:
+如果通过，移动到 Active：
 
 ```bash
 mv .claude/plans/Review/auth-jwt.md .claude/plans/Active/
 ```
 
-**Step 3: Implementation (Claude One)**
+**步骤 3：实现（Claude One）**
 
 ```
-You (to Claude One): Implement .claude/plans/Active/auth-jwt.md
+你（对 Claude One）：Implement .claude/plans/Active/auth-jwt.md
 ```
 
-Claude One reads the plan file, implements all steps, commits.
+Claude One 读取计划文件，执行所有步骤，然后提交。
 
-**Step 4: Verification (Claude Zero)**
+**步骤 4：验证（Claude Zero）**
 
 ```
-You (to Claude Zero): Review the JWT implementation Claude One just completed.
+你（对 Claude Zero）：Review the JWT implementation Claude One just completed.
 ```
 
-Claude Zero reviews:
+Claude Zero 进行审查：
 
-- Code matches plan?
-- Security best practices followed?
-- Tests cover success criteria?
+- 代码是否符合计划？
+- 是否遵循安全最佳实践？
+- 测试是否覆盖成功标准？
 
-**Step 5: Archive**
+**步骤 5：归档**
 
-If approved:
+如果通过：
 
 ```bash
 mv .claude/plans/Active/auth-jwt.md .claude/plans/Completed/
 ```
 
-#### Comparison: Boris (Horizontal) vs Jon (Vertical)
+#### 对比：Boris（水平扩展）vs Jon（垂直分离）
 
-| Dimension | Boris Pattern | Jon Pattern (Dual-Instance) |
+| 维度 | Boris 模式 | Jon 模式（双实例） |
 |-----------|---------------|----------------------------|
-| **Scaling axis** | Horizontal (5-15 instances, parallel features) | Vertical (2 instances, separated phases) |
-| **Primary goal** | Speed via parallelism | Quality via separation of concerns |
-| **Monthly cost** | $500-1,000 (Opus × 5-15) | $100-200 (Opus × 2 sequential) |
-| **Entry barrier** | High (worktrees, CLAUDE.md 2.5K, orchestration) | Low (2 terminals, Plans/ directory) |
-| **Audience** | Teams, high-volume, 10+ devs | Solo devs, product designers, spec-heavy |
-| **Context pollution** | Isolated by worktrees (git branches) | Isolated by role separation (planner vs implementer) |
-| **Accountability** | Git history (commits per instance) | Human-in-the-loop (review plans before execution) |
-| **Tooling required** | Worktrees, teleport, `/commit-push-pr` | Plans/ directory structure |
-| **Coordination** | Self-orchestrated (Boris steers 10 sessions) | Human gatekeeper (approve plans) |
-| **Best for** | Shipping 10+ features/day, experienced teams | Complex specs, quality-critical, budget-conscious |
+| **扩展方向** | 水平（5-15 个实例，并行开发功能） | 垂直（2 个实例，阶段分离） |
+| **主要目标** | 通过并行化提速 | 通过职责分离保质量 |
+| **月度成本** | $500-1,000（Opus × 5-15） | $100-200（Opus × 2 顺序使用） |
+| **入门门槛** | 高（工作树、CLAUDE.md 2.5K、编排） | 低（2 个终端、Plans/ 目录） |
+| **适用人群** | 团队、高产量、10+ 开发者 | 独立开发者、产品设计师、重规格项目 |
+| **上下文污染** | 通过工作树隔离（git 分支） | 通过角色分离隔离（规划者 vs 实现者） |
+| **问责机制** | Git 历史（每个实例的提交） | 人工参与（执行前审查计划） |
+| **所需工具** | 工作树、传送、`/commit-push-pr` | Plans/ 目录结构 |
+| **协调方式** | 自编排（Boris 驾驭 10 个会话） | 人工把关（批准计划） |
+| **最适合** | 每天交付 10+ 功能、经验丰富的团队 | 复杂规格、质量优先、预算敏感 |
 
-**Key insight**: These patterns are **not mutually exclusive**. You can use dual-instance for complex features (planning rigor) and Boris pattern for high-volume simple features (speed).
+**关键洞察**：这两种模式**并非互斥**。你可以对复杂功能使用双实例（规划严谨），对大量简单功能使用 Boris 模式（速度优先）。
 
-#### Cost Analysis: 2 Instances vs Correction Loops
+#### 成本分析：2 个实例 vs 修正循环
 
-**Question**: Is it cheaper to use 2 instances (planner + implementer) or 1 instance with correction loops?
+**问题**：使用 2 个实例（规划 + 实现）更便宜，还是 1 个实例加修正循环更便宜？
 
-| Scenario | 1 Instance (Corrections) | 2 Instances (Dual) | Winner |
+| 场景 | 1 个实例（含修正） | 2 个实例（双实例） | 赢家 |
 |----------|-------------------------|-------------------|--------|
-| **Simple feature** (login form) | 1 session × $5 = $5 | 2 sessions × $3 each = $6 | 1 instance |
-| **Complex spec** (auth system) | 1 session × $15 + 2 correction loops × $10 = $35 | 2 sessions × $12 each = $24 | 2 instances |
-| **Ambiguous requirements** | 1 session × $20 + 3 correction loops × $15 = $65 | 2 sessions × $18 each = $36 | 2 instances |
+| **简单功能**（登录表单） | 1 个会话 × $5 = $5 | 2 个会话 × $3 = $6 | 1 个实例 |
+| **复杂规格**（认证系统） | 1 个会话 × $15 + 2 次修正 × $10 = $35 | 2 个会话 × $12 = $24 | 2 个实例 |
+| **模糊需求** | 1 个会话 × $20 + 3 次修正 × $15 = $65 | 2 个会话 × $18 = $36 | 2 个实例 |
 
-**Breakeven point**: For features requiring ≥2 correction loops, dual-instance is cheaper and faster.
+**盈亏平衡点**：对于需要 ≥2 次修正循环的功能，双实例更便宜也更快。
 
-**Hidden cost savings**:
+**隐性成本节省**：
 
-- **Context pollution**: Planner doesn't see implementation details → cleaner reasoning
-- **Fewer hallucinations**: Plans have file paths + line numbers → implementer is grounded
-- **Learning**: Review step catches mistakes before they compound
+- **上下文污染**：规划者看不到实现细节 → 推理更清晰
+- **更少幻觉**：计划包含文件路径 + 行号 → 实现者有据可依
+- **学习效应**：审查步骤在错误累积前将其拦截
 
-#### Agent-Ready Plans: Best Practices
+#### 智能体就绪计划：最佳实践
 
-The key to dual-instance efficiency is **plan structure**. Jon Williams emphasizes "agent-ready plans with specific file references and line numbers."
+双实例效率的关键在于**计划结构**。Jon Williams 强调"带有具体文件引用和行号的智能体就绪计划"。
 
-**Bad plan** (vague):
+**糟糕的计划**（模糊）：
 
 ```markdown
 ## Implementation
@@ -18830,7 +18863,7 @@ Update the routes.
 Create middleware.
 ```
 
-**Good plan** (agent-ready):
+**优秀的计划**（智能体就绪）：
 
 ```markdown
 ## Implementation
@@ -18860,168 +18893,168 @@ Create middleware.
 router.get('/profile', requireAuth, profileController)
 ```
 
-**Why agent-ready plans work**:
+**为什么智能体就绪计划有效**：
 
-- File paths → Claude One knows exactly where to work
-- Line numbers → Reduces guessing, fewer file reads
-- Dependencies explicit → No surprises during implementation
-- Examples included → Claude One understands expected structure
+- 文件路径 → Claude One 确切知道去哪里工作
+- 行号 → 减少猜测，减少文件读取
+- 依赖明确 → 实现时不会有意外
+- 包含示例 → Claude One 理解预期结构
 
-**Template**: See [guide/workflows/dual-instance-planning.md](workflows/dual-instance-planning.md) for full plan template.
+**模板**：完整模板见 [guide/workflows/dual-instance-planning.md](workflows/dual-instance-planning.md)。
 
-#### Tips for Success
+#### 成功小贴士
 
-**1. Role enforcement**:
-Set roles in **first message** of each session:
+**1. 角色强制**：
+在每个会话的**第一条消息**中设定角色：
 
-- Claude Zero: "NEVER edit code, only write plans to .claude/plans/Review/"
-- Claude One: "ONLY implement plans from .claude/plans/Active/, never plan"
+- Claude Zero："NEVER edit code, only write plans to .claude/plans/Review/"
+- Claude One："ONLY implement plans from .claude/plans/Active/, never plan"
 
-**2. Plans directory in .gitignore**:
+**2. 将 Plans 目录加入 .gitignore**：
 
 ```bash
 # .gitignore
-.claude/plans/Review/    # Work in progress
-.claude/plans/Active/    # Under implementation
-# Don't ignore Completed/ (optional: archive for team learning)
+.claude/plans/Review/    # 进行中
+.claude/plans/Active/    # 正在实现
+# 可以保留 Completed/（可选：作为团队学习档案）
 ```
 
-**3. Use /plan mode**:
-Claude Zero should start with `/plan` for safe exploration:
+**3. 使用 /plan 模式**：
+Claude Zero 应以 `/plan` 开始，以安全探索：
 
 ```
 /plan
 
-[Your feature request]
+[你的功能请求]
 ```
 
-**4. Interview prompts**:
-Encourage Claude Zero to ask clarifying questions:
+**4. 访谈式提示**：
+鼓励 Claude Zero 提出澄清问题：
 
 ```
 "Interview me about requirements before drafting the plan.
 Ask about edge cases, success criteria, and constraints."
 ```
 
-**5. Review checklist**:
-When Claude Zero reviews Claude One's implementation:
+**5. 审查清单**：
+当 Claude Zero 审查 Claude One 的实现时：
 
-- [ ] Code matches plan structure?
-- [ ] All files from plan created/modified?
-- [ ] Tests cover success criteria?
-- [ ] Security best practices followed?
-- [ ] No TODO comments for core functionality?
+- [ ] 代码是否符合计划结构？
+- [ ] 计划中所有文件是否都已创建/修改？
+- [ ] 测试是否覆盖成功标准？
+- [ ] 是否遵循安全最佳实践？
+- [ ] 核心功能是否没有 TODO 注释？
 
-#### Limitations
+#### 局限性
 
-**When dual-instance doesn't help**:
+**双实例模式帮不上忙的情况**：
 
-- **Trivial changes**: Typo fixes, simple refactors → 1 instance faster
-- **Exploratory coding**: Unknown problem space → planning overhead not justified
-- **Tight deadlines**: Speed > quality → use 1 instance, accept corrections
-- **Very limited budget**: <$100/month → use Sonnet, 1 instance
+- **琐碎变更**：拼写修正、简单重构 → 1 个实例更快
+- **探索性编码**：问题空间未知 → 规划开销不值得
+- **时间紧迫**：速度 > 质量 → 用 1 个实例，接受修正
+- **预算非常有限**：<$100/月 → 用 Sonnet，1 个实例
 
-**Overhead**:
+**额外开销**：
 
-- **Manual coordination**: You move plans between directories (no automation)
-- **Context switching**: Managing 2 terminal sessions
-- **Slower iteration**: Plan → approve → implement (vs immediate execution)
+- **人工协调**：你手动在目录间移动计划（无自动化）
+- **上下文切换**：管理 2 个终端会话
+- **迭代变慢**：计划 → 批准 → 实现（vs 立即执行）
 
-**Partial adoption**: You can use this pattern selectively:
+**部分采用**：你可以有选择地使用这种模式：
 
-- Dual-instance for complex features
-- Single instance for simple tasks
-- No need to commit to one pattern exclusively
+- 复杂功能用双实例
+- 简单任务用单实例
+- 无需 exclusively 承诺某一种模式
 
-#### See Also
+#### 另请参阅
 
-- **Workflow guide**: [dual-instance-planning.md](workflows/dual-instance-planning.md) — Full workflow with templates
-- **Plan Mode**: Section 9.1 "The Trinity" — Foundation for planning
-- **Multi-Instance (Boris)**: Section 9.17 — Horizontal scaling alternative
-- **Cost optimization**: Section 8.10 — Budget management strategies
+- **工作流指南**：[dual-instance-planning.md](workflows/dual-instance-planning.md) — 完整工作流与模板
+- **计划模式**：第 9.1 节 "The Trinity" — 规划基础
+- **多实例（Boris）**：第 9.17 节 — 水平扩展替代方案
+- **成本优化**：第 8.10 节 — 预算管理策略
 
-**External resource**: [Jon Williams LinkedIn post](https://www.linkedin.com/posts/thatjonwilliams_ive-been-using-cursor-for-six-months-now-activity-7424481861802033153-k8bu) (Feb 3, 2026)
+**外部资源**：[Jon Williams LinkedIn post](https://www.linkedin.com/posts/thatjonwilliams_ive-been-using-cursor-for-six-months-now-activity-7424481861802033153-k8bu)（2026 年 2 月 3 日）
 
 ---
 
-### Foundation: Git Worktrees (Non-Negotiable)
+### 基础：Git Worktrees（不可妥协）
 
-Multi-instance workflows **REQUIRE** git worktrees to avoid conflicts. Without worktrees, parallel instances create merge hell.
+多实例工作流**必须**使用 git 工作树来避免冲突。没有工作树，并行实例将制造合并地狱。
 
-**Why worktrees are critical**:
+**工作树为何至关重要**：
 
-- Each instance operates in **isolated git checkout**
-- No branch switching = no context loss
-- No merge conflicts during development
-- Instant creation (~1s vs minutes for full clone)
+- 每个实例在**独立的 git 检出**中运行
+- 无需切换分支 = 不会丢失上下文
+- 开发期间不会产生合并冲突
+- 即时创建（~1 秒 vs 完整克隆需数分钟）
 
-**Quick setup**:
+**快速设置**：
 
 ```bash
-# Create worktree with new branch
+# 用新分支创建工作树
 /git-worktree feature/auth
 
-# Result: .worktrees/feature-auth/
-# - Separate checkout
-# - Shared .git history
-# - Zero duplication overhead
+# 结果：.worktrees/feature-auth/
+# - 独立检出
+# - 共享 .git 历史
+# - 零重复开销
 ```
 
-**See also**:
+**另请参阅**：
 
-- Command: [/git-worktree](../examples/commands/git-worktree.md)
-- Workflow: [Database Branch Setup](../examples/workflows/database-branch-setup.md)
+- 命令：[/git-worktree](../examples/commands/git-worktree.md)
+- 工作流：[Database Branch Setup](../examples/workflows/database-branch-setup.md)
 
 ---
 
-### Advanced Tooling for Worktree Management (Optional)
+### 工作树管理的高级工具（可选）
 
-While git worktrees are foundational, **daily productivity** improves with automation wrappers. Multiple professional teams have independently created worktree management tools—a validated pattern.
+虽然 git 工作树是基础，但**日常生产力**会因自动化包装工具而提升。多个专业团队独立创建了工作树管理工具——这是一个经过验证的模式。
 
-#### Pattern Validation: 3 Independent Implementations
+#### 模式验证：3 个独立实现
 
-| Team | Solution | Key Features |
+| 团队 | 方案 | 核心特性 |
 |------|----------|--------------|
-| **incident.io** | Custom bash wrapper `w` | Auto-completion, organized in `~/projects/worktrees/`, Claude auto-launch |
-| **GitHub #1052** | Fish shell functions (8 commands) | LLM commits, rebase automation, worktree lifecycle |
-| **Worktrunk** | Rust CLI (1.6K stars, 64 releases) | Project hooks, CI status, PR links, multi-platform |
+| **incident.io** | 自定义 bash 包装器 `w` | 自动补全、按 `~/projects/worktrees/` 组织、自动启动 Claude |
+| **GitHub #1052** | Fish shell 函数（8 个命令） | LLM 提交、rebase 自动化、工作树生命周期 |
+| **Worktrunk** | Rust CLI（1.6K stars，64 个 release） | 项目级钩子、CI 状态、PR 链接、跨平台 |
 
-**Conclusion**: The worktree wrapper pattern is reinvented by power users. Vanilla git is sufficient but verbose for 5-10+ daily worktree operations.
+**结论**：工作树包装器模式被高级用户反复发明。原生 git 够用，但每天 5-10+ 次工作树操作会显得冗长。
 
-#### Do I Need Worktrunk? (Self-Assessment)
+#### 我需要 Worktrunk 吗？（自测）
 
-**Answer these 3 questions honestly:**
+**诚实回答这 3 个问题：**
 
-1. **Volume**: How many worktrees do you create per week?
-   - ❌ <5/week → Vanilla git sufficient
-   - ⚠️ 5-15/week → Consider lightweight alias
-   - ✅ 15+/week → Worktrunk or DIY wrapper justified
+1. **数量**：你每周创建多少个工作树？
+   - ❌ <5/周 → 原生 git 够用
+   - ⚠️ 5-15/周 → 考虑轻量级 alias
+   - ✅ 15+/周 → Worktrunk 或 DIY 包装器值得
 
-2. **Multi-instance workflow**: Are you running 5+ parallel Claude instances regularly?
-   - ❌ No, 1-2 instances → Vanilla git sufficient
-   - ⚠️ Sometimes 3-5 instances → Alias or lightweight wrapper
-   - ✅ Yes, 5-10+ instances daily → Worktrunk features valuable (CI status, hooks)
+2. **多实例工作流**：你是否经常并行运行 5+ 个 Claude 实例？
+   - ❌ 不，1-2 个实例 → 原生 git 够用
+   - ⚠️ 有时 3-5 个实例 → alias 或轻量级包装器
+   - ✅ 是的，每天 5-10+ 个实例 → Worktrunk 特性有价值（CI 状态、钩子）
 
-3. **Team context**: Who else uses your worktree workflow?
-   - ❌ Solo dev → Alias (zero dependency)
-   - ⚠️ Small team, same OS/shell → DIY wrapper (shared script)
-   - ✅ Multi-platform team → Worktrunk (Homebrew/Cargo/Winget)
+3. **团队环境**：还有谁使用你的工作树工作流？
+   - ❌ 独立开发者 → alias（零依赖）
+   - ⚠️ 小团队，同 OS/Shell → DIY 包装器（共享脚本）
+   - ✅ 跨平台团队 → Worktrunk（Homebrew/Cargo/Winget）
 
-**Decision matrix:**
+**决策矩阵**：
 
-| Profile | Weekly Worktrees | Instances | Team | Recommendation |
+| 画像 | 每周工作树 | 实例数 | 团队 | 推荐 |
 |---------|------------------|-----------|------|----------------|
-| **Beginner** | <5 | 1-2 | Solo | ✅ **Vanilla git** - Learn fundamentals first |
-| **Casual user** | 5-15 | 2-3 | Solo/Small | ⚠️ **Alias** (2 min setup, example below) |
-| **Power user** | 15-30 | 5-10 | Multi-platform | ✅ **Worktrunk** - ROI justified |
-| **Boris scale** | 30+ | 10-15 | Team | ✅ **Worktrunk + orchestrator** |
+| **初学者** | <5 | 1-2 | 单人 | ✅ **原生 git** — 先学基础 |
+| ** casual 用户** | 5-15 | 2-3 | 单人/小团队 | ⚠️ **Alias**（2 分钟设置，示例见下） |
+| **高级用户** | 15-30 | 5-10 | 跨平台 | ✅ **Worktrunk** — ROI 合理 |
+| **Boris 规模** | 30+ | 10-15 | 团队 | ✅ **Worktrunk + 编排器** |
 
-**Quick alias alternative (for "Casual user" profile):**
+**面向 "casual 用户" 的快速 alias 替代方案**：
 
-If you scored ⚠️ (5-15 worktrees/week), try this first before installing Worktrunk:
+如果你自测为 ⚠️（5-15 工作树/周），在安装 Worktrunk 之前先试试这个：
 
 ```bash
-# Add to ~/.zshrc or ~/.bashrc (2 minutes setup)
+# 添加到 ~/.zshrc 或 ~/.bashrc（2 分钟设置）
 wtc() {
     local branch=$1
     local path="../${PWD##*/}.${branch//\//-}"
@@ -19031,151 +19064,151 @@ alias wtl='git worktree list'
 alias wtd='git worktree remove'
 ```
 
-**Usage**: `wtc feature/auth` (18 chars vs 88 chars vanilla git, -79% typing)
+**用法**：`wtc feature/auth`（18 个字符 vs 原生 git 88 个字符，减少 79% 输入）
 
-**When to upgrade to Worktrunk:**
+**何时升级到 Worktrunk**：
 
-- Alias feels limiting (want CI status, LLM commits, project hooks)
-- Volume increases to 15+ worktrees/week
-- Team adopts multi-instance workflows (need consistent tooling)
+- alias 感觉不够用（想要 CI 状态、LLM 提交、项目钩子）
+- 数量增加到 15+ 工作树/周
+- 团队采用多实例工作流（需要一致工具）
 
-**Bottom line**: Most readers (80%) should start with vanilla git or alias. Worktrunk is for power users managing 5-10+ instances daily where typing friction and CI visibility matter.
+**底线**：大多数读者（80%）应从原生 git 或 alias 开始。Worktrunk 适合每天管理 5-10+ 实例的高级用户，此时输入摩擦和 CI 可见性才重要。
 
-#### Benchmark: Wrapper vs Vanilla Git
+#### 基准测试：包装器 vs 原生 Git
 
-| Operation | Vanilla Git | Worktrunk | Custom Wrapper |
+| 操作 | 原生 Git | Worktrunk | 自定义包装器 |
 |-----------|-------------|-----------|----------------|
-| Create + switch | `git worktree add -b feat ../repo.feat && cd ../repo.feat` | `wt switch -c feat` | `w myproject feat` |
-| List worktrees | `git worktree list` | `wt list` (with CI status) | `w list` |
-| Remove + cleanup | `git worktree remove ../repo.feat && git worktree prune` | `wt remove feat` | `w finish feat` |
-| LLM commit msg | Manual or custom script | Built-in via `llm` tool | Custom via LLM API |
-| Setup time | 0 (git installed) | 2 min (Homebrew/Cargo) | 10-30 min (copy-paste script) |
-| Maintenance | Git updates only | Active (64 releases) | Manual (custom code) |
+| 创建 + 切换 | `git worktree add -b feat ../repo.feat && cd ../repo.feat` | `wt switch -c feat` | `w myproject feat` |
+| 列出工作树 | `git worktree list` | `wt list`（带 CI 状态） | `w list` |
+| 移除 + 清理 | `git worktree remove ../repo.feat && git worktree prune` | `wt remove feat` | `w finish feat` |
+| LLM 提交信息 | 手动或自定义脚本 | 通过 `llm` 工具内置 | 通过 LLM API 自定义 |
+| 设置时间 | 0（已安装 git） | 2 分钟（Homebrew/Cargo） | 10-30 分钟（复制脚本） |
+| 维护 | 仅 git 更新 | 活跃维护（64 个 release） | 手动（自定义代码） |
 
-**Trade-off**: Wrappers reduce typing ~60% but add dependency. Learn git fundamentals first, add wrapper for speed later.
+**权衡**：包装器减少约 60% 输入，但增加了依赖。先学 git 基础，再加包装器提速。
 
-#### Option 1: Worktrunk (Recommended for Scale)
+#### 选项 1：Worktrunk（规模化推荐）
 
-**What**: Rust CLI simplifying worktree management (1.6K stars, active development since 2023)
+**是什么**：简化工作树管理的 Rust CLI（1.6K stars，自 2023 年起活跃开发）
 
-**Unique features not in git**:
+**git 中没有的独特功能**：
 
-- **Project-level hooks**: Automate post-create, pre-remove actions
-- **LLM integration**: `wt commit` generates messages via `llm` tool
-- **CI status tracking**: See build status inline with `wt list`
-- **PR link generation**: Quick links to open PRs per worktree
-- **Path templates**: Configure worktree location pattern once
+- **项目级钩子**：自动化创建后、移除前动作
+- **LLM 集成**：`wt commit` 通过 `llm` 工具生成提交信息
+- **CI 状态跟踪**：`wt list` 时内联显示构建状态
+- **PR 链接生成**：每个工作树快速跳转到 open PR
+- **路径模板**：一次性配置工作树位置模式
 
-**Installation**:
+**安装**：
 
 ```bash
 # macOS/Linux
 brew install worktrunk
 
-# Or via Rust
+# 或通过 Rust
 cargo install worktrunk
 
 # Windows
 winget install worktrunk
 ```
 
-**Typical workflow**:
+**典型工作流**：
 
 ```bash
-# Create worktree + switch
+# 创建工作树 + 切换
 wt switch -c feature/auth
 
-# Work with Claude...
+# 与 Claude 一起工作...
 claude
 
-# LLM-powered commit
-wt commit  # Generates message from diff
+# LLM 驱动的提交
+wt commit  # 根据 diff 生成提交信息
 
-# List all worktrees with status
+# 列出所有工作树及其状态
 wt list
 
-# Remove when done
+# 完成后移除
 wt remove feature/auth
 ```
 
-**When to use**: Managing 5+ worktrees daily, want CI integration, multi-platform team (macOS/Linux/Windows).
+**何时使用**：每天管理 5+ 工作树，想要 CI 集成，跨平台团队（macOS/Linux/Windows）。
 
-**Source**: [github.com/max-sixty/worktrunk](https://github.com/max-sixty/worktrunk)
+**来源**：[github.com/max-sixty/worktrunk](https://github.com/max-sixty/worktrunk)
 
-#### Option 2: DIY Custom Wrapper (Lightweight Alternative)
+#### 选项 2：DIY 自定义包装器（轻量替代）
 
-**What**: 10-50 lines of bash/fish/PowerShell tailored to your workflow.
+**是什么**：10-50 行针对你工作流定制的 bash/fish/PowerShell。
 
-**Examples from production teams**:
+**来自生产团队的示例**：
 
-1. **incident.io approach** (bash wrapper):
+1. **incident.io 方案**（bash 包装器）：
    ```bash
-   # Function: w myproject feature-name claude
-   # - Creates worktree in ~/projects/worktrees/myproject.feature-name
-   # - Auto-completion for projects and branches
-   # - Launches Claude automatically
+   # 函数：w myproject feature-name claude
+   # - 在 ~/projects/worktrees/myproject.feature-name 创建工作树
+   # - 项目和分支自动补全
+   # - 自动启动 Claude
    ```
-   - **ROI**: 18% improvement (30s) on API generation time
-   - **Source**: [incident.io blog post](https://incident.io/blog/shipping-faster-with-claude-code-and-git-worktrees)
+   - **ROI**：API 生成时间提升 18%（节省 30 秒）
+   - **来源**：[incident.io blog post](https://incident.io/blog/shipping-faster-with-claude-code-and-git-worktrees)
 
-2. **GitHub #1052 approach** (Fish shell, 8 functions):
+2. **GitHub #1052 方案**（Fish shell，8 个函数）：
    ```fish
-   git worktree-llm feature-name    # Create + start Claude
-   git worktree-merge                # Finish, commit, rebase, merge
-   git commit-llm                    # LLM-generated commit messages
+   git worktree-llm feature-name    # 创建 + 启动 Claude
+   git worktree-merge                # 完成、提交、rebase、合并
+   git commit-llm                    # LLM 生成的提交信息
    ```
-   - **Author quote**: *"I now use it for basically all my development where I can use claude code"*
-   - **Source**: [Claude Code issue #1052](https://github.com/anthropics/claude-code/issues/1052)
+   - **作者原话**：*"I now use it for basically all my development where I can use claude code"*
+   - **来源**：[Claude Code issue #1052](https://github.com/anthropics/claude-code/issues/1052)
 
-**When to use**: Want full control, small team (same shell), already have shell functions for git.
+**何时使用**：想要完全控制、小团队（同 shell）、已有 git shell 函数。
 
-**Trade-off**: Custom scripts lack maintenance, cross-platform support, but are zero-dependency and infinitely customizable.
+**权衡**：自定义脚本缺乏维护和跨平台支持，但零依赖且可无限定制。
 
-#### Recommendation: Learn → Wrapper → Scale
+#### 推荐：学习 → 包装器 → 规模化
 
 ```
-Phase 1 (Weeks 1-2): Master vanilla git worktree via /git-worktree command
-  └─ Understand fundamentals, safety checks, database branching
+Phase 1（第 1-2 周）：通过 /git-worktree 命令掌握原生 git 工作树
+  └─ 理解基础、安全检查、数据库分支
 
-Phase 2 (Week 3+): Add wrapper for productivity
-  ├─ Worktrunk (if multi-platform, want CI status, LLM commits)
-  └─ DIY bash/fish (if lightweight, team uses same shell)
+Phase 2（第 3 周+）：添加包装器提升生产力
+  ├─ Worktrunk（如果跨平台、想要 CI 状态、LLM 提交）
+  └─ DIY bash/fish（如果轻量、团队使用同 shell）
 
-Phase 3 (Multi-instance scale): Combine with orchestration
-  └─ Worktrunk/wrapper + Headless PM for 5-10 instances
+Phase 3（多实例规模）：结合编排工具
+  └─ Worktrunk/包装器 + Headless PM 管理 5-10 个实例
 ```
 
-**Philosophy**: Tools amplify knowledge. Master git patterns (this guide) before adding convenience layers. Wrappers save 5-10 minutes/day but don't replace understanding.
+**理念**：工具放大知识。在添加便利层之前，先掌握 git 模式（本指南）。包装器每天节省 5-10 分钟，但不能替代理解。
 
-**Anthropic stance**: Official best practices recommend git worktrees (vanilla) but remain agnostic on wrappers. Choose what fits your team.
+**Anthropic 立场**：官方最佳实践推荐 git 工作树（原生），但对包装器持中立态度。选择适合你团队的即可。
 
 ---
 
-### Anthropic Internal Study (August 2025)
+### Anthropic 内部研究（2025 年 8 月）
 
-Anthropic studied how their own engineers use Claude Code, providing empirical data on productivity and limitations.
+Anthropic 研究了他们自己的工程师如何使用 Claude Code，提供了关于生产力和局限性的实证数据。
 
-**Study scope**:
+**研究范围**：
 
-- **132 engineers and researchers** surveyed
-- **53 qualitative interviews** conducted
-- **200,000 session transcripts** analyzed (Feb-Aug 2025)
+- 调查了 **132 名工程师和研究员**
+- 进行了 **53 次定性访谈**
+- 分析了 **200,000 份会话记录**（2025 年 2 月至 8 月）
 
-**Productivity gains**:
+**生产力提升**：
 
-- **+50%** productivity (self-reported, vs +20% 12 months prior)
-- **2-3x increase** year-over-year in usage and output
-- **59%** of work involves Claude (vs 28% a year ago)
-- **27%** of work "wouldn't have been done otherwise" (scope expansion, not velocity)
+- **+50%** 生产力（自我报告，12 个月前为 +20%）
+- 使用和产出同比 **增长 2-3 倍**
+- **59%** 的工作涉及 Claude（一年前为 28%）
+- **27%** 的工作"否则根本不会做"（范围扩展，而非速度提升）
 
-**Autonomous actions**:
+**自主行动**：
 
-- **21.2 consecutive tool calls** without human intervention (vs 9.8 six months prior)
-- **+116%** increase in autonomous action chains
-- **33% reduction** in human interventions required
-- Average task complexity: **3.8/5** (vs 3.2 six months before)
+- 无需人工干预的**连续 21.2 次工具调用**（六个月前为 9.8 次）
+- 自主行动链**增长 116%**
+- 所需人工干预**减少 33%**
+- 平均任务复杂度：**3.8/5**（六个月前为 3.2）
 
-**Critical concerns (verbatim quotes from engineers)**:
+**工程师的核心担忧（原话引用）**：
 
 > "When producing is so easy and fast, it's hard to really learn"
 
@@ -19183,92 +19216,92 @@ Anthropic studied how their own engineers use Claude Code, providing empirical d
 
 > "I feel like I come to work each day to automate myself"
 
-**Implications**: Even at Anthropic (perfect conditions: created the tool, ideal architecture, unlimited budget), engineers express uncertainty about long-term skill development and role evolution.
+**启示**：即使在 Anthropic（完美条件：创造了这个工具、理想架构、无限预算），工程师们也对长期技能发展和角色演变表达了不确定性。
 
-**Source**: [Anthropic Research - How AI is Transforming Work at Anthropic (Aug 2025)](https://www.anthropic.com/research/how-ai-is-transforming-work-at-anthropic)
-
----
-
-### Contribution Metrics (January 2026)
-
-Five months after the internal study, Anthropic published updated productivity data alongside a new analytics feature for Team and Enterprise customers.
-
-**Updated metrics (Anthropic internal)**:
-
-- **+67%** PRs merged per engineer per day (vs Aug 2025 self-reported +50%)
-- **70-90%** of code now written with Claude Code assistance across teams
-
-**Methodological note**: These figures are PR/commit-based (measured via GitHub integration), not self-reported surveys as in the Aug 2025 study. However, Anthropic discloses no baseline period, no team breakdown, and defines measurement only as "conservative — only code where we have high confidence in Claude Code's involvement." Treat as directional indicators, not rigorous benchmarks.
-
-**Product feature — Contribution Metrics dashboard**:
-
-- **Status**: Public beta (January 2026)
-- **Availability**: Claude Team and Enterprise plans (exact add-on requirements unconfirmed)
-- **Tracks**: PRs merged and lines of code committed, with/without Claude Code attribution
-- **Access**: Workspace admins and owners only
-- **Setup**: Install Claude GitHub App → Enable GitHub Analytics in Admin settings → Authenticate GitHub organization
-- **Positioning**: Complement to existing engineering KPIs (DORA metrics, sprint velocity), not a replacement
-
-**Source**: [Anthropic — Contribution Metrics (Jan 2026)](https://claude.com/blog/contribution-metrics)
+**来源**：[Anthropic Research - How AI is Transforming Work at Anthropic (Aug 2025)](https://www.anthropic.com/research/how-ai-is-transforming-work-at-anthropic)
 
 ---
 
-### Cost-Benefit Analysis
+### 贡献指标（2026 年 1 月）
 
-Multi-instance workflows have hard costs and soft overhead (coordination, supervision, merge conflicts).
+内部研究五个月后，Anthropic 发布了更新的生产力数据，同时为 Team 和 Enterprise 客户推出了一项新的分析功能。
 
-#### Direct API Costs
+**更新指标（Anthropic 内部）**：
 
-| Scale | Model | Monthly Cost | Break-Even Productivity Gain |
+- 每位工程师每天合并的 PR **+67%**（vs 2025 年 8 月自我报告的 +50%）
+- 各团队 **70-90%** 的代码现在在 Claude Code 辅助下编写
+
+**方法论说明**：这些数字基于 PR/提交（通过 GitHub 集成测量），而非 2025 年 8 月研究的自我报告调查。但 Anthropic 未披露基线期、团队细分，且将测量定义为"保守的——仅统计我们有高度信心确认 Claude Code 参与的代码"。应视为方向性指标，而非严格基准。
+
+**产品功能 — Contribution Metrics 仪表板**：
+
+- **状态**：Public beta（2026 年 1 月）
+- **可用性**：Claude Team 和 Enterprise 计划（具体附加组件要求未确认）
+- **追踪**：合并的 PR 和提交的代码行，区分有无 Claude Code 归因
+- **访问权限**：仅工作区管理员和所有者
+- **设置**：安装 Claude GitHub App → 在 Admin 设置中启用 GitHub Analytics → 认证 GitHub 组织
+- **定位**：补充现有工程 KPI（DORA 指标、冲刺速度），而非替代
+
+**来源**：[Anthropic — Contribution Metrics (Jan 2026)](https://claude.com/blog/contribution-metrics)
+
+---
+
+### 成本效益分析
+
+多实例工作流有硬性成本和软性开销（协调、监督、合并冲突）。
+
+#### 直接 API 成本
+
+| 规模 | 模型 | 月度成本 | 盈亏平衡所需生产力提升 |
 |-------|-------|--------------|------------------------------|
-| **5 devs, 2 instances each** | Sonnet | $390-750 | 3-5% |
-| **10 devs, 2-3 instances** | Sonnet | $1,080-1,650 | 1.3-2% |
-| **Boris scale (15 instances)** | Opus | $500-1,000 | Justified if 259 PRs/month |
+| **5 名开发者，每人 2 实例** | Sonnet | $390-750 | 3-5% |
+| **10 名开发者，2-3 实例** | Sonnet | $1,080-1,650 | 1.3-2% |
+| **Boris 规模（15 实例）** | Opus | $500-1,000 | 每月 259 个 PR 即合理 |
 
-**Calculation basis** (Sonnet 4.5):
+**计算依据**（Sonnet 4.5）：
 
-- Input: $3/million tokens
-- Output: $15/million tokens
-- Estimate: 30k tokens/instance/day × 20 days
-- 5 devs × 2 instances × 600k tokens/month = ~$540/month
+- Input：$3/百万 tokens
+- Output：$15/百万 tokens
+- 估算：30k tokens/实例/天 × 20 天
+- 5 开发者 × 2 实例 × 600k tokens/月 = ~$540/月
 
-**OpusPlan optimization**: Use Opus for planning (10-20% of work), Sonnet for execution (80-90%). Reduces cost while maintaining quality.
+**OpusPlan 优化**：用 Opus 做规划（10-20% 工作），Sonnet 做执行（80-90%）。在保持质量的同时降低成本。
 
-#### Hidden Costs (Not in API Bill)
+#### 隐性成本（不在 API 账单里）
 
-| Cost Type | Impact | Mitigation |
+| 成本类型 | 影响 | 缓解措施 |
 |-----------|--------|------------|
-| **Coordination overhead** | 10-20% time managing instances | Headless PM framework |
-| **Merge conflicts** | 5-15% time resolving conflicts | Git worktrees + modular architecture |
-| **Context switching** | Cognitive load × number of instances | Limit to 2-3 instances per developer |
-| **Supervision** | Must review all autonomous output | Automated tests + code review |
+| **协调开销** | 10-20% 时间用于管理实例 | Headless PM 框架 |
+| **合并冲突** | 5-15% 时间用于解决冲突 | Git 工作树 + 模块化架构 |
+| **上下文切换** | 认知负荷 × 实例数量 | 每位开发者限制在 2-3 个实例 |
+| **监督** | 必须审查所有自主输出 | 自动化测试 + 代码审查 |
 
-**ROI monitoring**:
+**ROI 监控**：
 
-1. **Baseline**: Track PRs/month before multi-instance (3 months)
-2. **Implement**: Scale to multi-instance with monitoring
-3. **Measure**: PRs/month after 3 months
-4. **Decision**: If gain <3%, rollback to sequential
+1. **基线**：多实例前追踪 PRs/月（3 个月）
+2. **实施**：带监控地扩展到多实例
+3. **测量**：3 个月后追踪 PRs/月
+4. **决策**：如果增益 <3%，回退到顺序模式
 
 ---
 
-### Orchestration Frameworks
+### 编排框架
 
-Coordinating multiple Claude instances without chaos requires tooling.
+协调多个 Claude 实例而不陷入混乱需要工具。
 
-#### Headless PM (Open Source)
+#### Headless PM（开源）
 
-**Project**: [madviking/headless-pm](https://github.com/madviking/headless-pm) (158 stars)
+**项目**：[madviking/headless-pm](https://github.com/madviking/headless-pm)（158 stars）
 
-**Architecture**:
+**架构**：
 
-- **REST API** for centralized coordination
-- **Task locking**: Prevents parallel work on same file
-- **Role-based agents**: PM, Architect, Backend, Frontend, QA
-- **Document-based communication**: Agents @mention each other
-- **Git workflow guidance**: Automatic PR/commit suggestions
+- 用于集中协调的 **REST API**
+- **任务锁定**：防止并行修改同一文件
+- **基于角色的智能体**：PM、Architect、Backend、Frontend、QA
+- **基于文档的通信**：智能体互相 @mention
+- **Git 工作流引导**：自动 PR/提交建议
 
-**Workflow**:
+**工作流**：
 
 ```
 Epic → Features → Tasks (major=PR, minor=commit)
@@ -19280,134 +19313,134 @@ Architect reviews (approve/reject)
 Communication via docs with @mention
 ```
 
-**Use case**: Teams managing 5-10 instances without manual coordination overhead.
+**用例**：管理 5-10 个实例而无需人工协调开销的团队。
 
-#### Alternatives
+#### 替代方案
 
-| Tool | Best For | Cost | Key Feature |
+| 工具 | 最适合 | 成本 | 核心特性 |
 |------|----------|------|-------------|
-| **Cursor Parallel Agents** | Solo/small teams | $20-40/month | UI integrated, git worktrees built-in |
-| **Windsurf Cascade** | Large codebases | $20/month | 10x faster context (Codemaps) |
-| **Sequential Claude** | Most teams | $20/month | 1-2 instances with better prompting |
+| **Cursor Parallel Agents** | 个人/小团队 | $20-40/月 | UI 集成、内置 git 工作树 |
+| **Windsurf Cascade** | 大型代码库 | $20/月 | 10 倍更快的上下文（Codemaps） |
+| **Sequential Claude** | 大多数团队 | $20/月 | 1-2 个实例 + 更好的提示词 |
 
 ---
 
-### Implementation Guide (Progressive Scaling)
+### 实施指南（渐进式扩展）
 
-Don't jump to 10 instances. Scale progressively with validation gates.
+不要直接跳到 10 个实例。通过验证关卡渐进扩展。
 
-#### Phase 1: Single Instance Mastery (2-4 weeks)
+#### 阶段 1：单实例精通（2-4 周）
 
-**Goal**: Achieve >80% success rate with 1 instance before scaling.
+**目标**：在扩展前，单实例成功率达到 >80%。
 
 ```bash
-# 1. Create CLAUDE.md (2-3k tokens)
-# - Conventions (naming, imports)
-# - Workflows (git, testing)
-# - Patterns (state management)
+# 1. 创建 CLAUDE.md（2-3k tokens）
+# - 约定（命名、导入）
+# - 工作流（git、测试）
+# - 模式（状态管理）
 
-# 2. Implement feedback loops
-# - Automated tests (run after every change)
-# - Pre-commit hooks (validation gates)
-# - /validate command (quality checks)
+# 2. 实施反馈循环
+# - 自动化测试（每次变更后运行）
+# - Pre-commit hooks（验证关卡）
+# - /validate 命令（质量检查）
 
-# 3. Measure baseline
-# - PRs/month
-# - Test pass rate
-# - Time to merge
+# 3. 测量基线
+# - PRs/月
+# - 测试通过率
+# - 合并耗时
 ```
 
-**Success criteria**: 80%+ PRs merged without major revisions.
+**成功标准**：80%+ 的 PR 无需重大修改即可合并。
 
-#### Phase 2: Dual Instance Testing (1 month)
+#### 阶段 2：双实例测试（1 个月）
 
-**Goal**: Validate that 2 instances increase throughput without chaos.
+**目标**：验证 2 个实例能在不混乱的前提下提升吞吐量。
 
 ```bash
-# 1. Setup git worktrees
+# 1. 设置 git 工作树
 /git-worktree feature/backend
 /git-worktree feature/frontend
 
-# 2. Parallel development
-# - Instance 1: Backend API
-# - Instance 2: Frontend UI
-# - Ensure decoupled work (no file overlap)
+# 2. 并行开发
+# - 实例 1：Backend API
+# - 实例 2：Frontend UI
+# - 确保解耦工作（无文件重叠）
 
-# 3. Monitor conflicts
-# - Track merge conflicts per week
-# - If >2% conflict rate, pause and fix architecture
+# 3. 监控冲突
+# - 每周追踪合并冲突
+# - 如果冲突率 >2%，暂停并修复架构
 ```
 
-**Success criteria**: <2% merge conflicts, >5% productivity gain vs single instance.
+**成功标准**：<2% 合并冲突，相比单实例生产力提升 >5%。
 
-#### Phase 3: Multi-Instance (if Phase 2 successful)
+#### 阶段 3：多实例（如果阶段 2 成功）
 
-**Goal**: Scale to 3-5 instances with orchestration framework.
+**目标**：在编排框架支持下扩展到 3-5 个实例。
 
 ```bash
-# 1. Deploy orchestration framework (choose based on needs)
-# - Headless PM (manual coordination)
-# - Gas Town (parallel task execution)
-# - multiclaude (self-hosted, tmux-based)
-# - Entire CLI (governance + sequential handoffs)
+# 1. 部署编排框架（根据需求选择）
+# - Headless PM（人工协调）
+# - Gas Town（并行任务执行）
+# - multiclaude（自托管，tmux 驱动）
+# - Entire CLI（治理 + 顺序交接）
 
-# 2. Define roles
-# - Architect (reviews PRs)
-# - Backend (API development)
-# - Frontend (UI development)
-# - QA (test automation)
+# 2. 定义角色
+# - Architect（审查 PR）
+# - Backend（API 开发）
+# - Frontend（UI 开发）
+# - QA（测试自动化）
 
-# 3. Weekly retrospectives
-# - Review conflict rate
-# - Measure ROI (cost vs output)
-# - Adjust instance count
+# 3. 每周复盘
+# - 审查冲突率
+# - 测量 ROI（成本 vs 产出）
+# - 调整实例数量
 ```
 
-**Orchestration framework options:**
+**编排框架选项**：
 
-| Tool | Paradigm | Best For |
+| 工具 | 范式 | 最适合 |
 |------|----------|----------|
-| **Manual (worktrees)** | No framework | 2-3 instances, full control |
-| **Gas Town** | Parallel coordination | 5+ instances, complex parallel tasks |
-| **multiclaude** | Self-hosted spawner | Teams needing on-prem/airgap |
-| **Entire CLI** | Governance + handoffs | Sequential workflows with compliance |
+| **Manual (worktrees)** | 无框架 | 2-3 个实例，完全控制 |
+| **Gas Town** | 并行协调 | 5+ 实例，复杂并行任务 |
+| **multiclaude** | 自托管启动器 | 需要本地部署/气隙隔离的团队 |
+| **Entire CLI** | 治理 + 交接 | 有合规要求的顺序工作流 |
 
-> **Entire CLI** (Feb 2026): Alternative to parallel orchestration, focuses on **sequential agent handoffs** with governance layer (approval gates, audit trails). Useful for compliance-critical workflows (SOC2, HIPAA) or multi-agent handoffs (Claude → Gemini). See [AI Ecosystem Guide](./ecosystem/ai-ecosystem.md#entire-cli-governance-first-orchestration) for details.
+> **Entire CLI**（2026 年 2 月）：并行编排的替代方案，专注于带治理层（审批关卡、审计追踪）的**顺序智能体交接**。适用于合规关键工作流（SOC2、HIPAA）或多智能体交接（Claude → Gemini）。详情见 [AI Ecosystem Guide](./ecosystem/ai-ecosystem.md#entire-cli-governance-first-orchestration)。
 
-**Success criteria**: Sustained 3-5% productivity gain over 3 months.
+**成功标准**：3 个月内持续保持 3-5% 的生产力提升。
 
 ---
 
-### Monitoring & Observability
+### 监控与可观测性
 
-Track multi-instance workflows with metrics to validate ROI.
+用指标追踪多实例工作流，以验证 ROI。
 
-#### Essential Metrics
+#### 核心指标
 
-| Metric | Tool | Target | Red Flag |
+| 指标 | 工具 | 目标 | 危险信号 |
 |--------|------|--------|----------|
-| **Merge conflicts** | `git log --grep="Merge conflict"` | <2% | >5% |
-| **PRs/month** | GitHub Insights | +3-5% vs baseline | Flat or declining |
-| **Test pass rate** | CI/CD | >95% | <90% |
-| **API cost** | Session stats script | Within budget | >20% over |
+| **合并冲突** | `git log --grep="Merge conflict"` | <2% | >5% |
+| **PRs/月** | GitHub Insights | 比基线 +3-5% | 持平或下降 |
+| **测试通过率** | CI/CD | >95% | <90% |
+| **API 成本** | 会话统计脚本 | 在预算内 | 超支 >20% |
 
-**Session stats script** (from this guide):
+**会话统计脚本**（来自本指南）：
 
 ```bash
-# Track API usage across all instances
+# 追踪所有实例的 API 使用情况
 ./examples/scripts/session-stats.sh --range 7d --json
 
-# Monitor per-instance cost
+# 监控每个实例的成本
 ./examples/scripts/session-stats.sh --project backend --range 30d
 ```
 
-**See also**: [Session Observability Guide](./ops/observability.md)
+**另请参阅**：[Session Observability Guide](./ops/observability.md)
 
-#### Proxy-level session tracking with `X-Claude-Code-Session-Id` (v2.1.86+)
+#### 使用 `X-Claude-Code-Session-Id` 的代理级会话追踪（v2.1.86+）
 
-Every API request Claude Code makes now includes an `X-Claude-Code-Session-Id` header. Reverse proxies and API gateways can use it to aggregate costs, latency, and quota usage by session without inspecting the request body.
+Claude Code 现在发出的每个 API 请求都包含 `X-Claude-Code-Session-Id` 请求头。反向代理和 API 网关可以用它来按会话聚合成本、延迟和配额使用情况，而无需检查请求体。
 
-**nginx example:**
+**nginx 示例：**
 
 ```nginx
 map $http_x_claude_code_session_id $session_id {
@@ -19417,7 +19450,7 @@ log_format claude '$remote_addr - $session_id - $request_time - $status';
 access_log /var/log/nginx/claude.log claude;
 ```
 
-**Envoy / structured logging example:**
+**Envoy / 结构化日志示例：**
 
 ```yaml
 access_log:
@@ -19431,227 +19464,227 @@ access_log:
         status: "%RESPONSE_CODE%"
 ```
 
-This lets you build per-session dashboards, enforce session-level rate limits, or attribute API costs to individual developers or CI jobs — all without modifying Claude Code's configuration.
+这让你无需修改 Claude Code 配置，就能构建按会话的仪表板、实施会话级速率限制，或将 API 成本归因到具体开发者或 CI 任务。
 
-#### Warning Signs (Rollback Triggers)
+#### 危险信号（回退触发器）
 
-Stop multi-instance and return to sequential if you see:
+如果出现以下情况，停止多实例并回到顺序模式：
 
-- **Merge conflicts** >5% of PRs
-- **CLAUDE.md** grows >5k tokens (sign of chaos)
-- **Test quality** degrades (coverage drops, flaky tests increase)
-- **Supervision overhead** >30% developer time
-- **Team reports** skill atrophy or frustration
-
----
-
-### When NOT to Use Multi-Instance
-
-Be honest about your context. Most teams should stay sequential.
-
-#### Architecture Red Flags
-
-❌ **Legacy monolith** (tight coupling):
-
-- Claude struggles with implicit dependencies
-- Context pollution across instances
-- Merge conflicts frequent
-
-❌ **Event-driven systems** (complex interactions):
-
-- Hard to decompose into parallel tasks
-- Integration testing becomes nightmare
-
-❌ **No automated tests**:
-
-- Can't validate autonomous output
-- "Death spirals" where broken tests stay broken
-
-#### Team Red Flags
-
-❌ **Solo developer**:
-
-- Coordination overhead unjustified
-- Cursor parallel agents simpler (UI integrated)
-
-❌ **Team <3 people**:
-
-- Not enough concurrent work to parallelize
-- Better ROI from optimizing single-instance workflow
-
-❌ **Junior team**:
-
-- Requires expertise in Claude Code, git worktrees, prompt engineering
-- Start with single instance, scale later
-
-#### Budget Red Flags
-
-❌ **<$500/month available**:
-
-- Multi-instance costs $400-1,000/month minimum
-- Better investment: training, better prompts, Cursor
+- **合并冲突** >5% 的 PR
+- **CLAUDE.md** 膨胀到 >5k tokens（混乱的信号）
+- **测试质量** 下降（覆盖率降低、不稳定测试增加）
+- **监督开销** >30% 开发者时间
+- **团队反馈** 技能退化或沮丧
 
 ---
 
-### Decision Matrix
+### 何时不应使用多实例
 
-Use this flowchart to decide if multi-instance is right for you:
+诚实评估你的上下文。大多数团队应保持顺序模式。
+
+#### 架构危险信号
+
+❌ **遗留单体应用**（紧耦合）：
+
+- Claude 难以处理隐式依赖
+- 跨实例的上下文污染
+- 合并冲突频繁
+
+❌ **事件驱动系统**（复杂交互）：
+
+- 难以拆分为并行任务
+- 集成测试变成噩梦
+
+❌ **没有自动化测试**：
+
+- 无法验证自主输出
+- "死亡螺旋"：坏测试一直坏
+
+#### 团队危险信号
+
+❌ **独立开发者**：
+
+- 协调开销不合理
+- Cursor 并行代理更简单（UI 集成）
+
+❌ **团队 <3 人**：
+
+- 没有足够并发的任务来并行化
+- 优化单实例工作流 ROI 更高
+
+❌ **初级团队**：
+
+- 需要 Claude Code、git 工作树、提示词工程的专业知识
+- 从单实例开始，以后再扩展
+
+#### 预算危险信号
+
+❌ **可用预算 <$500/月**：
+
+- 多实例最低成本 $400-1,000/月
+- 更好的投资：培训、更好的提示词、Cursor
+
+---
+
+### 决策矩阵
+
+用这张流程图判断多实例是否适合你：
 
 ```
-New feature request
-├─ Solo dev?
-│  └─ Use Cursor ($20/month)
+新功能需求
+├─ 独立开发者？
+│  └─ 用 Cursor（$20/月）
 │
-├─ Startup <10 devs?
-│  ├─ Legacy code without tests?
-│  │  └─ Fix architecture first (1-2 months)
-│  └─ Modular + tested?
-│     └─ Try 2 instances (1 month pilot)
+├─ 初创公司 <10 人？
+│  ├─ 无测试的遗留代码？
+│  │  └─ 先修复架构（1-2 个月）
+│  └─ 模块化 + 有测试？
+│     └─ 试用 2 个实例（1 个月试点）
 │
-├─ Scale-up 10-50 devs?
-│  ├─ Budget >$1k/month?
-│  │  └─ Deploy Headless PM framework
-│  └─ Budget <$1k/month?
-│     └─ Sequential optimized (better prompts)
+├─ 成长期 10-50 人？
+│  ├─ 预算 >$1k/月？
+│  │  └─ 部署 Headless PM 框架
+│  └─ 预算 <$1k/月？
+│     └─ 优化顺序模式（更好的提示词）
 │
-└─ Enterprise 50+ devs?
-   └─ Windsurf + custom orchestration
+└─ 企业 50+ 人？
+   └─ Windsurf + 自定义编排
 ```
 
 ---
 
-### Resources
+### 资源
 
-**Primary sources**:
+**主要来源**：
 
 - [Boris Cherny workflow (InfoQ, Jan 2026)](https://www.infoq.com/news/2026/01/claude-code-creator-workflow/)
 - [Anthropic internal study (Aug 2025)](https://www.anthropic.com/research/how-ai-is-transforming-work-at-anthropic)
 - [Headless PM framework (GitHub)](https://github.com/madviking/headless-pm)
 
-**Related guides**:
+**相关指南**：
 
 - [Git worktrees command](../examples/commands/git-worktree.md)
 - [Database branch setup workflow](../examples/workflows/database-branch-setup.md)
 - [Session observability](./ops/observability.md)
 - [Cost optimization](#913-cost-optimization-strategies)
 
-**Community discussions**:
+**社区讨论**：
 
 - [Boris Cherny on Twitter/X: Setup walkthrough](https://twitter.com/bcherny)
 - [r/ClaudeAI: Multi-instance patterns](https://reddit.com/r/ClaudeAI)
 
 ---
 
-## 9.18 Codebase Design for Agent Productivity
+## 9.18 面向智能体生产力的代码库设计
 
-> **Source**: [Agent Experience Best Practices for Coding Agent Productivity](https://marmelab.com/blog/2026/01/21/agent-experience.html)
-> François Zaninotto, Marmelab (January 21, 2026)
-> Additional validation: Netlify AX framework (2025), Speakeasy implementation guide, ArXiv papers on agent context engineering
+> **来源**：[Agent Experience Best Practices for Coding Agent Productivity](https://marmelab.com/blog/2026/01/21/agent-experience.html)
+> François Zaninotto，Marmelab（2026 年 1 月 21 日）
+> 额外验证：Netlify AX 框架（2025）、Speakeasy 实施指南、关于智能体上下文工程的 ArXiv 论文
 
-### 📌 Section 9.18 TL;DR (2 minutes)
+### 📌 第 9.18 节 TL;DR（2 分钟）
 
-**The paradigm shift**: Traditional codebases are optimized for human developers. AI agents have different needs—they excel at pattern matching but struggle with implicit knowledge and scattered context.
+**范式转变**：传统代码库为人类开发者优化。AI 智能体有不同的需求——它们擅长模式匹配，但难以处理隐式知识和分散的上下文。
 
-**Key principles**:
+**核心原则**：
 
-- **Domain Knowledge Embedding**: Put business logic and design decisions directly in code (CLAUDE.md, ADRs, comments)
-- **Code Discoverability**: Make code "searchable" like SEO—use synonyms, tags, complete terms
-- **Documentation Formats**: Use llms.txt for AI-optimized documentation indexing (complements MCP servers)
-- **Token Efficiency**: Split large files, remove obvious comments, use verbose flags for debug output
-- **Testing for Autonomy**: TDD is more critical for agents than humans—tests guide behavior
-- **Guardrails**: Hooks, CI checks, and PR reviews catch agent mistakes early
+- **领域知识嵌入**：将业务逻辑和设计决策直接放入代码（CLAUDE.md、ADRs、注释）
+- **代码可发现性**：让代码像 SEO 一样"可搜索"——使用同义词、标签、完整术语
+- **文档格式**：使用 llms.txt 进行 AI 优化的文档索引（补充 MCP 服务器）
+- **Token 效率**：拆分大文件、删除显而易见的注释、调试输出使用 verbose 标志
+- **自主测试**：TDD 对智能体比人类更关键——测试指导行为
+- **护栏**：Hooks、CI 检查和 PR 审查及早拦截智能体错误
 
-**When to optimize for agents**: High-impact files (core business logic, frequently modified modules) and greenfield projects. Don't refactor stable code just for agents.
+**何时为智能体优化**：高影响力文件（核心业务逻辑、频繁修改的模块）和绿地项目。不要仅为智能体而重构稳定代码。
 
-**Cross-references**: [CLAUDE.md patterns (3.1)](#31-claudemd-project-context) · [Hooks (6.2)](#62-hooks) · [Pitfalls (9.11)](#911-common-pitfalls--best-practices) · [Methodologies (9.14)](#914-development-methodologies)
+**交叉引用**：[CLAUDE.md 模式 (3.1)](#31-claudemd-project-context) · [Hooks (6.2)](#62-hooks) · [陷阱 (9.11)](#911-common-pitfalls--best-practices) · [方法论 (9.14)](#914-development-methodologies)
 
 ---
 
-### 9.18.1 The Paradigm Shift: Designing for Agents
+### 9.18.1 范式转变：为智能体设计
 
-#### Traditional vs AI-Native Codebase Design
+#### 传统 vs AI 原生代码库设计
 
-| Aspect | Human-Optimized | Agent-Optimized |
+| 方面 | 人类优化 | 智能体优化 |
 |--------|-----------------|-----------------|
-| **Comments** | Sparse, assume context | Explicit "why" + synonyms |
-| **File size** | 1000+ lines OK | Split at 500 lines |
-| **Architecture docs** | Separate wiki/Confluence | Embedded in CLAUDE.md + ADRs |
-| **Conventions** | Oral tradition, tribal knowledge | Written, discoverable, tagged |
-| **Testing** | Optional for prototypes | Critical—agents follow tests |
-| **Error messages** | Generic | Specific with recovery hints |
+| **注释** | 稀疏，假设有上下文 | 明确的"为什么" + 同义词 |
+| **文件大小** | 1000+ 行可接受 | 500 行拆分 |
+| **架构文档** | 独立 wiki/Confluence | 嵌入 CLAUDE.md + ADRs |
+| **约定** | 口头传统、部落知识 | 书面、可发现、带标签 |
+| **测试** | 原型可省略 | 关键——智能体跟随测试 |
+| **错误信息** | 通用 | 具体并带恢复提示 |
 
-**Why this matters**: Agents read code sequentially and lack the "mental model" humans build over time. What's obvious to you (e.g., "this service handles auth") must be made explicit.
+**为什么这很重要**：智能体按顺序读取代码，缺乏人类随时间构建的"心智模型"。对你显而易见的东西（比如"这个服务处理认证"）必须明确化。
 
-#### The Agent Experience (AX) Framework
+#### 智能体体验（AX）框架
 
-Netlify coined "Agent Experience" as the agent equivalent of Developer Experience (DX). Key questions:
+Netlify 将"Agent Experience" coined 为 Developer Experience（DX）的智能体等价物。核心问题：
 
-1. **Can the agent find what it needs?** (Discoverability)
-2. **Can it understand design decisions?** (Domain Knowledge)
-3. **Can it validate its work?** (Testing + Guardrails)
-4. **Can it work efficiently?** (Token budget)
+1. **智能体能找到它需要的吗？**（可发现性）
+2. **它能理解设计决策吗？**（领域知识）
+3. **它能验证自己的工作吗？**（测试 + 护栏）
+4. **它能高效工作吗？**（Token 预算）
 
-> "Agent Experience is about reducing cognitive friction for AI, just as DX reduces friction for humans."
-> — Netlify AX Research Team
+> "Agent Experience 是关于减少 AI 的认知摩擦，正如 DX 减少人类的摩擦。"
+> — Netlify AX 研究团队
 
-**Real-world impact**:
+**实际影响**：
 
-- **Marmelab**: Refactored Atomic CRM codebase with AX principles → 40% faster feature delivery
-- **Speakeasy**: Agent-friendly API docs → 3x higher API adoption rates
-- **Anthropic internal**: Codebase restructuring → 60% reduction in agent hallucinations
+- **Marmelab**：用 AX 原则重构 Atomic CRM 代码库 → 功能交付速度提升 40%
+- **Speakeasy**：智能体友好的 API 文档 → API 采用率提升 3 倍
+- **Anthropic 内部**：代码库重组 → 智能体幻觉减少 60%
 
-**When to invest in AX**:
+**何时投资 AX**：
 
-- ✅ Greenfield projects (design agent-friendly from start)
-- ✅ High-churn files (business logic, API routes)
-- ✅ Teams using agents extensively (>50% of commits)
-- ❌ Stable legacy code (don't refactor just for agents)
-- ❌ Small scripts (<100 lines, agents handle fine)
+- ✅ 绿地项目（从一开始就面向智能体友好设计）
+- ✅ 高变更文件（业务逻辑、API 路由）
+- ✅ 大量使用智能体的团队（>50% 提交）
+- ❌ 稳定遗留代码（不要仅为智能体而重构）
+- ❌ 小脚本（<100 行，智能体处理得很好）
 
-#### Convention-Over-Configuration for AI Agents
+#### 面向 AI 智能体的约定优于配置
 
-**Problem**: Every configuration decision adds cognitive load for agents. Custom architectures require extensive CLAUDE.md documentation to prevent hallucinations.
+**问题**：每个配置决策都会增加智能体的认知负荷。自定义架构需要大量 CLAUDE.md 文档来防止幻觉。
 
-**Solution**: Choose opinionated frameworks that reduce decision space through enforced conventions.
+**解决方案**：选择通过强制约定减少决策空间的固执己见框架。
 
-**Why opinionated frameworks help agents:**
+**为什么固执己见框架能帮助智能体：**
 
-| Aspect | Custom Architecture | Opinionated Framework |
+| 方面 | 自定义架构 | 固执己见框架 |
 |--------|---------------------|----------------------|
-| **File organization** | Agent must learn your structure | Standard conventions (e.g., Next.js `app/`, Rails MVC) |
-| **Routing** | Custom logic, must be documented | Convention-based (file = route) |
-| **Data access** | Multiple patterns possible | Single pattern enforced (e.g., Rails Active Record) |
-| **Testing setup** | Agent must discover your approach | Framework provides defaults |
-| **CLAUDE.md size** | Large (must document everything) | Smaller (conventions already known) |
+| **文件组织** | 智能体必须学习你的结构 | 标准约定（如 Next.js `app/`、Rails MVC） |
+| **路由** | 自定义逻辑，必须文档化 | 基于约定（文件 = 路由） |
+| **数据访问** | 多种模式可能 | 强制单一模式（如 Rails Active Record） |
+| **测试设置** | 智能体必须发现你的方法 | 框架提供默认值 |
+| **CLAUDE.md 大小** | 大（必须文档化一切） | 更小（约定已知） |
 
-**Examples of opinionated frameworks:**
+**固执己见框架示例**：
 
-- **Next.js**: `app/` directory structure, file-based routing, server components conventions
-- **Rails**: MVC structure, Active Record patterns, generator conventions
-- **Phoenix (Elixir)**: Context boundaries, schema conventions, LiveView patterns
-- **Django**: Apps structure, settings conventions, admin interface patterns
+- **Next.js**：`app/` 目录结构、基于文件的路由、服务端组件约定
+- **Rails**：MVC 结构、Active Record 模式、生成器约定
+- **Phoenix (Elixir)**：Context 边界、schema 约定、LiveView 模式
+- **Django**：Apps 结构、settings 约定、admin 界面模式
 
-**Real-world impact:**
+**实际影响：**
 
-When agents work with opinionated frameworks, they:
+当智能体使用固执己见框架时，它们：
 
-- Make fewer mistakes (fewer choices = fewer wrong choices)
-- Generate boilerplate faster (know the patterns)
-- Require less CLAUDE.md documentation (conventions replace custom instructions)
-- Produce more consistent code (follow framework idioms)
+- 犯错更少（选择越少 = 错误选择越少）
+- 更快生成样板代码（了解模式）
+- 需要更少的 CLAUDE.md 文档（约定取代自定义指令）
+- 产出更一致的代码（遵循框架习惯用法）
 
-**Trade-offs:**
+**权衡：**
 
-| Benefit | Cost |
+| 收益 | 成本 |
 |---------|------|
-| Faster agent onboarding | Less architectural flexibility |
-| Smaller CLAUDE.md files | Framework lock-in |
-| Fewer hallucinations | Must accept framework opinions |
-| Consistent patterns | Learning curve for team |
+| 智能体上手更快 | 架构灵活性降低 |
+| CLAUDE.md 文件更小 | 框架锁定 |
+| 幻觉更少 | 必须接受框架观点 |
+| 模式一致 | 团队学习曲线 |
 
-**Connection to CLAUDE.md sizing:**
+**与 CLAUDE.md 大小的关联**：
 
-Convention-over-configuration directly reduces CLAUDE.md token requirements:
+约定优于配置直接减少 CLAUDE.md 的 token 需求：
 
 ```markdown
 # Custom Architecture (500+ lines CLAUDE.md)
@@ -19668,154 +19701,153 @@ We use Next.js 14 with App Router.
 ... (minimal context, rest is framework conventions)
 ```
 
-**Recommendation**: For greenfield projects with AI-assisted development, prefer opinionated frameworks unless architectural constraints require custom design. The reduction in agent cognitive load often outweighs loss of flexibility.
+**推荐**：对于 AI 辅助开发的绿地项目，优先选择固执己见框架，除非架构约束要求自定义设计。降低智能体认知负荷的收益通常超过灵活性损失。
 
-**See also**: [CLAUDE.md sizing guidelines (Section 3.2)](#32-claudemd-best-practices) for token optimization patterns.
+**另请参阅**：[CLAUDE.md 大小指南（第 3.2 节）](#32-claudemd-best-practices) 了解 token 优化模式。
 
 ---
 
-### 9.18.2 Domain Knowledge Embedding
+### 9.18.2 领域知识嵌入
 
-**Problem**: Agents lack context about your business domain, design decisions, and project history. They can read code syntax but miss the "why" behind decisions.
+**问题**：智能体缺乏关于你的业务领域、设计决策和项目历史的上下文。它们能读懂代码语法，却错过决策背后的"为什么"。
 
-**Solution**: Embed domain knowledge directly in discoverable locations.#### CLAUDE.md: Advanced Patterns
+**解决方案**：将领域知识直接嵌入可发现的位置。
+#### CLAUDE.md：进阶模式
 
-Beyond basic project setup, use CLAUDE.md to encode deep domain knowledge:
+基础的项目配置之外，你还可以用 CLAUDE.md 沉淀更深层的领域知识：
 
-**Personas and roles**:
+**角色与人设**：
 
 ```markdown
 # CLAUDE.md
 
-## Domain Context
+## 领域上下文
 
-**Product**: SaaS platform for event management (B2B, enterprise clients)
-**Business model**: Subscription-based, tiered pricing
-**Core value prop**: Seamless integration with 20+ calendar providers
+**产品**：面向企业的活动管理 SaaS 平台（B2B，企业客户）
+**商业模式**：订阅制，分级定价
+**核心价值**：无缝集成 20+ 日历服务商
 
-## Design Principles
+## 设计原则
 
-1. **Idempotency First**: All API mutations must be idempotent (event industry = duplicate requests common)
-2. **Eventual Consistency**: Calendar sync uses queue-based reconciliation (not real-time)
-3. **Graceful Degradation**: If external calendar API fails, store locally + retry (never block user)
+1. **幂等优先**：所有 API 变更操作必须幂等（活动行业重复请求很常见）
+2. **最终一致性**：日历同步采用基于队列的调和机制（非实时）
+3. **优雅降级**：外部日历 API 失败时，本地存储 + 重试（绝不阻塞用户）
 
-## Domain Terms
+## 领域术语
 
-- **Event**: User-created calendar entry (our domain model)
-- **Appointment**: External calendar system's term (Google/Outlook)
-- **Sync Job**: Background process reconciling our DB with external calendars
-- **Conflict Resolution**: Algorithm handling overlapping events (see `src/services/conflict-resolver.ts`)
+- **Event**：用户创建的日历条目（我们的领域模型）
+- **Appointment**：外部日历系统的术语（Google/Outlook）
+- **Sync Job**：后台进程，协调我们的数据库与外部日历
+- **Conflict Resolution**：处理时间重叠事件的算法（见 `src/services/conflict-resolver.ts`）
 
-## Gotchas
+## 注意事项
 
-- Google Calendar API has 10 req/sec rate limit per user → batch operations in `syncEvents()`
-- Outlook timezone handling is non-standard → use `normalizeTimezone()` helper
-- Event deletion = soft delete (set `deletedAt`) to maintain audit trail for compliance
+- Google Calendar API 对每个用户有 10 req/sec 的速率限制 → 在 `syncEvents()` 中批量操作
+- Outlook 的时区处理非标准 → 使用 `normalizeTimezone()` 辅助函数
+- 删除事件 = 软删除（设置 `deletedAt`），以保留审计轨迹满足合规要求
 ```
 
-**Why this works**: When the agent encounters `syncEvents()`, it understands the rate limiting constraint. When it sees `deletedAt`, it knows not to use hard deletes.
+**为什么有效**：当智能体遇到 `syncEvents()` 时，它会理解速率限制约束；看到 `deletedAt` 时，它就知道不能用硬删除。
 
-**See also**: [CLAUDE.md Best Practices (3.1)](#31-claudemd-project-context) for foundational setup.
+**另见**：[CLAUDE.md 最佳实践（3.1）](#31-claudemd-project-context) 了解基础配置。
 
-#### Code Comments: What vs How
+#### 代码注释：写什么 vs 怎么写
 
-**❌ Don't** write obvious comments:
+**❌ 不要**写显而易见的注释：
 
 ```typescript
-// Get user by ID
+// 根据 ID 获取用户
 function getUserById(id: string) {
   return db.users.findOne({ id });
 }
 ```
 
-**✅ Do** explain the "why" and business context:
+**✅ 要**解释"为什么"和业务上下文：
 
 ```typescript
-// Fetch user with calendar permissions. Returns null if user exists but
-// lacks calendar access (common after OAuth token expiration).
-// Callers should handle null by redirecting to re-auth flow.
+// 获取带有日历权限的用户。如果用户存在但缺少日历访问权限，则返回 null
+// （OAuth token 过期后很常见）。调用方应通过重定向到重新授权流程来处理 null。
 function getUserById(id: string) {
   return db.users.findOne({ id });
 }
 ```
 
-**Even better**: Add domain knowledge + edge cases:
+**更好**：加上领域知识和边界情况：
 
 ```typescript
-// Fetch user with calendar permissions for event sync operations.
+// 获取带有日历权限的用户，用于事件同步操作。
 //
-// Returns null in two cases:
-// 1. User doesn't exist (rare, DB inconsistency)
-// 2. User exists but calendar OAuth token expired (common, ~5% of calls)
+// 在两种情况下返回 null：
+// 1. 用户不存在（少见，数据库不一致）
+// 2. 用户存在但日历 OAuth token 已过期（常见，约占 5% 的调用）
 //
-// Callers MUST handle null by:
-// - Redirecting to /auth/calendar/reauth (UI flows)
-// - Logging + skipping sync (background jobs)
+// 调用方 MUST 按以下方式处理 null：
+// - 重定向到 /auth/calendar/reauth（UI 流程）
+// - 记录日志并跳过同步（后台任务）
 //
-// Related: See `refreshCalendarToken()` for automatic token refresh strategy.
-// Rate limits: Google Calendar = 10 req/sec, Outlook = 20 req/sec
+// 相关：见 `refreshCalendarToken()` 了解自动 token 刷新策略。
+// 速率限制：Google Calendar = 10 req/sec，Outlook = 20 req/sec
 function getUserById(id: string): Promise<User | null> {
   return db.users.findOne({ id });
 }
 ```
 
-**What the agent gains**:
+**智能体从中获得什么**：
 
-- Knows null is expected, not an error condition
-- Understands business context (OAuth expiration)
-- Has concrete recovery strategies
-- Can navigate to related code (`refreshCalendarToken`)
-- Knows external API constraints
+- 知道 null 是预期结果，不是错误
+- 理解业务上下文（OAuth 过期）
+- 掌握具体的恢复策略
+- 能导航到相关代码（`refreshCalendarToken`）
+- 了解外部 API 约束
 
-#### Architecture Decision Records (ADRs)
+#### 架构决策记录（ADRs）
 
-Store ADRs in `docs/decisions/` and reference from code:
+将 ADR 存放在 `docs/decisions/` 并在代码中引用：
 
 ```markdown
-# ADR-007: Event Deletion Strategy
+# ADR-007：事件删除策略
 
-**Status**: Accepted
-**Date**: 2025-11-15
-**Authors**: Engineering team
+**状态**：已接受
+**日期**：2025-11-15
+**作者**：工程团队
 
-## Context
+## 背景
 
-Event deletion is complex because:
-1. Legal requirement to retain audit trail (GDPR Article 30)
-2. External calendar APIs handle deletes differently (Google = permanent, Outlook = recoverable)
-3. Users expect "undo" within 30-day window
+事件删除很复杂，因为：
+1. 法律要求保留审计轨迹（GDPR 第 30 条）
+2. 外部日历 API 对删除的处理不同（Google = 永久删除，Outlook = 可恢复）
+3. 用户期望在 30 天内可以"撤销"
 
-## Decision
+## 决策
 
-Use soft deletes with `deletedAt` timestamp:
-- Events marked deleted remain in DB for 90 days
-- UI hides deleted events immediately
-- Background job purges after 90 days
-- External calendars notified via webhook (eventual consistency)
+使用带 `deletedAt` 时间戳的软删除：
+- 标记为删除的事件在数据库中保留 90 天
+- UI 立即隐藏已删除事件
+- 后台任务在 90 天后清理
+- 通过 webhook 通知外部日历（最终一致性）
 
-## Consequences
+## 后果
 
-**Benefits**:
-- Compliance with GDPR audit requirements
-- Consistent "undo" experience regardless of calendar provider
-- Simpler conflict resolution (deleted events participate in sync)
+**优点**：
+- 符合 GDPR 审计要求
+- 无论日历提供商如何，都提供一致的"撤销"体验
+- 冲突解决更简单（已删除事件参与同步）
 
-**Drawbacks**:
-- DB grows ~10% larger (deleted events retained)
-- Complex query patterns (always filter `deletedAt IS NULL`)
+**缺点**：
+- 数据库增长约 10%（保留已删除事件）
+- 查询模式更复杂（始终要过滤 `deletedAt IS NULL`）
 
-## Related Code
+## 相关代码
 
-- `src/models/event.ts` (Event model with deletedAt field)
-- `src/services/event-deleter.ts` (soft delete logic)
-- `src/jobs/purge-deleted-events.ts` (90-day cleanup)
+- `src/models/event.ts`（带 deletedAt 字段的 Event 模型）
+- `src/services/event-deleter.ts`（软删除逻辑）
+- `src/jobs/purge-deleted-events.ts`（90 天清理）
 ```
 
-**In code, reference ADRs**:
+**在代码中引用 ADR**：
 
 ```typescript
-// Soft delete per ADR-007. Never use db.events.delete() due to
-// compliance requirements (GDPR audit trail).
+// 按 ADR-007 进行软删除。由于合规要求（GDPR 审计轨迹），永远不要使用 db.events.delete()。
 async function deleteEvent(eventId: string) {
   await db.events.update(
     { id: eventId },
@@ -19824,19 +19856,19 @@ async function deleteEvent(eventId: string) {
 }
 ```
 
-**Agent benefit**: When agent sees `deletedAt`, it can read ADR-007 to understand full context and constraints.
+**智能体收益**：当智能体看到 `deletedAt` 时，它可以阅读 ADR-007 来理解完整的背景和约束。
 
 ---
 
-### 9.18.3 Code Discoverability (SEO for Agents)
+### 9.18.3 代码可发现性（面向智能体的 SEO）
 
-**Problem**: Agents search for code using keyword matching. If your variable is named `usr`, the agent won't find it when searching for "user".
+**问题**：智能体通过关键词匹配来搜索代码。如果你的变量叫 `usr`，智能体在搜索 "user" 时就找不到它。
 
-**Solution**: Treat code discoverability like SEO—use complete terms, synonyms, and tags.
+**解决方案**：把代码可发现性当作 SEO 来对待——使用完整术语、同义词和标签。
 
-#### Use Complete Terms, Not Abbreviations
+#### 使用完整术语，不用缩写
 
-**❌ Agent-hostile**:
+**❌ 对智能体不友好**：
 
 ```typescript
 function calcEvtDur(evt: Evt): number {
@@ -19846,11 +19878,11 @@ function calcEvtDur(evt: Evt): number {
 }
 ```
 
-**✅ Agent-friendly**:
+**✅ 对智能体友好**：
 
 ```typescript
-// Calculate event duration in milliseconds.
-// Also known as: event length, time span, appointment duration
+// 计算事件持续时间（毫秒）。
+// 又称：event length, time span, appointment duration
 function calculateEventDuration(event: Event): number {
   const startTime = event.startTime;
   const endTime = event.endTime;
@@ -19858,40 +19890,40 @@ function calculateEventDuration(event: Event): number {
 }
 ```
 
-**What changed**:
+**改了什么**：
 
-- `calcEvtDur` → `calculateEventDuration` (full term)
-- Comment includes synonyms ("event length", "time span") so agent finds this when searching for those terms
-- Type `Evt` → `Event` (no abbreviation)
+- `calcEvtDur` → `calculateEventDuration`（完整术语）
+- 注释包含同义词（"event length"、"time span"），这样智能体搜索这些词时也能找到
+- 类型 `Evt` → `Event`（无缩写）
 
-#### Add Synonyms in Comments
+#### 在注释中添加同义词
 
-Your domain may use multiple terms for the same concept. Make them all searchable:
+你的领域可能对同一个概念有多个术语。让它们都能被搜索到：
 
 ```typescript
-// User account record. Also called: member, subscriber, customer, client.
-// Note: In external calendar APIs, this maps to their "principal" or "identity" concepts.
+// 用户账户记录。又称：member, subscriber, customer, client。
+// 注意：在外部日历 API 中，这对应它们的 "principal" 或 "identity" 概念。
 interface User {
   id: string;
   email: string;
-  calendarToken: string;  // OAuth token for calendar access, aka "access token", "auth credential"
+  calendarToken: string;  // 用于日历访问的 OAuth token，又称 "access token"、"auth credential"
 }
 ```
 
-**Why this works**: When agent searches for "subscriber" or "principal", it finds this code despite those terms not being in the type name.
+**为什么有效**：当智能体搜索 "subscriber" 或 "principal" 时，即使这些词不在类型名中，它也能找到这段代码。
 
-#### Tags and Faceting
+#### 标签与分类
 
-Use JSDoc-style tags for categorization:
+使用 JSDoc 风格的标签进行分类：
 
 ```typescript
 /**
- * Process incoming webhook from Google Calendar.
+ * 处理来自 Google Calendar 的入站 webhook。
  *
  * @domain calendar-sync
  * @external google-calendar-api
- * @rate-limit 100/min (Google's limit, not ours)
- * @failure-mode Queues failed webhooks for retry (see retry-queue.ts)
+ * @rate-limit 100/min（Google 的限制，不是我们的）
+ * @failure-mode 将失败的 webhook 加入重试队列（见 retry-queue.ts）
  * @related syncEvents, refreshCalendarToken
  */
 async function handleGoogleWebhook(payload: WebhookPayload) {
@@ -19899,56 +19931,56 @@ async function handleGoogleWebhook(payload: WebhookPayload) {
 }
 ```
 
-**Agent queries enabled**:
+**支持的智能体查询**：
 
-- "What code touches the google calendar api?" → Finds via `@external` tag
-- "Which functions have rate limits?" → Finds via `@rate-limit` tag
-- "What's related to syncEvents?" → Finds via `@related` tag
+- "哪些代码接触了 google calendar api？" → 通过 `@external` 标签找到
+- "哪些函数有速率限制？" → 通过 `@rate-limit` 标签找到
+- "与 syncEvents 相关的是什么？" → 通过 `@related` 标签找到
 
-#### Directory README Pattern
+#### 目录 README 模式
 
-Place a `README.md` in each major directory explaining its purpose:
+在每个主要目录中放置一个 `README.md`，说明其用途：
 
 ```
 src/
 ├── services/
-│   ├── README.md          ← "Service layer: business logic, no HTTP concerns"
+│   ├── README.md          ← "服务层：业务逻辑，不涉及 HTTP"
 │   ├── event-service.ts
 │   └── user-service.ts
 ├── controllers/
-│   ├── README.md          ← "HTTP controllers: request/response handling only"
+│   ├── README.md          ← "HTTP 控制器：只处理请求/响应"
 │   ├── event-controller.ts
 │   └── user-controller.ts
 ```
 
-**src/services/README.md**:
+**src/services/README.md**：
 
 ```markdown
-# Services Layer
+# 服务层
 
-**Purpose**: Business logic and domain operations. Services are framework-agnostic (no Express/HTTP concerns).
+**用途**：业务逻辑和领域操作。服务与框架无关（不涉及 Express/HTTP）。
 
-**Conventions**:
-- One service per domain entity (EventService, UserService)
-- Services interact with repositories (data layer) and other services
-- All service methods return domain objects, never HTTP responses
-- Error handling: Throw domain errors (EventNotFoundError), not HTTP errors
+**约定**：
+- 每个领域实体一个服务（EventService、UserService）
+- 服务与仓库（数据层）和其他服务交互
+- 所有服务方法返回领域对象，绝不返回 HTTP 响应
+- 错误处理：抛出领域错误（EventNotFoundError），而非 HTTP 错误
 
-**Dependencies**:
-- Services may call other services
-- Services may call repositories (`src/repositories/`)
-- Services must NOT import from `controllers/` (layering violation)
+**依赖关系**：
+- 服务可以调用其他服务
+- 服务可以调用仓库（`src/repositories/`）
+- 服务 MUST NOT 从 `controllers/` 导入（违反分层）
 
-**Testing**: Unit test services with mocked repositories. See `tests/services/` for examples.
+**测试**：用 mock 仓库对服务进行单元测试。示例见 `tests/services/`。
 
-**Related**: See ADR-003 for layered architecture rationale.
+**相关**：见 ADR-003 了解分层架构的设计 rationale。
 ```
 
-**Agent benefit**: When working in `services/`, agent reads README and understands constraints (no HTTP concerns, layer boundaries).
+**智能体收益**：在 `services/` 中工作时，智能体阅读 README 后就能理解约束（不涉及 HTTP、分层边界）。
 
-#### Example: Before vs After Discoverability
+#### 示例：可发现性改造前后对比
 
-**❌ Before (Agent-hostile)**:
+**❌ 改造前（对智能体不友好）**：
 
 ```typescript
 // usr-mgr.ts
@@ -19963,20 +19995,20 @@ class UsrMgr {
 }
 ```
 
-**Agent challenges**:
+**智能体面临的挑战**：
 
-- Abbreviated names (`UsrMgr`, `getUsr`) → hard to find
-- No comments → no context
-- `any` type → agent doesn't know data shape
-- No domain knowledge → what is "usr"?
+- 缩写名称（`UsrMgr`、`getUsr`）→ 难以找到
+- 没有注释 → 没有上下文
+- `any` 类型 → 智能体不知道数据结构
+- 没有领域知识 → "usr" 是什么？
 
-**✅ After (Agent-friendly)**:
+**✅ 改造后（对智能体友好）**：
 
 ```typescript
 // user-manager.ts
 /**
- * User account management service.
- * Also known as: member manager, subscriber service, customer service
+ * 用户账户管理服务。
+ * 又称：member manager, subscriber service, customer service
  *
  * @domain user-management
  * @layer service
@@ -19984,28 +20016,28 @@ class UsrMgr {
  */
 class UserManager {
   /**
-   * Fetch user account by ID. Returns null if not found.
-   * Also called: get member, fetch subscriber, load customer
+   * 根据 ID 获取用户账户。如果未找到则返回 null。
+   * 又称：get member, fetch subscriber, load customer
    *
-   * Common use cases:
-   * - Authentication flows (verifying user exists)
-   * - Profile page rendering (loading user details)
-   * - Admin operations (fetching user for support)
+   * 常见用例：
+   * - 认证流程（验证用户是否存在）
+   * - 个人资料页渲染（加载用户详情）
+   * - 管理员操作（为支持人员获取用户）
    */
   async getUser(userId: string): Promise<User | null> {
     return db.query('SELECT * FROM users WHERE id = ?', [userId]);
   }
 
   /**
-   * Update user account fields. Performs partial update (only provided fields).
-   * Also known as: modify user, edit member, change subscriber details
+   * 更新用户账户字段。执行部分更新（仅更新提供的字段）。
+   * 又称：modify user, edit member, change subscriber details
    *
-   * @param userId - Unique user identifier (UUID v4)
-   * @param updates - Partial user data (email, name, etc.)
-   * @throws {UserNotFoundError} If user doesn't exist
-   * @throws {ValidationError} If updates fail schema validation
+   * @param userId - 唯一用户标识符（UUID v4）
+   * @param updates - 部分用户数据（email、name 等）
+   * @throws {UserNotFoundError} 如果用户不存在
+   * @throws {ValidationError} 如果更新未通过 schema 验证
    *
-   * Example:
+   * 示例：
    *   await userManager.updateUser('user-123', { email: 'new@example.com' });
    */
   async updateUser(userId: string, updates: Partial<User>): Promise<User> {
@@ -20014,46 +20046,46 @@ class UserManager {
 }
 ```
 
-**Improvements**:
+**改进之处**：
 
-- Full names (`UserManager`, `getUser`)
-- Synonyms in comments (member, subscriber, customer)
-- Tags for faceting (`@domain`, `@layer`, `@related`)
-- Typed parameters and return values
-- Use case examples
-- Error documentation
+- 完整名称（`UserManager`、`getUser`）
+- 注释中的同义词（member、subscriber、customer）
+- 分类标签（`@domain`、`@layer`、`@related`）
+- 类型化的参数和返回值
+- 用例示例
+- 错误文档
 
-**Agent search results**:
+**智能体搜索结果**：
 
-| Query | Finds Before? | Finds After? |
-|-------|---------------|--------------|
-| "user management" | ❌ | ✅ (class comment) |
-| "member service" | ❌ | ✅ (synonym) |
-| "fetch subscriber" | ❌ | ✅ (synonym) |
-| "service layer" | ❌ | ✅ (@layer tag) |
-| "authentication" | ❌ | ✅ (use case) |
+| 查询 | 改造前能找到？ | 改造后能找到？ |
+|------|---------------|---------------|
+| "user management" | ❌ | ✅（类注释） |
+| "member service" | ❌ | ✅（同义词） |
+| "fetch subscriber" | ❌ | ✅（同义词） |
+| "service layer" | ❌ | ✅（@layer 标签） |
+| "authentication" | ❌ | ✅（用例） |
 
 ---
 
-### 9.18.4 Documentation Formats for Agents (llms.txt)
+### 9.18.4 面向智能体的文档格式（llms.txt）
 
-**Problem**: Agents need to discover and consume project documentation efficiently. Traditional documentation (wikis, Confluence) is hard to find and parse. MCP doc servers require installation and configuration.
+**问题**：智能体需要高效地发现和阅读项目文档。传统文档（wiki、Confluence）难以查找和解析。MCP 文档服务器需要安装和配置。
 
-**Solution**: Use the llms.txt standard for AI-optimized documentation indexing.
+**解决方案**：使用 llms.txt 标准来优化 AI 文档索引。
 
-#### What is llms.txt?
+#### 什么是 llms.txt？
 
-llms.txt is a lightweight standard for making documentation discoverable to LLMs. It's like `robots.txt` for AI agents—a simple index file that tells agents where to find relevant documentation.
+llms.txt 是一个轻量级标准，用于让文档对 LLM 可发现。它就像 AI 智能体的 `robots.txt`——一个简单的索引文件，告诉智能体在哪里找到相关文档。
 
-**Specification**: https://llmstxt.org/
+**规范**：https://llmstxt.org/
 
-**Format**: Plain text file at `/llms.txt` or `/machine-readable/llms.txt` containing:
+**格式**：放在 `/llms.txt` 或 `/machine-readable/llms.txt` 的纯文本文件，包含：
 
-- Markdown content directly (inline docs)
-- Links to external documentation files
-- Structured sections for different topics
+- 直接的 Markdown 内容（内联文档）
+- 指向外部文档文件的链接
+- 按主题划分的结构化章节
 
-**Example from this repo** (`machine-readable/llms.txt`):
+**本仓库示例**（`machine-readable/llms.txt`）：
 
 ```
 # Claude Code Ultimate Guide
@@ -20076,27 +20108,27 @@ Complete guide for Anthropic's Claude Code CLI (19,000+ lines, 120 templates)
 - Event hooks: examples/hooks/
 ```
 
-#### Why llms.txt Complements MCP Servers
+#### 为什么 llms.txt 是对 MCP 服务器的补充
 
-llms.txt and MCP doc servers solve **different problems**:
+llms.txt 和 MCP 文档服务器解决的是**不同的问题**：
 
-| Aspect | llms.txt | Context7 MCP |
-|--------|----------|--------------|
-| **Purpose** | Static documentation index | Runtime library lookup |
-| **Setup** | Zero config (just a file) | Requires MCP server install |
-| **Content** | Project-specific docs | Official library docs |
-| **Token cost** | Low (index only, ~500 tokens) | Medium (full doc fetching) |
-| **Use case** | Project README, architecture | React API, Next.js patterns |
-| **Update frequency** | Manual (on doc changes) | Automatic (tracks library versions) |
+| 方面 | llms.txt | Context7 MCP |
+|------|----------|--------------|
+| **目的** | 静态文档索引 | 运行时库查询 |
+| **配置** | 零配置（只需一个文件） | 需要安装 MCP 服务器 |
+| **内容** | 项目专属文档 | 官方库文档 |
+| **Token 成本** | 低（仅索引，约 500 tokens） | 中等（获取完整文档） |
+| **用例** | 项目 README、架构 | React API、Next.js 模式 |
+| **更新频率** | 手动（文档变更时） | 自动（跟踪库版本） |
 
-**Best practice**: Use **both**:
+**最佳实践**：**两者都用**：
 
-- llms.txt for project-specific documentation (architecture, conventions, getting started)
-- Context7 MCP for official library documentation (React hooks, Express API)
+- llms.txt 用于项目专属文档（架构、约定、入门指南）
+- Context7 MCP 用于官方库文档（React hooks、Express API）
 
-#### Creating llms.txt for Your Project
+#### 为你的项目创建 llms.txt
 
-**Minimal example**:
+**最小示例**：
 
 ```
 # MyProject
@@ -20114,7 +20146,7 @@ Enterprise SaaS platform for event management
 - Troubleshooting: docs/troubleshooting.md
 ```
 
-**Advanced example with line numbers**:
+**带行号的高级示例**：
 
 ```
 # MyProject
@@ -20135,165 +20167,165 @@ Enterprise SaaS platform for event management
 - Webhook handling: docs/domain/webhooks.md
 ```
 
-**Line numbers** help agents jump directly to relevant sections without reading entire files.
+**行号**帮助智能体直接跳转到相关章节，无需阅读整个文件。
 
-#### When to Update llms.txt
+#### 何时更新 llms.txt
 
-Update llms.txt when:
+在以下情况更新 llms.txt：
 
-- Adding new major documentation files
-- Restructuring docs directory
-- Documenting new architectural patterns
-- Adding ADRs (Architecture Decision Records)
-- Creating domain-specific guides
+- 添加新的主要文档文件
+- 重构文档目录结构
+- 记录新的架构模式
+- 添加 ADR（架构决策记录）
+- 创建领域专属指南
 
-**Don't** update for:
+**不需要**在以下情况更新：
 
-- Code changes (unless architecture shifts)
-- Minor doc tweaks
-- Dependency updates
+- 代码变更（除非架构发生变化）
+- 文档的小幅调整
+- 依赖更新
 
-#### Integration with CLAUDE.md
+#### 与 CLAUDE.md 的集成
 
-llms.txt and CLAUDE.md serve different purposes:
+llms.txt 和 CLAUDE.md 的用途不同：
 
-| File | Purpose | Audience |
-|------|---------|----------|
-| **CLAUDE.md** | Active instructions, project context | Claude during this session |
-| **llms.txt** | Documentation index | Claude discovering resources |
+| 文件 | 目的 | 受众 |
+|------|------|------|
+| **CLAUDE.md** | 主动指令、项目上下文 | 当前会话中的 Claude |
+| **llms.txt** | 文档索引 | 发现资源的 Claude |
 
-**Pattern**: Reference llms.txt from CLAUDE.md:
+**模式**：在 CLAUDE.md 中引用 llms.txt：
 
 ```markdown
 # CLAUDE.md
 
-## Project Documentation
+## 项目文档
 
-Complete documentation is indexed in `machine-readable/llms.txt`.
+完整文档索引见 `machine-readable/llms.txt`。
 
-Key resources:
-- Architecture overview: docs/architecture.md
-- API reference: docs/api.md
-- Testing guide: docs/testing.md
+关键资源：
+- 架构概览：docs/architecture.md
+- API 参考：docs/api.md
+- 测试指南：docs/testing.md
 
-For domain-specific knowledge, consult llms.txt index.
+领域专属知识请参阅 llms.txt 索引。
 ```
 
-#### Real-World Example: This Guide
+#### 真实案例：本指南
 
-This guide uses both llms.txt and CLAUDE.md:
+本指南同时使用 llms.txt 和 CLAUDE.md：
 
-**llms.txt** (`machine-readable/llms.txt`):
+**llms.txt**（`machine-readable/llms.txt`）：
 
-- Indexes all major sections with line numbers
-- Points to templates in `examples/`
-- References workflows in `guide/workflows/`
+- 为所有主要章节建立索引并标注行号
+- 指向 `examples/` 中的模板
+- 引用 `guide/workflows/` 中的工作流
 
-**CLAUDE.md** (`CLAUDE.md`):
+**CLAUDE.md**（`CLAUDE.md`）：
 
-- Active project context (repo structure, conventions)
-- Current focus (guide version, changelog)
-- Working instructions (version sync, landing sync)
+- 活跃的项目上下文（仓库结构、约定）
+- 当前焦点（指南版本、变更日志）
+- 工作指令（版本同步、落地页同步）
 
-**Result**: Agents can discover content via llms.txt, then consult CLAUDE.md for active context.
+**结果**：智能体可以通过 llms.txt 发现内容，再通过 CLAUDE.md 获取活跃上下文。
 
-#### Real-World: Anthropic's Official llms.txt
+#### 真实案例：Anthropic 官方 llms.txt
 
-Anthropic publie deux variantes LLM-optimized pour Claude Code :
+Anthropic 为 Claude Code 发布了两版 LLM 优化文档：
 
-| Fichier | URL | Taille | Tokens (approx) | Use case |
-|---------|-----|--------|-----------------|----------|
-| `llms.txt` | `code.claude.com/docs/llms.txt` | ~65 pages | ~15-20K | Index rapide, découverte de sections |
-| `llms-full.txt` | `code.claude.com/docs/llms-full.txt` | ~98 KB | ~25-30K | Fact-checking, doc complète, source de vérité |
+| 文件 | URL | 大小 | Tokens（约） | 用例 |
+|------|-----|------|-------------|------|
+| `llms.txt` | `code.claude.com/docs/llms.txt` | ~65 页 | ~15-20K | 快速索引、章节发现 |
+| `llms-full.txt` | `code.claude.com/docs/llms-full.txt` | ~98 KB | ~25-30K | 事实核查、完整文档、真相来源 |
 
-**Pattern recommandé** : fetch `llms.txt` d'abord pour identifier la section pertinente, puis fetch la page spécifique (ou `llms-full.txt`) pour les détails. Évite de charger 98 KB quand seules 2 pages sont nécessaires.
+**推荐模式**：先 fetch `llms.txt` 定位相关章节，再 fetch 特定页面（或 `llms-full.txt`）获取详情。避免在只需要 2 页内容时加载 98 KB。
 
-Ces URLs sont la source officielle à consulter en priorité quand un claim sur Claude Code semble incertain ou potentiellement obsolète.
+这些 URL 是官方来源，当某个关于 Claude Code 的说法看起来不确定或可能过时时，应优先查阅它们。
 
-#### Specification Resources
+#### 规范资源
 
-- **Official spec**: https://llmstxt.org/
-- **Community examples**: https://github.com/topics/llms-txt
-- **This guide's implementation**: `machine-readable/llms.txt`
+- **官方规范**：https://llmstxt.org/
+- **社区示例**：https://github.com/topics/llms-txt
+- **本指南的实现**：`machine-readable/llms.txt`
 
-**Not recommended source**: Framework-specific blog posts (often present llms.txt in opposition to MCP servers, when they're complementary).
+**不推荐来源**：框架专属博客文章（经常把 llms.txt 描述为 MCP 服务器的对立面，而它们其实是互补的）。
 
 ---
 
-### 9.18.5 Token-Efficient Codebase
+### 9.18.5 Token 高效的代码库
 
-**Problem**: Agents have token limits. Large files consume context budget quickly, forcing agents to read in chunks and lose coherence.
+**问题**：智能体有 token 限制。大文件会快速消耗上下文预算，迫使智能体分块阅读并失去连贯性。
 
-**Solution**: Structure code to minimize token usage while maximizing agent comprehension.
+**解决方案**：优化代码结构，在最大化智能体理解的同时最小化 token 使用。
 
-#### Split Large Files (Agents Read in Chunks)
+#### 拆分大文件（智能体按块阅读）
 
-**Guideline**: Keep files under 500 lines. Agents typically read 200-300 lines at a time (depending on model context).
+**指南**：保持文件在 500 行以内。智能体通常一次读取 200-300 行（取决于模型上下文）。
 
-**❌ Monolithic file (1200 lines)**:
+**❌ 单体文件（1200 行）**：
 
 ```
 src/services/event-service.ts
 ```
 
-**✅ Split by concern**:
+**✅ 按关注点拆分**：
 
 ```
 src/services/event/
-├── event-service.ts         (200 lines: public API + orchestration)
-├── event-validator.ts       (150 lines: validation logic)
-├── event-calendar-sync.ts   (300 lines: external calendar sync)
-├── event-conflict-resolver.ts (250 lines: overlap detection)
-└── README.md                (explains module structure)
+├── event-service.ts         (200 行：公共 API + 编排)
+├── event-validator.ts       (150 行：验证逻辑)
+├── event-calendar-sync.ts   (300 行：外部日历同步)
+├── event-conflict-resolver.ts (250 行：冲突检测)
+└── README.md                (说明模块结构)
 ```
 
-**Why this works**:
+**为什么有效**：
 
-- Agent can load just what it needs (`event-validator.ts` for validation work)
-- Each file has clear responsibility
-- Easier to navigate via imports
+- 智能体可以只加载它需要的部分（做验证工作时加载 `event-validator.ts`）
+- 每个文件职责清晰
+- 通过 import 更容易导航
 
-**When to split**:
+**何时拆分**：
 
-- File >500 lines and growing
-- File has multiple unrelated concerns (validation + sync + conflict resolution)
-- Agent frequently reads only part of the file
+- 文件 >500 行且持续增长
+- 文件包含多个无关关注点（验证 + 同步 + 冲突解决）
+- 智能体经常只读取文件的一部分
 
-**When NOT to split**:
+**何时不拆分**：
 
-- File is cohesive (one class with related methods)
-- Splitting would create artificial boundaries
-- File size <300 lines
+- 文件内聚性强（一个类带相关方法）
+- 拆分会造成人为边界
+- 文件 <300 行
 
-**See also**: [Context Management (2.1)](#21-core-concepts) for token optimization strategies.
+**另见**：[上下文管理（2.1）](#21-core-concepts) 了解 token 优化策略。
 
-#### Remove Obvious Comments (Reduce Noise)
+#### 删除显而易见的注释（减少噪音）
 
-**❌ Wasteful tokens**:
+**❌ 浪费 token**：
 
 ```typescript
-// Import React
+// 导入 React
 import React from 'react';
 
-// Import useState hook
+// 导入 useState hook
 import { useState } from 'react';
 
-// Define Props interface
+// 定义 Props 接口
 interface Props {
-  // User name
+  // 用户名
   name: string;
-  // User age
+  // 用户年龄
   age: number;
 }
 
-// User component
+// User 组件
 function User(props: Props) {
-  // Render user info
+  // 渲染用户信息
   return <div>{props.name}</div>;
 }
 ```
 
-**✅ Remove noise, keep value**:
+**✅ 去除噪音，保留价值**：
 
 ```typescript
 import React, { useState } from 'react';
@@ -20303,30 +20335,30 @@ interface Props {
   age: number;
 }
 
-// Displays user name. Age is required for future age-gating feature (see ADR-012).
+// 显示用户名。age 是为未来的年龄限制功能预留的（见 ADR-012）。
 function User(props: Props) {
   return <div>{props.name}</div>;
 }
 ```
 
-**Savings**: Reduced from ~150 tokens to ~80 tokens (47% reduction) without losing critical info.
+**节省**：从约 150 tokens 减少到约 80 tokens（减少 47%），且不丢失关键信息。
 
-**Keep comments that provide**:
+**保留提供以下信息的注释**：
 
-- Business context ("age for future age-gating")
-- Non-obvious decisions ("why age is required now but unused")
-- References (ADR-012)
+- 业务上下文（"age 是为未来的年龄限制功能预留的"）
+- 非显而易见的决策（"为什么 age 现在就需要但尚未使用"）
+- 引用（ADR-012）
 
-**Remove comments that are**:
+**删除以下注释**：
 
-- Obvious from code ("Import React")
-- Redundant with types ("User name" when field is `name: string`)
+- 代码本身显而易见的注释（"导入 React"）
+- 与类型重复的注释（字段已经是 `name: string` 时再加 "User name"）
 
-#### Verbose Flags for Debug Output
+#### 用 Verbose 标志控制调试输出
 
-**Problem**: Debug logging consumes tokens but is sometimes necessary.
+**问题**：调试日志消耗 token，但有时又必不可少。
 
-**Solution**: Use verbose flags to conditionally include detailed output.
+**解决方案**：使用 verbose 标志来条件性地包含详细输出。
 
 ```typescript
 // config.ts
@@ -20351,26 +20383,26 @@ class EventService {
 }
 ```
 
-**CLAUDE.md configuration**:
+**CLAUDE.md 配置**：
 
 ```markdown
-## Debug Mode
+## 调试模式
 
-To enable verbose logging:
+启用详细日志：
 
 \`\`\`bash
 DEBUG=true npm run dev
 \`\`\`
 
-This adds detailed logs to help trace execution flow. Disable in production (default).
+这会添加详细日志以帮助追踪执行流程。生产环境默认关闭。
 ```
 
-**Agent behavior**:
+**智能体行为**：
 
-- In normal mode: Reads clean code without log noise
-- In debug mode: Sees detailed execution trace when troubleshooting
+- 正常模式：阅读干净的代码，没有日志噪音
+- 调试模式：排查问题时能看到详细的执行轨迹
 
-**Alternative: Use logger with levels**:
+**替代方案：使用带级别的 logger**：
 
 ```typescript
 import { logger } from './logger';
@@ -20385,64 +20417,64 @@ class EventService {
 }
 ```
 
-Configure logger in CLAUDE.md:
+在 CLAUDE.md 中配置 logger：
 
 ```markdown
-## Logging
+## 日志
 
-- `logger.debug()`: Verbose details (disabled in production)
-- `logger.info()`: Important milestones (always enabled)
-- `logger.warn()`: Recoverable issues
-- `logger.error()`: Failures requiring attention
+- `logger.debug()`：详细信息（生产环境禁用）
+- `logger.info()`：重要里程碑（始终启用）
+- `logger.warn()`：可恢复的问题
+- `logger.error()`：需要关注的失败
 ```
 
 ---
 
-### 9.18.6 Testing for Autonomy
+### 9.18.6 为自主性而测试
 
-**Problem**: Agents follow tests more reliably than documentation. Incomplete tests lead to incorrect implementations.
+**问题**：智能体遵循测试比遵循文档更可靠。不完整的测试会导致错误的实现。
 
-**Solution**: Use Test-Driven Development (TDD) with manually-written tests. Tests become the specification.
+**解决方案**：使用手写测试的测试驱动开发（TDD）。测试本身就是规范。
 
-#### Why TDD is More Critical for Agents
+#### 为什么 TDD 对智能体更为关键
 
-**Humans**: Can infer intent from vague requirements and course-correct during implementation.
+**人类**：可以从模糊的需求中推断意图，并在实现过程中修正方向。
 
-**Agents**: Implement exactly what tests specify. Missing test = missing feature.
+**智能体**：精确地按照测试指定的内容实现。缺少测试 = 缺少功能。
 
-**Example: Human vs Agent Behavior**
+**示例：人类 vs 智能体行为**
 
-**Requirement**: "Add email validation to signup form"
+**需求**："给注册表单添加邮箱验证"
 
-**Human developer**:
+**人类开发者**：
 
-- Infers "validation" includes format check AND duplicate check
-- Adds both even if tests only cover format
-- Asks clarifying questions if uncertain
+- 推断"验证"包括格式检查 AND 重复检查
+- 即使测试只覆盖格式，也会把两者都加上
+- 不确定时会问澄清问题
 
-**Agent**:
+**智能体**：
 
-- Implements only what tests specify
-- If tests only cover format → agent only implements format
-- If tests don't cover edge cases → agent doesn't handle them
+- 只实现测试指定的内容
+- 如果测试只覆盖格式 → 智能体只实现格式
+- 如果测试不覆盖边界情况 → 智能体不处理它们
 
-**Lesson**: For agents, tests ARE the spec. Write comprehensive tests manually.
+**教训**：对智能体来说，测试**就是**规范。手写全面的测试。
 
-#### Tests Written Manually, Not Delegated
+#### 手写测试，不要委托
 
-**❌ Don't** ask the agent to write tests:
+**❌ 不要**让智能体写测试：
 
 ```
-User: "Implement email validation and write tests for it"
+User: "实现邮箱验证并为其编写测试"
 ```
 
-**Why this fails**:
+**为什么失败**：
 
-- Agent may write incomplete tests (missing edge cases)
-- Agent tests match its implementation (circular validation)
-- No independent verification
+- 智能体可能写出不完整的测试（缺少边界情况）
+- 智能体的测试与其实现相匹配（循环验证）
+- 没有独立验证
 
-**✅ Do** write tests first yourself:
+**✅ 要**自己先写测试：
 
 ```typescript
 // tests/validation/email.test.ts
@@ -20459,45 +20491,45 @@ describe('Email validation', () => {
   });
 
   it('rejects disposable email domains', () => {
-    // Business requirement: Block temporary email services
+    // 业务需求：屏蔽临时邮箱服务
     expect(validateEmail('user@tempmail.com')).toBe(false);
     expect(validateEmail('user@10minutemail.com')).toBe(false);
   });
 
   it('handles international characters', () => {
-    // Business requirement: Support international domains
+    // 业务需求：支持国际域名
     expect(validateEmail('user@münchen.de')).toBe(true);
   });
 
   it('checks for duplicate emails in database', async () => {
-    // Business requirement: Email must be unique
+    // 业务需求：邮箱必须唯一
     await db.users.create({ email: 'existing@example.com' });
     await expect(validateEmail('existing@example.com')).rejects.toThrow('Email already registered');
   });
 });
 ```
 
-**Then give agent the tests**:
+**然后把测试交给智能体**：
 
 ```
-User: "Implement the email validation function to pass all tests in tests/validation/email.test.ts. Requirements:
-- Use validator.js for format checking
-- Disposable domain list at src/data/disposable-domains.json
-- Database check via userRepository.findByEmail()"
+User: "实现 email validation 函数，使其通过 tests/validation/email.test.ts 中的所有测试。要求：
+- 使用 validator.js 进行格式检查
+- 临时域名列表在 src/data/disposable-domains.json
+- 数据库检查通过 userRepository.findByEmail()"
 ```
 
-**Agent outcome**: Implements exactly what tests specify, including:
+**智能体结果**：精确实现测试指定的内容，包括：
 
-- Format validation
-- Disposable domain blocking
-- International character support
-- Duplicate database check
+- 格式验证
+- 临时域名屏蔽
+- 国际字符支持
+- 重复数据库检查
 
-**Without manual tests**: Agent might skip disposable domain blocking (not obvious from "email validation") or miss international character support.
+**没有手写测试**：智能体可能会跳过临时域名屏蔽（从"邮箱验证"中并不明显）或遗漏国际字符支持。
 
-#### TDD Workflow for Agents
+#### 面向智能体的 TDD 工作流
 
-**Step 1: Write failing test** (you, the human)
+**步骤 1：写失败的测试**（你，人类）
 
 ```typescript
 // tests/services/event-service.test.ts
@@ -20510,11 +20542,11 @@ describe('EventService.createEvent', () => {
       endTime: '2026-01-21T11:00:00Z'
     });
 
-    // Attempt overlapping event
+    // 尝试重叠事件
     await expect(
       eventService.createEvent({
         userId,
-        startTime: '2026-01-21T10:30:00Z',  // overlaps by 30 min
+        startTime: '2026-01-21T10:30:00Z',  // 重叠 30 分钟
         endTime: '2026-01-21T11:30:00Z'
       })
     ).rejects.toThrow('Scheduling conflict detected');
@@ -20522,30 +20554,30 @@ describe('EventService.createEvent', () => {
 });
 ```
 
-**Step 2: Give agent the test** with implementation constraints
+**步骤 2：把测试交给智能体**，附带实现约束
 
 ```
-User: "Implement EventService.createEvent() to pass the double-booking test. Requirements:
-- Check for conflicts using conflictResolver.detectOverlap()
-- Throw SchedulingConflictError with list of conflicting event IDs
-- See ADR-009 for conflict resolution algorithm"
+User: "实现 EventService.createEvent() 以通过双重预订测试。要求：
+- 使用 conflictResolver.detectOverlap() 检查冲突
+- 抛出 SchedulingConflictError，附带冲突事件 ID 列表
+- 冲突解决算法见 ADR-009"
 ```
 
-**Step 3: Agent implements** to pass the test
+**步骤 3：智能体实现**以通过测试
 
-**Step 4: Verify** with test run
+**步骤 4：用测试运行验证**
 
 ```bash
 npm test tests/services/event-service.test.ts
 ```
 
-**Step 5: Iterate** if test fails (agent fixes implementation)
+**步骤 5：迭代**（如果测试失败，智能体修正实现）
 
-**Cross-reference**: [TDD Methodology (9.14)](#914-development-methodologies) for full TDD workflow patterns.
+**交叉引用**：[TDD 方法论（9.14）](#914-development-methodologies) 了解完整的 TDD 工作流模式。
 
-#### Browser Automation for Validation
+#### 用浏览器自动化验证
 
-For UI features, use browser automation to validate agent output:
+对于 UI 功能，使用浏览器自动化来验证智能体输出：
 
 ```typescript
 // tests/e2e/signup-form.spec.ts
@@ -20554,50 +20586,50 @@ import { test, expect } from '@playwright/test';
 test('signup form validates email', async ({ page }) => {
   await page.goto('/signup');
 
-  // Test invalid format
+  // 测试无效格式
   await page.fill('[name="email"]', 'invalid-email');
   await page.click('button[type="submit"]');
   await expect(page.locator('.error')).toHaveText('Invalid email format');
 
-  // Test disposable domain
+  // 测试临时域名
   await page.fill('[name="email"]', 'user@tempmail.com');
   await page.click('button[type="submit"]');
   await expect(page.locator('.error')).toHaveText('Temporary email addresses not allowed');
 
-  // Test valid email
+  // 测试有效邮箱
   await page.fill('[name="email"]', 'user@example.com');
   await page.click('button[type="submit"]');
   await expect(page.locator('.error')).not.toBeVisible();
 });
 ```
 
-**Why browser tests matter for agents**:
+**浏览器测试对智能体为什么重要**：
 
-- Validates actual user experience (not just unit logic)
-- Catches CSS/accessibility issues agents might miss
-- Provides visual proof of correctness
+- 验证真实的用户体验（不只是单元逻辑）
+- 捕获智能体可能遗漏的 CSS/可访问性问题
+- 提供正确性的视觉证明
 
-**Give agent the E2E test**:
+**把 E2E 测试交给智能体**：
 
 ```
-User: "Implement signup form email validation to pass tests/e2e/signup-form.spec.ts. Use React Hook Form + Zod schema."
+User: "实现注册表单的邮箱验证，使其通过 tests/e2e/signup-form.spec.ts。使用 React Hook Form + Zod schema。"
 ```
 
-**Agent knows**:
+**智能体知道**：
 
-- Error messages must match test expectations
-- Error display must use `.error` class
-- Form must prevent submission on invalid input
+- 错误信息必须与测试预期匹配
+- 错误显示必须使用 `.error` 类
+- 表单必须在输入无效时阻止提交
 
-#### Test Coverage as Guardrail
+#### 测试覆盖率作为护栏
 
-**Post-implementation check**:
+**实现后检查**：
 
 ```bash
 npm test -- --coverage
 ```
 
-**Coverage thresholds in CI**:
+**CI 中的覆盖率阈值**：
 
 ```json
 // package.json
@@ -20615,40 +20647,40 @@ npm test -- --coverage
 }
 ```
 
-**CLAUDE.md instruction**:
+**CLAUDE.md 指令**：
 
 ```markdown
-## Testing Requirements
+## 测试要求
 
-All features must have:
-- Unit tests (>80% coverage)
-- Integration tests for API endpoints
-- E2E tests for user-facing features
+所有功能必须包含：
+- 单元测试（>80% 覆盖率）
+- API 端点的集成测试
+- 面向用户功能的 E2E 测试
 
-Run before committing:
+提交前运行：
 \`\`\`bash
 npm test -- --coverage
 \`\`\`
 
-CI will reject PRs below 80% coverage.
+CI 会拒绝覆盖率低于 80% 的 PR。
 ```
 
 ---
 
-### 9.18.7 Conventions & Patterns
+### 9.18.7 约定与模式
 
-**Problem**: Agents hallucinate less when using familiar patterns from their training data.
+**问题**：当使用训练数据中熟悉的模式时，智能体的幻觉会更少。
 
-**Solution**: Use well-known design patterns and mainstream technologies. Document custom patterns explicitly.
+**解决方案**：使用广为人知的设计模式和主流技术。自定义模式必须显式文档化。
 
-#### Design Patterns Agents Know
+#### 智能体熟悉的设计模式
 
-Agents are trained on massive codebases using standard design patterns. Leverage this:
+智能体在海量使用标准设计模式的代码库上训练过。充分利用这一点：
 
-**✅ Use standard patterns**:
+**✅ 使用标准模式**：
 
 ```typescript
-// Singleton pattern (widely known)
+// 单例模式（广为人知）
 class DatabaseConnection {
   private static instance: DatabaseConnection;
 
@@ -20663,12 +20695,12 @@ class DatabaseConnection {
 }
 ```
 
-**Agent recognizes**: "This is Singleton pattern" → understands `getInstance()` returns same instance.
+**智能体识别**："这是单例模式" → 理解 `getInstance()` 返回同一个实例。
 
-**❌ Custom pattern without documentation**:
+**❌ 无文档的自定义模式**：
 
 ```typescript
-// Undocumented custom pattern
+// 无文档的自定义模式
 class DatabaseConnection {
   private static conn: DatabaseConnection;
 
@@ -20678,19 +20710,19 @@ class DatabaseConnection {
 }
 ```
 
-**Agent confusion**: "What's `make()`? Is it factory? Builder? Why `conn` instead of `instance`?"
+**智能体困惑**："`make()` 是什么？工厂？构建器？为什么用 `conn` 而不是 `instance`？"
 
-**If you must use custom patterns, document heavily**:
+**如果必须使用自定义模式，请大量文档化**：
 
 ```typescript
 /**
- * Database connection using Lazy Singleton pattern.
+ * 使用懒加载单例模式的数据库连接。
  *
- * Pattern: Singleton with lazy initialization (no eager instantiation).
- * Why custom naming: "make()" aligns with our framework's naming convention (Laravel-inspired).
- * Standard Singleton uses "getInstance()" but we use "make()" for consistency across all singletons.
+ * 模式：带懒初始化的单例（无急切实例化）。
+ * 为什么用自定义命名："make()" 与我们框架的命名约定一致（受 Laravel 启发）。
+ * 标准单例用 "getInstance()"，但我们在所有单例中都使用 "make()" 以保持一致。
  *
- * Related: See ADR-004 for singleton usage policy.
+ * 相关：见 ADR-004 了解单例使用策略。
  */
 class DatabaseConnection {
   private static conn: DatabaseConnection;
@@ -20701,29 +20733,29 @@ class DatabaseConnection {
 }
 ```
 
-#### The "Boring Tech" Advantage
+#### "无聊技术"的优势
 
-**Principle**: Popular frameworks and libraries have more training data → agents perform better.
+**原则**：流行的框架和库拥有更多训练数据 → 智能体表现更好。
 
-**Framework training data volume (approximate)**:
+**框架训练数据量（约）**：
 
-| Framework/Library | GitHub repos | Agent performance |
-|------------------|--------------|-------------------|
-| React | 10M+ | Excellent |
-| Express | 5M+ | Excellent |
-| Vue | 3M+ | Good |
-| Angular | 2M+ | Good |
-| Svelte | 500K | Fair |
-| Custom framework | <1K | Poor |
+| 框架/库 | GitHub 仓库数 | 智能体表现 |
+|--------|--------------|-----------|
+| React | 1000万+ | 优秀 |
+| Express | 500万+ | 优秀 |
+| Vue | 300万+ | 良好 |
+| Angular | 200万+ | 良好 |
+| Svelte | 50万 | 一般 |
+| 自定义框架 | <1千 | 较差 |
 
-**Recommendation**: Use mainstream tech unless you have strong reasons otherwise.
+**建议**：除非有充分理由，否则使用主流技术。
 
-**Example: React vs Custom Framework**
+**示例：React vs 自定义框架**
 
-**React** (agent-friendly):
+**React**（对智能体友好）：
 
 ```typescript
-// Agent knows React patterns from training data
+// 智能体从训练数据中了解 React 模式
 function UserProfile({ userId }: { userId: string }) {
   const [user, setUser] = useState<User | null>(null);
 
@@ -20736,10 +20768,10 @@ function UserProfile({ userId }: { userId: string }) {
 }
 ```
 
-**Custom framework** (agent-hostile without docs):
+**自定义框架**（无文档时对智能体不友好）：
 
 ```typescript
-// Agent has no training data for "Fluxor" framework
+// 智能体没有 "Fluxor" 框架的训练数据
 @Component({
   state: ['user'],
   effects: ['loadUser']
@@ -20755,87 +20787,87 @@ class UserProfile {
 }
 ```
 
-**Without Fluxor documentation**: Agent doesn't know `@Component` decorator, `state`, `effects`, or lifecycle hooks.
+**没有 Fluxor 文档**：智能体不知道 `@Component` 装饰器、`state`、`effects` 或生命周期钩子。
 
-**With Fluxor documentation**:
+**有了 Fluxor 文档**：
 
 ```markdown
-# Fluxor Framework
+# Fluxor 框架
 
-## Component Lifecycle
+## 组件生命周期
 
-Fluxor components use decorators (similar to Angular):
+Fluxor 组件使用装饰器（类似 Angular）：
 
-- `@Component({ state, effects })` - Define component with reactive state
-- `onMount()` - Equivalent to React's `useEffect` with empty deps
-- `render()` - Returns HTML string (not JSX)
+- `@Component({ state, effects })` - 用响应式状态定义组件
+- `onMount()` - 等效于 React 的带空依赖的 `useEffect`
+- `render()` - 返回 HTML 字符串（不是 JSX）
 
-## State Management
+## 状态管理
 
-- `this.state.user` - Access reactive state (equivalent to React `useState`)
-- `this.loadUser()` - Dispatch effect (equivalent to Redux action)
+- `this.state.user` - 访问响应式状态（等效于 React 的 `useState`）
+- `this.loadUser()` - 派发 effect（等效于 Redux action）
 
-## Example
+## 示例
 
 \`\`\`typescript
 @Component({ state: ['user'] })
 class UserProfile {
   onMount() {
-    // Runs once on component mount (like React useEffect)
+    // 组件挂载时运行一次（类似 React useEffect）
     this.loadUser(this.props.userId);
   }
 
   render() {
-    // Reactive: re-runs when this.state.user changes
+    // 响应式：当 this.state.user 变化时重新运行
     return this.state.user ? `<div>${this.state.user.name}</div>` : '<div>Loading...</div>';
   }
 }
 \`\`\`
 ```
 
-**Agent with docs**: Understands Fluxor by mapping to familiar React concepts.
+**有文档后的智能体**：通过映射到熟悉的 React 概念来理解 Fluxor。
 
-#### Document Architectural Decisions (ADRs)
+#### 文档化架构决策（ADRs）
 
-**Problem**: Custom architectures lack training data.
+**问题**：自定义架构缺乏训练数据。
 
-**Solution**: Document decisions in Architecture Decision Records.
+**解决方案**：在架构决策记录中文档化决策。
 
-**ADR example**:
+**ADR 示例**：
 
 ```markdown
-# ADR-011: Service Layer Architecture
+# ADR-011：服务层架构
 
-**Status**: Accepted
-**Date**: 2025-12-10
+**状态**：已接受
+**日期**：2025-12-10
 
-## Context
+## 背景
 
-We need clear separation between HTTP handling and business logic.
+我们需要在 HTTP 处理和业务逻辑之间保持清晰的分离。
 
-## Decision
+## 决策
 
-Adopt 3-layer architecture:
+采用 3 层架构：
 
-1. **Controllers** (`src/controllers/`): HTTP request/response, no business logic
-2. **Services** (`src/services/`): Business logic, framework-agnostic
-3. **Repositories** (`src/repositories/`): Data access, abstracts database
+1. **Controllers**（`src/controllers/`）：HTTP 请求/响应，无业务逻辑
+2. **Services**（`src/services/`）：业务逻辑，与框架无关
+3. **Repositories**（`src/repositories/`）：数据访问，抽象数据库
 
-**Rules**:
-- Controllers call services, never repositories directly
-- Services call repositories, never touch HTTP (no `req`, `res` objects)
-- Repositories encapsulate all database queries
+**规则**：
+- Controllers 调用 services，绝不直接调用 repositories
+- Services 调用 repositories，绝不接触 HTTP（无 `req`、`res` 对象）
+- Repositories 封装所有数据库查询
 
-**Similar to**: NestJS architecture, Spring Boot layers, Clean Architecture use cases
+**类似于**：NestJS 架构、Spring Boot 分层、Clean Architecture 用例
 
-## Example
+## 示例
 
 \`\`\`typescript
-// ✅ Correct: Controller → Service → Repository
+// ✅ 正确：Controller → Service → Repository
 // src/controllers/user-controller.ts
 class UserController {
   async getUser(req: Request, res: Response) {
-    const user = await userService.getUser(req.params.id);  // Calls service
+    const user = await userService.getUser(req.params.id);  // 调用 service
     res.json(user);
   }
 }
@@ -20843,7 +20875,7 @@ class UserController {
 // src/services/user-service.ts
 class UserService {
   async getUser(userId: string) {
-    return userRepository.findById(userId);  // Calls repository
+    return userRepository.findById(userId);  // 调用 repository
   }
 }
 
@@ -20856,31 +20888,31 @@ class UserRepository {
 \`\`\`
 
 \`\`\`typescript
-// ❌ Incorrect: Controller calls repository directly
+// ❌ 错误：Controller 直接调用 repository
 class UserController {
   async getUser(req: Request, res: Response) {
-    const user = await userRepository.findById(req.params.id);  // Layering violation!
+    const user = await userRepository.findById(req.params.id);  // 违反分层！
     res.json(user);
   }
 }
 \`\`\`
 ```
 
-**Agent benefit**: When working in controllers, agent reads ADR-011 and knows to call services (not repositories).
+**智能体收益**：在 controllers 中工作时，智能体阅读 ADR-011 后就知道要调用 services（而不是 repositories）。
 
 ---
 
-### 9.18.8 Guardrails & Validation
+### 9.18.8 护栏与验证
 
-**Problem**: Agents make mistakes—hallucinations, incorrect assumptions, security oversights.
+**问题**：智能体会犯错——幻觉、错误假设、安全疏忽。
 
-**Solution**: Multi-layer guardrails to catch errors before they reach production.
+**解决方案**：多层护栏，在错误到达生产环境之前捕获它们。
 
-#### Hooks as Anti-Pattern Validators
+#### 将钩子用作反模式验证器
 
-**Beyond secrets**: Use hooks to enforce codebase conventions.
+**超越 secrets**：用钩子来强制执行代码库约定。
 
-**Example: Prevent layering violations**:
+**示例：防止分层违反**：
 
 ```bash
 #!/bin/bash
@@ -20892,41 +20924,41 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool.name')
 if [[ "$TOOL_NAME" == "Edit" ]] || [[ "$TOOL_NAME" == "Write" ]]; then
   FILE_PATH=$(echo "$INPUT" | jq -r '.tool.input.file_path')
 
-  # Block controllers calling repositories directly (layering violation)
+  # 阻止 controllers 直接调用 repositories（分层违反）
   if [[ "$FILE_PATH" == *"/controllers/"* ]]; then
     CONTENT=$(echo "$INPUT" | jq -r '.tool.input.new_string // .tool.input.content')
 
     if echo "$CONTENT" | grep -q "Repository\\."; then
       echo "❌ Layering violation: Controllers must call Services, not Repositories directly" >&2
       echo "See ADR-011 for architecture rules" >&2
-      exit 2  # Block
+      exit 2  # 阻止
     fi
   fi
 fi
 
-exit 0  # Allow
+exit 0  # 允许
 ```
 
-**Catches**:
+**捕获**：
 
 ```typescript
-// ❌ This edit will be BLOCKED by hook
+// ❌ 这个编辑会被钩子阻止
 class UserController {
   async getUser(req: Request, res: Response) {
-    const user = await userRepository.findById(req.params.id);  // BLOCKED!
+    const user = await userRepository.findById(req.params.id);  // 被阻止！
   }
 }
 ```
 
-**Agent sees**: "❌ Layering violation: Controllers must call Services..." → revises to call service.
+**智能体看到**："❌ Layering violation: Controllers must call Services..." → 修正为调用 service。
 
-**See**: [Hooks (6.2)](#62-hooks) for comprehensive hook examples.
+**见**：[Hooks（6.2）](#62-hooks) 了解全面的钩子示例。
 
-#### "Tainted Code" Philosophy
+#### "受污染代码"理念
 
-**Principle**: Treat all agent-generated code as "tainted" until validated by CI.
+**原则**：将所有智能体生成的代码视为"受污染"的，直到通过 CI 验证。
 
-**CI checks**:
+**CI 检查**：
 
 ```yaml
 # .github/workflows/agent-validation.yml
@@ -20966,38 +20998,38 @@ jobs:
 
       - name: Architecture compliance
         run: |
-          # Check for layering violations
+          # 检查分层违反
           if grep -r "Repository" src/controllers/; then
             echo "Controllers calling repositories directly (ADR-011 violation)"
             exit 1
           fi
 ```
 
-**What CI catches**:
+**CI 捕获什么**：
 
-- Syntax errors (linting)
-- Type mismatches (type checking)
-- Broken logic (tests)
-- Incomplete implementations (TODO comments)
-- Architecture violations (custom checks)
+- 语法错误（linting）
+- 类型不匹配（类型检查）
+- 逻辑错误（测试）
+- 实现不完整（TODO 注释）
+- 架构违反（自定义检查）
 
-**CLAUDE.md instruction**:
+**CLAUDE.md 指令**：
 
 ```markdown
-## CI/CD Validation
+## CI/CD 验证
 
-All PRs run automated validation:
-- Linting (ESLint)
-- Type checking (TypeScript)
-- Unit tests (Jest, >80% coverage)
-- Architecture compliance (layering rules)
+所有 PR 都运行自动验证：
+- Linting（ESLint）
+- 类型检查（TypeScript）
+- 单元测试（Jest，>80% 覆盖率）
+- 架构合规性（分层规则）
 
-Agents must pass CI before PR approval. Never disable CI checks.
+智能体必须在 PR 批准前通过 CI。永远不要禁用 CI 检查。
 ```
 
-#### PR Reviews: Human-in-the-Loop
+#### PR 审查：人在回路中
 
-**Even with CI, require human review**:
+**即使有 CI，也需要人工审查**：
 
 ```yaml
 # .github/workflows/pr-rules.yml
@@ -21018,129 +21050,130 @@ jobs:
           fi
 ```
 
-**Why human review matters**:
+**为什么人工审查很重要**：
 
-- Agents miss context (business requirements not in code)
-- Agents may implement correct code for wrong problem
-- Security vulnerabilities AI doesn't recognize (novel attack vectors)
+- 智能体会遗漏上下文（代码中没有的业务需求）
+- 智能体可能为错误的问题实现了正确的代码
+- 安全漏洞是 AI 识别不了的（新型攻击向量）
 
-**Review checklist for agent PRs**:
+**智能体 PR 审查清单**：
 
 ```markdown
-## Agent PR Review Checklist
+## 智能体 PR 审查清单
 
-- [ ] **Intent**: Does the code solve the actual problem (not just pass tests)?
-- [ ] **Edge cases**: Are unusual inputs handled (null, empty, negative, extreme values)?
-- [ ] **Security**: Any potential injection, XSS, or authorization bypasses?
-- [ ] **Performance**: Will this scale (N+1 queries, memory leaks, inefficient algorithms)?
-- [ ] **Maintainability**: Is code readable and well-documented for future humans?
-- [ ] **Tests**: Do tests cover meaningful scenarios (not just happy path)?
+- [ ] **意图**：代码是否解决了真正的问题（而不只是通过测试）？
+- [ ] **边界情况**：是否处理了异常输入（null、空值、负数、极值）？
+- [ ] **安全**：是否存在潜在的注入、XSS 或授权绕过？
+- [ ] **性能**：是否能扩展（N+1 查询、内存泄漏、低效算法）？
+- [ ] **可维护性**：代码是否可读且文档化良好，方便未来维护？
+- [ ] **测试**：测试是否覆盖了有意义的场景（不只是 happy path）？
 ```
 
-**See also**: [CI/CD Integration (9.3)](#93-cicd-integration) for complete CI setup patterns.
+**另见**：[CI/CD 集成（9.3）](#93-cicd-integration) 了解完整的 CI 设置模式。
 
-#### Validation Layers Summary
+#### 验证层总结
 
-| Layer | Catches | Speed | Automation |
-|-------|---------|-------|-----------|
-| **Hooks** | Pre-execution (secrets, anti-patterns) | Instant | 100% |
-| **Linter** | Syntax, style violations | <10s | 100% |
-| **Type checker** | Type mismatches | <30s | 100% |
-| **Tests** | Logic errors, broken functionality | <2min | 100% |
-| **CI checks** | Coverage, TODOs, architecture | <5min | 100% |
-| **Human review** | Intent, security, context | Hours | Manual |
+| 层级 | 捕获 | 速度 | 自动化 |
+|------|------|------|--------|
+| **Hooks** | 执行前（secrets、反模式） | 即时 | 100% |
+| **Linter** | 语法、风格违反 | <10s | 100% |
+| **Type checker** | 类型不匹配 | <30s | 100% |
+| **Tests** | 逻辑错误、功能损坏 | <2min | 100% |
+| **CI checks** | 覆盖率、TODO、架构 | <5min | 100% |
+| **Human review** | 意图、安全、上下文 | 数小时 | 手动 |
 
-**Defense in depth**: Each layer catches different error classes. All layers together minimize risk.
+**纵深防御**：每一层捕获不同类型的错误。所有层一起最小化风险。
 
 ---
 
-### 9.18.9 Serendipity & Cross-References
+### 9.18.9 意外发现与交叉引用
 
-**Problem**: Agents work on isolated files and miss related code elsewhere in the codebase.
+**问题**：智能体在隔离的文件中工作，会遗漏代码库中其他位置的相关代码。
 
-**Solution**: Add cross-references so agents discover related modules.#### Module Cross-References
+**解决方案**：添加交叉引用，让智能体发现相关模块。
+#### 模块交叉引用
 
-**In each module, reference related code**:
+**在每个模块中引用相关代码**：
 
 ```typescript
 // src/services/event-service.ts
 /**
- * Event management service.
+ * 事件管理服务。
  *
- * Related modules:
- * - src/services/calendar-sync-service.ts (external calendar integration)
- * - src/services/conflict-resolver.ts (overlap detection)
- * - src/repositories/event-repository.ts (data access)
- * - src/jobs/reminder-sender.ts (sends event reminders via queue)
+ * 相关模块：
+ * - src/services/calendar-sync-service.ts（外部日历集成）
+ * - src/services/conflict-resolver.ts（冲突检测）
+ * - src/repositories/event-repository.ts（数据访问）
+ * - src/jobs/reminder-sender.ts（通过队列发送事件提醒）
  *
- * See also: ADR-007 (event deletion strategy), ADR-009 (conflict resolution)
+ * 另见：ADR-007（事件删除策略）、ADR-009（冲突解决）
  */
 class EventService {
   // implementation
 }
 ```
 
-**Agent behavior**:
+**Agent 的行为**：
 
-- Working on event service → reads cross-references
-- Discovers `conflict-resolver.ts` exists → uses it instead of re-implementing
-- Knows to check ADRs for business logic context
+- 处理事件服务时 → 读取交叉引用
+- 发现 `conflict-resolver.ts` 已存在 → 直接使用，而非重新实现
+- 知道要查阅 ADR 以获取业务逻辑背景
 
-**Pattern: "See also" chains**:
+**模式："另见"链**：
 
 ```typescript
 // src/services/calendar-sync-service.ts
 /**
- * Syncs events with external calendar providers (Google, Outlook).
+ * 将事件与外部日历提供商（Google、Outlook）同步。
  *
- * Related:
- * - src/services/event-service.ts (main event operations)
- * - src/integrations/google-calendar.ts (Google Calendar API client)
- * - src/integrations/outlook-calendar.ts (Outlook API client)
+ * 相关：
+ * - src/services/event-service.ts（主要事件操作）
+ * - src/integrations/google-calendar.ts（Google Calendar API 客户端）
+ * - src/integrations/outlook-calendar.ts（Outlook API 客户端）
  */
 
 // src/integrations/google-calendar.ts
 /**
- * Google Calendar API integration.
+ * Google Calendar API 集成。
  *
- * Related:
- * - src/services/calendar-sync-service.ts (orchestrates sync)
- * - src/models/calendar-event.ts (domain model)
+ * 相关：
+ * - src/services/calendar-sync-service.ts（编排同步）
+ * - src/models/calendar-event.ts（领域模型）
  *
- * Rate limits: 10 req/sec per user (enforced in sync service)
- * See ADR-014 for rate limiting strategy.
+ * 速率限制：每用户 10 次请求/秒（在同步服务中强制执行）
+ * 速率限制策略见 ADR-014。
  */
 ```
 
-**Result**: Agent navigates from `event-service` → `calendar-sync` → `google-calendar` → understands full flow.
+**结果**：Agent 能从 `event-service` → `calendar-sync` → `google-calendar` 一路导航，理解完整流程。
 
-#### Self-Documenting Commands (--help)
+#### 自文档化命令（--help）
 
-**CLI tools should explain themselves**:
+**CLI 工具应该能自我解释**：
 
 ```typescript
 #!/usr/bin/env node
 // src/cli/sync-calendars.ts
 
 /**
- * CLI tool to manually trigger calendar sync for a user.
+ * 手动触发用户日历同步的 CLI 工具。
  *
- * Usage:
+ * 用法：
  *   npm run sync-calendars -- --user-id=USER_ID [--provider=google|outlook]
  *
- * Examples:
+ * 示例：
  *   npm run sync-calendars -- --user-id=user-123
  *   npm run sync-calendars -- --user-id=user-123 --provider=google
  *
- * What it does:
- *   1. Fetches user calendar credentials from database
- *   2. Connects to external calendar API (Google or Outlook)
- *   3. Syncs events bidirectionally (our DB ↔ external calendar)
- *   4. Logs sync results (events added/updated/deleted)
+ * 功能说明：
+ *   1. 从数据库获取用户日历凭证
+ *   2. 连接外部日历 API（Google 或 Outlook）
+ *   3. 双向同步事件（我们的数据库 ↔ 外部日历）
+ *   4. 记录同步结果（新增/更新/删除的事件）
  *
- * Related:
- *   - src/services/calendar-sync-service.ts (sync logic)
- *   - docs/runbooks/calendar-sync-troubleshooting.md (debugging guide)
+ * 相关：
+ *   - src/services/calendar-sync-service.ts（同步逻辑）
+ *   - docs/runbooks/calendar-sync-troubleshooting.md（调试指南）
  */
 
 if (process.argv.includes('--help')) {
@@ -21166,26 +21199,26 @@ See: docs/runbooks/calendar-sync-troubleshooting.md
 // CLI implementation
 ```
 
-**Agent discovers**:
+**Agent 能从中获取**：
 
-- Reads `--help` output to understand CLI usage
-- Finds related code (`calendar-sync-service.ts`)
-- Knows where to look for troubleshooting (runbook)
+- 读取 `--help` 输出，理解 CLI 用法
+- 找到相关代码（`calendar-sync-service.ts`）
+- 知道去哪里查找故障排除指南（runbook）
 
-#### Embedded Technical Docs
+#### 嵌入式技术文档
 
-**Instead of separate wiki, embed docs near code**:
+**与其维护独立的 wiki，不如把文档嵌入代码旁边**：
 
 ```
 src/integrations/google-calendar/
 ├── google-calendar.ts
 ├── google-calendar.test.ts
-├── README.md               ← "How to use Google Calendar integration"
-├── RATE_LIMITS.md          ← "Google Calendar API rate limits + handling"
-└── TROUBLESHOOTING.md      ← "Common errors + solutions"
+├── README.md               ← "如何使用 Google Calendar 集成"
+├── RATE_LIMITS.md          ← "Google Calendar API 速率限制 + 处理方式"
+└── TROUBLESHOOTING.md      ← "常见错误 + 解决方案"
 ```
 
-**README.md**:
+**README.md**：
 
 ```markdown
 # Google Calendar Integration
@@ -21219,30 +21252,30 @@ Common errors:
 See TROUBLESHOOTING.md for full error catalog + solutions.
 ```
 
-**Agent workflow**:
+**Agent 工作流**：
 
-1. Agent needs to integrate Google Calendar
-2. Reads `google-calendar.ts` → sees `README.md` reference
-3. Reads README → understands usage, auth, rate limits
-4. Encounters error → reads TROUBLESHOOTING.md
-5. Implements correctly without hallucinating
+1. Agent 需要集成 Google Calendar
+2. 读取 `google-calendar.ts` → 看到 `README.md` 引用
+3. 读取 README → 了解用法、认证、速率限制
+4. 遇到错误 → 读取 TROUBLESHOOTING.md
+5. 正确实现，不产生幻觉
 
-**Contrast with wiki**:
+**与 wiki 的对比**：
 
-- Wiki: Agent doesn't know wiki exists or where to look
-- Embedded docs: Agent finds docs naturally via file system
+- Wiki：Agent 不知道 wiki 的存在，也不知道去哪里找
+- 嵌入式文档：Agent 通过文件系统自然发现文档
 
 ---
 
-### 9.18.10 Usage Instructions
+### 9.18.10 使用说明
 
-**Problem**: Agents guess API usage patterns and often guess wrong (argument order, error handling, return types).
+**问题**：Agent 会猜测 API 的使用模式，而且经常猜错（参数顺序、错误处理、返回类型）。
 
-**Solution**: Provide explicit usage examples in doc blocks.
+**解决方案**：在文档块中提供明确的使用示例。
 
-#### Doc Blocks with Examples
+#### 带示例的文档块
 
-**❌ Minimal docs (agent guesses)**:
+**❌ 最简文档（Agent 靠猜）**：
 
 ```typescript
 // Validate email address
@@ -21251,13 +21284,13 @@ function validateEmail(email: string): boolean {
 }
 ```
 
-**Agent must guess**:
+**Agent 必须猜测**：
 
-- What does "validate" mean? Format only? Uniqueness check?
-- What about `null` or empty string?
-- Are there side effects (database lookups)?
+- "validate"是什么意思？只检查格式？还是唯一性？
+- `null` 或空字符串怎么处理？
+- 有没有副作用（数据库查询）？
 
-**✅ Comprehensive docs with examples**:
+**✅ 带示例的完整文档**：
 
 ```typescript
 /**
@@ -21302,15 +21335,15 @@ async function validateEmail(email: string | null): Promise<boolean> {
 }
 ```
 
-**Agent now knows**:
+**Agent 现在知道**：
 
-- Function is async (returns Promise)
-- Throws errors (doesn't return false)
-- Handles null input
-- Trims whitespace automatically
-- Checks format, disposable domains, AND uniqueness
+- 函数是异步的（返回 Promise）
+- 抛出错误（不返回 false）
+- 处理 null 输入
+- 自动去除空白字符
+- 同时检查格式、一次性域名和唯一性
 
-**Agent can implement correctly**:
+**Agent 可以正确实现**：
 
 ```typescript
 // In signup form handler
@@ -21326,13 +21359,13 @@ try {
 }
 ```
 
-#### Context7 MCP for Official Docs
+#### Context7 MCP 获取官方文档
 
-**Problem**: Agents may use outdated API patterns from training data.
+**问题**：Agent 可能使用训练数据中过时的 API 模式。
 
-**Solution**: Use Context7 MCP to fetch current documentation.
+**解决方案**：使用 Context7 MCP 获取最新文档。
 
-**CLAUDE.md configuration**:
+**CLAUDE.md 配置**：
 
 ```markdown
 ## External Dependencies
@@ -21357,19 +21390,19 @@ Agent's training data may be outdated (pre-2025). Use Context7 to fetch current 
 Agent instruction: "When implementing Google Calendar integration, use Context7 MCP to fetch latest API docs."
 ```
 
-**Agent behavior**:
+**Agent 行为**：
 
-- Reads CLAUDE.md → sees Context7 instruction
-- Uses Context7 MCP → fetches current docs
-- Implements with correct API (not outdated training data)
+- 读取 CLAUDE.md → 看到 Context7 指令
+- 使用 Context7 MCP → 获取最新文档
+- 使用正确的 API 实现（而非过时的训练数据）
 
-**See**: [Context7 MCP (5.3)](#53-context7-technical-documentation) for setup.
+**参见**：[Context7 MCP（5.3）](#53-context7-technical-documentation)了解配置方法。
 
-#### Sensible Defaults
+#### 合理的默认值
 
-**Design APIs to work with minimal configuration**:
+**设计 API 时，让它以最少配置即可运行**：
 
-**❌ Requires all parameters**:
+**❌ 要求所有参数**：
 
 ```typescript
 const client = new GoogleCalendarClient({
@@ -21377,1078 +21410,230 @@ const client = new GoogleCalendarClient({
   rateLimit: 10,
   rateLimitWindow: 1000,
   retryAttempts: 3,
-  retryDelay: 1000,
-  timeout: 30000,
-  userAgent: 'MyApp/1.0'
-});
 ```
 
-**✅ Sensible defaults**:
+### 两种启动方式
 
-```typescript
-// Minimal usage (defaults applied)
-const client = new GoogleCalendarClient(userCredentials);
-
-// Override defaults if needed
-const client = new GoogleCalendarClient(userCredentials, {
-  timeout: 60000  // Only override timeout, other defaults remain
-});
-```
-
-**Implementation with defaults**:
-
-```typescript
-interface GoogleCalendarOptions {
-  rateLimit?: number;        // Default: 10 req/sec
-  retryAttempts?: number;    // Default: 3
-  retryDelay?: number;       // Default: 1000ms
-  timeout?: number;          // Default: 30000ms
-}
-
-class GoogleCalendarClient {
-  private options: Required<GoogleCalendarOptions>;
-
-  constructor(
-    private credentials: Credentials,
-    options: GoogleCalendarOptions = {}
-  ) {
-    // Apply defaults
-    this.options = {
-      rateLimit: options.rateLimit ?? 10,
-      retryAttempts: options.retryAttempts ?? 3,
-      retryDelay: options.retryDelay ?? 1000,
-      timeout: options.timeout ?? 30000
-    };
-  }
-}
-```
-
-**Agent benefit**: Can use API immediately without researching all options.
-
-**Document defaults in code**:
-
-```typescript
-/**
- * Google Calendar API client with automatic rate limiting and retries.
- *
- * Default configuration:
- * - Rate limit: 10 requests/second (Google's limit)
- * - Retry attempts: 3 (exponential backoff)
- * - Timeout: 30 seconds
- *
- * @example
- * // Use defaults
- * const client = new GoogleCalendarClient(credentials);
- *
- * @example
- * // Override specific options
- * const client = new GoogleCalendarClient(credentials, {
- *   timeout: 60000  // 60 second timeout for slow connections
- * });
- */
-```
-
----
-
-### 9.18.11 Decision Matrix & Implementation Checklist
-
-#### When to Optimize for Agents vs Humans
-
-Not all code needs agent optimization. Use this decision matrix:
-
-| Factor | Optimize for Agents | Optimize for Humans |
-|--------|---------------------|-------------------|
-| **Code churn** | High (>5 edits/month) | Low (<2 edits/month) |
-| **Team usage** | >50% commits by agents | <30% commits by agents |
-| **Complexity** | Business logic, APIs | Infrastructure, DevOps |
-| **Project phase** | Greenfield, active development | Stable, maintenance mode |
-| **File size** | >500 lines | <300 lines |
-| **Team size** | >5 developers | Solo or pair |
-
-**✅ High ROI for agent optimization**:
-
-- Core business logic files (e.g., `order-service.ts`, `payment-processor.ts`)
-- Frequently modified features (e.g., UI components, API routes)
-- Complex domains requiring context (e.g., healthcare, finance, legal)
-- Greenfield projects (design agent-friendly from start)
-
-**❌ Low ROI for agent optimization**:
-
-- Stable infrastructure code (rarely modified)
-- Small utility functions (<50 lines, self-evident)
-- DevOps scripts (agents rarely touch these)
-- Legacy code in maintenance mode (refactoring cost > benefit)
-
-#### Agent-Friendly Codebase Checklist
-
-Use this checklist to assess your codebase's agent-friendliness:
-
-**Domain Knowledge** (Score: ___ / 5)
-
-- [ ] CLAUDE.md exists with business context, design principles, domain terms
-- [ ] Architecture Decision Records (ADRs) document key decisions
-- [ ] Code comments explain "why" (not just "what")
-- [ ] Cross-references link related modules
-- [ ] Directory READMEs explain module purpose
-
-**Discoverability** (Score: ___ / 6)
-
-- [ ] Files use complete terms (not abbreviations: `user` not `usr`)
-- [ ] Comments include synonyms (e.g., "member, subscriber, customer")
-- [ ] Functions have JSDoc tags (`@domain`, `@related`, `@external`)
-- [ ] README files in major directories
-- [ ] CLI tools have `--help` with examples
-- [ ] Embedded docs near code (not separate wiki)
-
-**Token Efficiency** (Score: ___ / 4)
-
-- [ ] Files under 500 lines (split larger files by concern)
-- [ ] Obvious comments removed (keep only valuable context)
-- [ ] Debug output controlled by verbose flags
-- [ ] Large generated files excluded via `.claudeignore`
-
-**Testing** (Score: ___ / 5)
-
-- [ ] Tests written manually (not delegated to agent)
-- [ ] TDD workflow for new features (test first, implement second)
-- [ ] E2E tests for UI features (Playwright or similar)
-- [ ] Test coverage >80% enforced in CI
-- [ ] Tests cover edge cases (not just happy path)
-
-**Conventions** (Score: ___ / 4)
-
-- [ ] Standard design patterns used (Singleton, Factory, Repository, etc.)
-- [ ] Mainstream frameworks (React, Express, etc.) preferred over custom
-- [ ] ADRs document custom patterns
-- [ ] "See also" comments reference similar patterns
-
-**Guardrails** (Score: ___ / 5)
-
-- [ ] Hooks validate code at pre-execution (layering, secrets, conventions)
-- [ ] CI enforces linting, type checking, tests
-- [ ] Test coverage thresholds in CI (e.g., 80%)
-- [ ] Architecture compliance checks (layering violations, etc.)
-- [ ] Human PR review required before merge
-
-**Usage Instructions** (Score: ___ / 4)
-
-- [ ] Functions have doc blocks with `@example` usage
-- [ ] Error conditions documented (`@throws`)
-- [ ] APIs have sensible defaults (minimal config required)
-- [ ] Context7 MCP used for fetching current docs
-
-**Total Score: ___ / 33**
-
-**Scoring**:
-
-- **25-33**: Excellent agent-friendliness
-- **18-24**: Good, some improvements possible
-- **10-17**: Fair, significant gaps exist
-- **<10**: Poor, major refactoring needed
-
-#### Quick Wins (Immediate Impact)
-
-Start with these high-impact, low-effort improvements:
-
-**1. Add CLAUDE.md** (30 minutes)
-
-```markdown
-# Project Context
-
-**Tech stack**: React, Express, PostgreSQL
-**Architecture**: 3-layer (controllers, services, repositories)
-**Conventions**: ESLint + Prettier, 80% test coverage required
-
-## Key Files
-
-- `src/services/` - Business logic (framework-agnostic)
-- `src/controllers/` - HTTP handlers (thin layer)
-- `src/repositories/` - Database access
-
-See ADR-011 for layering rules.
-```
-
-**2. Add directory READMEs** (15 minutes per directory)
-
-```markdown
-# Services Layer
-
-Business logic and domain operations. Services are framework-agnostic.
-
-**Rules**:
-- Call repositories for data access
-- Never import from controllers (layering violation)
-- Return domain objects (not HTTP responses)
-```
-
-**3. Add cross-references to hot files** (10 minutes per file)
-
-```typescript
-/**
- * Event service - core business logic for event management.
- *
- * Related:
- * - src/services/calendar-sync-service.ts (external calendar sync)
- * - src/repositories/event-repository.ts (data access)
- *
- * See ADR-007 for event deletion strategy.
- */
-```
-
-**4. Split one large file** (30 minutes)
-
-- Find file >500 lines
-- Split by concern (e.g., validation, sync, conflict resolution)
-- Add README in new directory
-
-**5. Enable test coverage in CI** (15 minutes)
-
-```yaml
-# .github/workflows/ci.yml
-- name: Run tests with coverage
-  run: npm test -- --coverage
-
-- name: Check coverage threshold
-  run: |
-    COVERAGE=$(npm test -- --coverage --json | jq '.coverage')
-    if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-      exit 1
-    fi
-```
-
-**Total time**: ~2 hours for foundational improvements.
-
-#### Resources
-
-**Primary source**:
-
-- [Agent Experience Best Practices](https://marmelab.com/blog/2026/01/21/agent-experience.html) by François Zaninotto (Marmelab)
-
-**Related frameworks**:
-
-- [Netlify AX (Agent Experience) Research](https://www.netlify.com/blog/agent-experience/) (2025)
-- [Speakeasy API Developer Experience Guide](https://docs.speakeasy.com/) (includes agent-friendly patterns)
-
-**Academic research**:
-
-- "Context Engineering for AI Agents" (ArXiv, June 2025)
-- "Agent-Oriented Software Engineering" (ArXiv, March 2025)
-- "Prompt Injection Prevention in Code Agents" (ArXiv, November 2024)
-
-**Cross-references in this guide**:
-
-- [CLAUDE.md patterns (3.1)](#31-claudemd-project-context)
-- [Hooks (6.2)](#62-hooks)
-- [CI/CD Integration (9.3)](#93-cicd-integration)
-- [Pitfalls (9.11)](#911-common-pitfalls--best-practices)
-- [Methodologies - TDD (9.14)](#914-development-methodologies)
-
----
-
-## 9.19 Permutation Frameworks
-
-**Reading time**: 10 minutes
-**Skill level**: Month 1+
-
-### The Problem: Single-Approach Thinking
-
-Most developers pick one approach and stick with it. But Claude Code's tooling supports systematic variation—testing multiple approaches to find the optimal solution.
-
-**Permutation Frameworks** formalize this: instead of hoping your first approach works, you systematically generate and evaluate variations.
-
-### What Is a Permutation Framework?
-
-A permutation framework defines **dimensions of variation** and lets Claude generate all meaningful combinations. Each dimension represents a design choice; each combination is a distinct implementation approach.
-
-```
-Dimension 1: Architecture    → [Monolith, Modular, Microservice]
-Dimension 2: State Mgmt      → [Server-side, Client-side, Hybrid]
-Dimension 3: Auth Strategy    → [JWT, Session, OAuth]
-
-Total permutations: 3 × 3 × 3 = 27 approaches
-Practical subset: 4-6 worth evaluating
-```
-
-### When to Use Permutation Frameworks
-
-| Scenario | Use Permutation? | Why |
-|----------|-----------------|-----|
-| New project architecture | ✅ Yes | Multiple valid approaches, high impact |
-| Component design with tradeoffs | ✅ Yes | Performance vs. readability vs. maintainability |
-| Migration strategy | ✅ Yes | Big-bang vs. strangler vs. parallel |
-| Bug fix with known root cause | ❌ No | One correct fix |
-| Styling changes | ❌ No | Low impact, subjective |
-| Performance optimization | ✅ Maybe | Profile first, then permute solutions |
-
-### Implementation: CLAUDE.md-Driven Permutations
-
-The key insight: use CLAUDE.md variations to generate consistent implementations across different approaches.
-
-#### Step 1: Define the Base Template
-
-```markdown
-# CLAUDE.md (base)
-
-## Project: [Project Name]
-## Permutation: {{VARIANT_NAME}}
-
-### Architecture
-{{ARCHITECTURE_PATTERN}}
-
-### State Management
-{{STATE_STRATEGY}}
-
-### Conventions
-- All implementations must include tests
-- Use the same data model across variants
-- Each variant in its own branch: `perm/{{VARIANT_NAME}}`
-```
-
-#### Step 2: Generate Variants
-
-```bash
-# Create variant branches with Claude
-claude -p "Create 4 CLAUDE.md variants for our dashboard project:
-1. 'server-heavy': Server components, minimal client JS, session auth
-2. 'spa-optimized': Client SPA, REST API, JWT auth
-3. 'hybrid-ssr': SSR with hydration, tRPC, session + JWT
-4. 'edge-first': Edge functions, client cache, token auth
-
-For each: create branch perm/<name>, write CLAUDE.md with filled template,
-scaffold the base structure. Same data model across all variants."
-```
-
-#### Step 3: Implement in Parallel
-
-```bash
-# Terminal 1
-git checkout perm/server-heavy
-claude "Implement the dashboard following CLAUDE.md conventions"
-
-# Terminal 2
-git checkout perm/spa-optimized
-claude "Implement the dashboard following CLAUDE.md conventions"
-
-# Terminal 3 (or sequential)
-git checkout perm/hybrid-ssr
-claude "Implement the dashboard following CLAUDE.md conventions"
-```
-
-#### Step 4: Evaluate with Sub-Agents
-
-```markdown
-User: Compare the 4 permutation branches. For each, evaluate:
-- Bundle size and load time
-- Code complexity (files, lines, dependencies)
-- Test coverage achievable
-- Maintenance burden estimate
-
-Create a comparison matrix and recommend the best approach
-for our team of 3 developers with moderate React experience.
-```
-
-### Practical Example: API Design Permutations
-
-```markdown
-# Permutation: REST vs GraphQL vs tRPC
-
-## Shared constraints (all variants)
-- Same database schema (PostgreSQL + Prisma)
-- Same auth (JWT)
-- Same business logic (services layer)
-
-## Variant A: REST
-- Express routes, OpenAPI spec
-- Separate validation layer (Zod)
-- Standard REST conventions (GET/POST/PUT/DELETE)
-
-## Variant B: GraphQL
-- Apollo Server, schema-first
-- Resolvers calling same services
-- Dataloader for N+1 prevention
-
-## Variant C: tRPC
-- Type-safe end-to-end
-- Shared types between client/server
-- Zod validation built-in
-```
-
-**Evaluation prompt**:
-
-```markdown
-User: I've implemented all 3 API variants. Now act as a reviewer:
-
-1. Run tests for each: which has better coverage?
-2. Count total lines of boilerplate vs business logic
-3. Measure type safety (any manual type assertions?)
-4. Rate developer experience for adding a new endpoint (1-5)
-
-Give me a decision matrix, not a recommendation.
-I'll decide based on our team context.
-```
-
-### Permutation Anti-Patterns
-
-| Anti-Pattern | Problem | Fix |
-|-------------|---------|-----|
-| Too many dimensions | Combinatorial explosion (3⁴ = 81) | Cap at 3 dimensions, 3-4 variants each |
-| No shared constraints | Variants aren't comparable | Define fixed elements first |
-| Permuting the trivial | Wasting tokens on style choices | Only permute architectural decisions |
-| No evaluation criteria | Can't pick a winner | Define scoring before generating variants |
-| Skipping implementation | Comparing on paper only | Build at least a skeleton for each |
-
-### Integration with Other Patterns
-
-**Permutation + Plan Mode**:
-
-```
-1. /plan → Define dimensions and constraints
-2. Generate CLAUDE.md variants
-3. /execute → Implement each variant
-4. /plan → Compare and decide
-```
-
-**Permutation + TDD**:
-
-```
-1. Write tests that ALL variants must pass (shared spec)
-2. Implement each variant against the same test suite
-3. The variant with cleanest implementation wins
-```
-
-**Permutation + Skeleton Projects**:
-
-```
-1. Start from same skeleton
-2. Branch per variant
-3. Each variant evolves the skeleton differently
-4. Compare which skeleton evolution is most maintainable
-```
-
-**Cross-references**:
-
-- Skeleton Projects workflow: See [Skeleton Projects Workflow](./workflows/skeleton-projects.md)
-- Plan Mode: See [§2.3 Plan Mode](#23-plan-mode)
-- TDD workflow: See [TDD with Claude](./workflows/tdd-with-claude.md)
-- Multi-Instance parallel execution: See [§9.17 Scaling Patterns](#917-scaling-patterns-multi-instance-workflows)
-
----
-
-## 9.20 Agent Teams (Multi-Agent Coordination)
-
-**Reading time**: 5 minutes (overview) | [Quick Start →](./workflows/agent-teams-quick-start.md) (8-10 min, practical) | [Full workflow guide →](./workflows/agent-teams.md) (~30 min, theory)
-**Skill level**: Month 2+ (Advanced)
-**Status**: ⚠️ Experimental (v2.1.32+, Opus 4.6 required)
-
-### What Are Agent Teams?
-
-**Agent teams** enable multiple Claude instances to work in parallel on a shared codebase, coordinating autonomously without human intervention. One session acts as **team lead** to break down tasks and synthesize findings from **teammate** sessions.
-
-**Key difference from Multi-Instance** (§9.17):
-
-- **Multi-Instance** = You manually orchestrate separate Claude sessions (independent projects, no shared state)
-- **Agent Teams** = Claude manages coordination automatically (shared codebase, git-based communication)
-
-```
-Setup:
-export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-claude
-
-OR in ~/.claude/settings.json:
-{
-  "experimental": {
-    "agentTeams": true
-  }
-}
-```
-
-### When Introduced & Production Validation
-
-**Version**: v2.1.32 (2026-02-05) as research preview
-**Model requirement**: Opus 4.6 minimum
-
-**Production metrics** (validated cases):
-
-- **Fountain** (workforce management): 50% faster screening, 2x conversions
-- **CRED** (15M users, financial services): 2x execution speed
-- **Anthropic Research**: Autonomous C compiler completion (no human intervention)
-
-Source: [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf), [Anthropic Engineering Blog](https://www.anthropic.com/engineering/building-c-compiler)
-
-### Architecture Quick View
-
-```
-Team Lead (Main Session)
-    ├─ Breaks tasks into subtasks
-    ├─ Spawns teammate sessions (each with 1M token context)
-    └─ Synthesizes findings from all agents
-         │
-         ├─ Teammate 1: Task A (independent context)
-         └─ Teammate 2: Task B (independent context)
-
-Coordination: Git-based (task locking, continuous merge, conflict resolution)
-Navigation: Shift+Down to cycle through teammates, or tmux panes
-```
-
-### Teams vs Multi-Instance vs Dual-Instance
-
-| Pattern | Coordination | Best For | Cost | Setup |
-|---------|--------------|----------|------|-------|
-| **Agent Teams** | Automatic (git-based) | Read-heavy tasks needing coordination | High (3x+) | Experimental flag |
-| **Multi-Instance** ([§9.17](#917-scaling-patterns-multi-instance-workflows)) | Manual (human) | Independent parallel tasks | Medium (2x) | Multiple terminals |
-| **Dual-Instance** | Manual (human) | Quality assurance (plan-execute) | Medium (2x) | 2 terminals |
-
-### Use Cases That Work Well
-
-**✅ Excellent fit** (read-heavy, clear boundaries):
-
-1. **Multi-layer code review**: Security scope + API scope + Frontend scope (Fountain: 50% faster)
-2. **Parallel hypothesis testing**: Debug by testing 3 theories simultaneously
-3. **Large-scale refactoring**: 47+ files across layers with clear interfaces
-4. **Full codebase analysis**: Architecture review, pattern detection
-
-**❌ Poor fit** (avoid these):
-
-- Simple tasks (<5 files affected) — coordination overhead not justified
-- Write-heavy tasks (many shared file modifications) — merge conflict risks
-- Sequential dependencies — no parallelization benefit
-- Budget-constrained projects — 3x token cost multiplier
-
-### Quick Example: Multi-Layer Code Review
-
-```markdown
-Prompt:
-"Review this PR comprehensively using agent teams with scope-focused analysis:
-- Security Scope: Check for vulnerabilities, auth issues, data exposure (context: auth, validation code)
-- API Design Scope: Review endpoint design, validation, error handling (context: API routes, controllers)
-- Frontend Scope: Check UI patterns, accessibility, performance (context: components, styles)
-
-PR: https://github.com/company/repo/pull/123"
-
-Result:
-Team lead spawns 3 scope-focused agents → Each analyzes their scope in parallel →
-Team lead synthesizes findings → Comprehensive review in 1/3 the time
-```
-
-### Critical Limitations
-
-**Read-heavy > Write-heavy trade-off**:
-
-```
-✅ Good: Code review (agents read, analyze, report)
-✅ Good: Bug tracing (agents read logs, trace execution)
-✅ Good: Architecture analysis (agents read structure)
-
-⚠️ Risky: Refactoring shared types (merge conflicts)
-⚠️ Risky: Database schema changes (coordinated migrations)
-❌ Bad: Same file modified by multiple agents (conflict hell)
-```
-
-**Mitigation**: Assign non-overlapping file sets, use interface-first approach, define contracts before parallel work.
-
-**Token intensity**: 3x+ cost multiplier (3 agents = 3 model inferences). Only justified when time saved > cost increase.
-
-**Experimental status**: No stability guarantee, bugs expected, feature may change. Report issues to [Anthropic GitHub](https://github.com/anthropics/claude-code/issues).
-
-### Decision Tree: When to Use Agent Teams
-
-```
-Is task simple (<5 files)? ──YES──> Single agent
-    │
-    NO
-    │
-Tasks completely independent? ──YES──> Multi-Instance (§9.17)
-    │
-    NO
-    │
-Need quality assurance split? ──YES──> Dual-Instance
-    │
-    NO
-    │
-Read-heavy (analysis, review)? ──YES──> Agent Teams ✓
-    │
-    NO
-    │
-Write-heavy (many file mods)? ──YES──> Single agent
-    │
-    NO
-    │
-Budget-constrained? ──YES──> Single agent
-    │
-    NO
-    │
-Complex coordination needed? ──YES──> Agent Teams ✓
-                            ──NO──> Single agent
-```
-
-### Swarm vs Sequential Coordination
-
-Two distinct coordination patterns exist for multi-agent review, and the choice matters:
-
-| Dimension | Sequential Specialists | Swarm Mode |
-|-----------|----------------------|------------|
-| **Structure** | Predefined lead + members | Ad-hoc, no hierarchy |
-| **Coordination** | Lead assigns tasks, synthesizes | Each reviewer works independently |
-| **Leadership** | Team lead orchestrates | Human synthesizes findings |
-| **Task assignment** | Lead delegates to specific agents | All relevant agents get the same input |
-| **Best for** | Tasks with dependencies between reviewers | Independent review, final pre-merge pass |
-| **When to use** | Complex workflows, state needs sharing | PR review, unfamiliar codebase, thoroughness |
-
-**Swarm Mode in practice** (Every.to compound-engineering pattern):
-
-Launch all relevant specialist reviewers in parallel against the same diff or PR, with no coordination between them. Each produces independent findings. You read all findings and decide what to act on.
-
-```bash
-# Swarm: all reviewers see the same input, report independently
-/workflows:review --swarm   # Every.to compound-engineering command
-```
-
-This is distinct from Agent Teams: there is no persistent team structure, no shared context between agents, no lead synthesizing in real time. It is faster to set up and appropriate when thoroughness matters more than coordination.
-
-**Rule of thumb**: Use Agent Teams for workflows with sequential dependencies (agent A's output feeds agent B). Use Swarm when each reviewer can work from the same starting point and you want maximum coverage with minimum setup overhead.
-
-### Practitioner Testimonial
-
-**Paul Rayner** (CEO Virtual Genius, EventStorming Handbook author):
-
-> "Running 3 concurrent agent team sessions across separate terminals. Pretty impressive compared to previous multi-terminal workflows without coordination."
-
-**Workflows used** (Feb 2026):
-
-1. Job search app: Design research + bug fixing
-2. Business ops: Operating system + conference planning
-3. Infrastructure: Playwright MCP + beads framework management
-
-Source: [Paul Rayner LinkedIn](https://www.linkedin.com/posts/thepaulrayner_this-is-wild-i-just-upgraded-claude-code-activity-7425635159678414850-MNyv)
-
-### Navigation Between Agents
-
-**Built-in controls**:
-
-- **Shift+Down**: Cycle through active teammates (in-process mode)
-- **tmux**: Use tmux commands if in tmux session
-- **Direct takeover**: Take control of any agent's work mid-execution
-
-**Monitoring**: Each agent reports progress, team lead synthesizes when all complete.
-
-### Full Documentation
-
-This section is a quick overview. For complete guide:
-
-- **[Agent Teams Workflow](./workflows/agent-teams.md)** (~30 min, 10 sections)
-  - Architecture deep-dive (team lead, teammates, git coordination)
-  - Setup instructions (2 methods)
-  - 5 production use cases with metrics
-  - Workflow impact analysis (before/after)
-  - Limitations & gotchas (read/write trade-offs)
-  - Decision framework (Teams vs Multi-Instance vs Beads)
-  - Best practices, troubleshooting
-
-**Related patterns**:
-
-- [§9.17 Multi-Instance Workflows](#917-scaling-patterns-multi-instance-workflows) — Manual parallel coordination
-- [§4.3 Sub-Agents](#43-sub-agents) — Single-agent task delegation
-- [AI Ecosystem: Beads Framework](./ecosystem/ai-ecosystem.md) — Alternative orchestration (Gas Town)
-
-**Official sources**:
-
-- [Introducing Claude Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) (Anthropic, Feb 2026)
-- [Building a C compiler with agent teams](https://www.anthropic.com/engineering/building-c-compiler) (Anthropic Engineering, Feb 2026)
-- [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) (Anthropic, Jan 2026)
-
----
-
-## 9.21 Legacy Codebase Modernization
-
-> **Context**: In February 2026, Anthropic published a [COBOL modernization playbook](https://claude.com/blog/how-ai-helps-break-cost-barrier-cobol-modernization) positioning Claude Code as a direct replacement for legacy consulting teams. The same day, IBM stock dropped -13% (its worst single-day performance since October 2000). The workflow described is validated by independent research — it applies to any large legacy codebase (COBOL, Fortran, VB6, PL/I), not just COBOL.
-
-### Why Legacy Modernization Is Hard
-
-The real cost isn't the migration itself — it's the **discovery phase**. Original developers have retired. Documentation is absent or wrong. Code has been patched for decades by engineers who never understood the full system. Finding what talks to what requires consultants billing by the hour.
-
-AI changes the economics by automating this exact phase.
-
-**COBOL context** (for scale reference):
-
-- ~220 billion lines of COBOL still in production (IBM estimate)
-- ~95% of US ATM transactions run on COBOL-based systems (Reuters/industry consensus — methodology varies by source)
-- Modernization previously required multi-year, multi-team projects
-
-### The 4-Step Workflow
-
-**Independent validation**: Academic research (WJAETS 2025) shows -25 to -30% timeline reduction on average. Best-case: Airbnb migrated 3,500 test files in 6 weeks vs. an estimated 1.5 years. COBOL→Java accuracy: 93% in controlled studies (arXiv, April 2025).
-
----
-
-**Step 1 — Automated Exploration & Discovery**
-
-```
-Map the entire codebase:
-- Identify all program entry points and execution paths
-- Trace subroutine calls across hundreds of files
-- Document implicit dependencies via shared files, databases, and global state
-- Generate a dependency graph before touching a single line
-```
-
-> Prompt pattern:
-> ```
-> "Read the entire [COBOL/legacy] codebase. Map its structure:
->  entry points, execution paths, subroutine call chains,
->  and any implicit dependencies via shared data structures,
->  global variables, or file I/O. Output a dependency map."
-> ```
-
----
-
-**Step 2 — Risk Analysis & Opportunity Mapping**
-
-```
-With the dependency map in hand:
-- Assess coupling levels between modules (high coupling = high risk)
-- Surface isolated components as safe modernization candidates
-- Identify duplicated logic and dead code
-- Flag shared state as the highest-risk zones
-```
-
-> Prompt pattern:
-> ```
-> "Based on the dependency map: rank modules by coupling level.
->  Which components can be modernized in isolation?
->  Which share state with 3+ other modules and should be touched last?"
-> ```
-
----
-
-**Step 3 — Strategic Planning**
-
-```
-Human + AI collaboration:
-- AI suggests prioritization based on risk/dependency analysis
-- Team reviews against business priorities (what breaks = most expensive)
-- Define target architecture and code standards
-- Design function-level tests for validation before migration begins
-```
-
-> This phase is **not fully automatable** — business context requires human judgment.
-> Hybrid human-AI workflows show 31% higher completion rates within initial time estimates
-> vs. purely automated approaches (WJAETS 2025).
-
----
-
-**Step 4 — Incremental Implementation**
-
-```
-Never migrate the whole system at once:
-- Translate logic component by component
-- Create API wrappers for legacy components still in use
-- Run old and new code side-by-side in production
-- Validate each component independently before proceeding to the next
-```
-
-> Prompt pattern:
-> ```
-> "Translate [module X] to [target language].
->  Preserve exact business logic — no optimization yet.
->  Add a compatibility wrapper so both versions can run in parallel.
->  Write tests that verify identical outputs for identical inputs."
-> ```
-
----
-
-### Key Principles
-
-| Principle | Why it matters |
-|-----------|----------------|
-| **Map before touching** | Blind migrations fail; discovery first |
-| **Isolate before migrating** | High-coupling modules = cascade failures |
-| **Parallel run** | Rollback possible only if both versions coexist |
-| **Test at boundary** | Test inputs/outputs, not internal logic (which will change) |
-| **Human review on business logic** | AI doesn't know which edge case is regulatory vs. dead code |
-
-### Realistic Expectations
-
-"Years to quarters" is real — but it's the **optimistic scenario**, not the average:
-
-| Scenario | Timeline reduction | Source |
-|----------|-------------------|--------|
-| Conservative estimate | -25 to -30% | WJAETS 2025 academic review |
-| Automation-heavy phases | -40 to -50% | Fullstack Labs industry synthesis |
-| Best-case (test migration) | -88% (6 weeks vs 1.5 yr) | Airbnb case study |
-| COBOL→Java conversion accuracy | 93% | arXiv, April 2025 |
-
-The average gains are real and significant. The headline numbers require favorable conditions: good test coverage, isolated modules, and a team that understands both the legacy system and the target stack.
-
-### Anti-Patterns
-
-- **❌ Big bang migration** — Rewriting everything at once. No company has survived this at scale.
-- **❌ No parallel run** — Cutting over without a fallback. One undiscovered edge case = production outage.
-- **❌ Skipping discovery** — Starting to translate before mapping. You will break things you didn't know existed.
-- **❌ Trusting AI on business logic** — AI translates faithfully what it reads. If the original was wrong or context-dependent, the translation will be too.
-
-### Resources
-
-- [Anthropic COBOL Modernization Playbook](https://claude.com/blog/how-ai-helps-break-cost-barrier-cobol-modernization) (Feb 2026)
-- [AI-Driven Legacy Systems Modernization: COBOL to Java](https://arxiv.org/abs/2504.11335) (arXiv, April 2025)
-- [AWS EKS COBOL Modernization Case Study](https://aws.amazon.com/blogs/apn/modernize-cobol-workloads-with-amazon-eks-powered-by-generative-ai/) (July 2025)
-
----
-
-## 9.22 Remote Control (Mobile Access)
-
-**Reading time**: 7 minutes
-**Skill level**: Week 2+
-**Status**: Research Preview (as of February 2026)
-**Availability**: Pro and Max plans only — not available on Team, Enterprise, or API keys
-
-Remote Control lets you monitor and control a local Claude Code session from a phone, tablet, or web browser — without migrating anything to the cloud. Your terminal keeps running locally; the mobile/web interface is a remote window onto that session.
-
-> **Key difference from Session Teleportation (§9.16)**: Teleportation *migrates* a session (web → local). Remote Control *mirrors* a local session to a remote viewer. Execution always stays on your local machine.
-
-### How It Works
-
-```
-Local terminal (running claude)
-        │
-        │ HTTPS outbound only (no inbound ports)
-        ▼
-   Anthropic relay
-        │
-        ▼
-Phone / tablet / browser (claude.ai/code or Claude app)
-```
-
-- **Execution**: 100% local — your terminal does all the work
-- **Security**: HTTPS outbound only, zero inbound ports, short-lived scoped credentials
-- **What you can do remotely**: Send messages, approve/deny tool calls, read responses
-
-### Setup
-
-**Requirements:**
-
-- Claude Code v2.1.51+
-- Active Pro or Max subscription (not Team/Enterprise)
-- Logged in (`/login`)### Two Ways to Start
-
-**Option A — From the command line (start a new session):**
+**方式 A — 从命令行启动（开启新会话）：**
 
 ```bash
 claude remote-control
 
-# Optional flags:
-#   --verbose    Show detailed connection logs
-#   --sandbox    Restrict to sandbox mode
+# 可选参数：
+#   --verbose    显示详细连接日志
+#   --sandbox    限制为沙箱模式
 ```
 
-**Option B — From inside an active session:**
+**方式 B — 在活跃会话内启动：**
 
 ```
 /remote-control
 
-# or the shorter alias:
+# 或使用简短别名：
 /rc
 ```
 
-### Connecting from Your Device
+### 从你的设备连接
 
-Once started, Claude Code displays:
+启动后，Claude Code 会显示：
 
-1. A **session URL** (open in any browser)
-2. Press **spacebar** to show a **QR code** (scan with your phone)
-3. Or open the **Claude app** (iOS / Android) — your active session appears automatically
+1. 一个**会话 URL**（可在任意浏览器中打开）
+2. 按**空格键**显示**二维码**（用手机扫描）
+3. 或打开 **Claude 应用**（iOS / Android）——你的活跃会话会自动出现
 
-To enable remote control on every session by default:
-
-```
-/config   → toggle "Remote Control: auto-enable"
-```
-
-### Download the Mobile App
+若要默认在每次会话中启用远程控制：
 
 ```
-/mobile   # Shows App Store + Google Play download links
+/config   → 切换"Remote Control: auto-enable"
 ```
 
-### Known Limitations (Research Preview)
+### 下载移动端应用
 
-| Limitation | Detail |
-|------------|--------|
-| **1 session at a time** | Only one active remote control session |
-| **Terminal must stay open** | Closing the local terminal ends the session |
-| **Network timeout** | ~10 min before session expires on disconnect |
-| **Slash commands don't work remotely** | `/new`, `/compact`, etc. are treated as plain text in the remote UI |
-| **Pro/Max only** | Not available on Team, Enterprise, or API keys |
+```
+/mobile   # 显示 App Store 和 Google Play 下载链接
+```
 
-> **⚠️ Slash commands limitation**: When you type `/new`, `/compact`, or any slash command in the remote interface (mobile app or browser), they are treated as plain text messages — not forwarded as commands to the local CLI. Use slash commands from your local terminal instead.
+### 已知限制（研究预览版）
 
-### Advanced Patterns (Community-Validated)
+| 限制 | 详情 |
+|------|------|
+| **同时只能有 1 个会话** | 只允许一个活跃的远程控制会话 |
+| **终端必须保持打开** | 关闭本地终端会结束会话 |
+| **网络超时** | 断开连接后约 10 分钟会话过期 |
+| **斜杠命令在远程端无效** | `/new`、`/compact` 等命令在远程 UI 中会被当作普通文本处理 |
+| **仅限 Pro/Max** | Team、Enterprise 或 API Key 用户不可用 |
 
-#### Multi-Session via tmux (Workaround for 1-Session Limit)
+> **⚠️ 斜杠命令限制**：在远程界面（移动应用或浏览器）中输入 `/new`、`/compact` 或其他斜杠命令时，它们会被当作普通文本消息处理，而不会作为命令转发给本地 CLI。请在本地终端中使用斜杠命令。
+
+### 进阶模式（社区验证）
+
+#### 通过 tmux 实现多会话（突破单会话限制的变通方案）
 
 ```bash
-# Start a tmux session with multiple panes
+# 启动一个包含多个窗格的 tmux 会话
 tmux new-session -s dev
 
-# Each tmux pane can run its own claude session:
-# Pane 1: claude → run /rc → share URL with your phone
-# Pane 2: claude (local only)
-# Pane 3: claude (local only)
+# 每个 tmux 窗格可以运行独立的 claude 会话：
+# 窗格 1：claude → 运行 /rc → 将 URL 分享给手机
+# 窗格 2：claude（仅本地）
+# 窗格 3：claude（仅本地）
 
-# To switch which session you're controlling remotely:
-# → Go to pane 2, run /rc (disconnects pane 1's remote, connects pane 2)
+# 若要切换远程控制的目标会话：
+# → 进入窗格 2，运行 /rc（断开窗格 1 的远程连接，连接窗格 2）
 ```
 
-Each tmux pane hosts its own Claude session. Only one can use remote-control at a time, but you can switch between sessions by running `/rc` in different panes.
+每个 tmux 窗格托管独立的 Claude 会话。同一时间只有一个会话可以使用远程控制，但你可以通过在不同窗格中运行 `/rc` 来切换控制目标。
 
-#### Persistent Server Architecture (VM/Cloud)
+#### 持久化服务器架构（虚拟机 / 云端）
 
-Remote Control works on remote machines (VMs, cloud servers) running in tmux:
+远程控制可在运行 tmux 的远程机器（虚拟机、云服务器）上使用：
 
 ```bash
-# On your cloud server (e.g., Clever Cloud, AWS, etc.):
+# 在你的云服务器上（例如 Clever Cloud、AWS 等）：
 tmux new-session -s claude-server
 claude remote-control
-# → Scan QR code from your phone
-# → Control a cloud-hosted Claude session from mobile
-# → Sessions survive laptop reboots (tmux keeps them alive)
+# → 用手机扫描二维码
+# → 从移动端控制云端托管的 Claude 会话
+# → 会话在笔记本重启后依然存活（tmux 保持进程运行）
 ```
 
-This gives you persistent sessions that survive closing your laptop. Combine 6-8 Claude sessions in tmux for continuous uninterrupted work while traveling.
+这样你就能获得持久化会话，即使关闭笔记本也不会中断。在 tmux 中组合 6–8 个 Claude 会话，出行途中也能持续不间断地工作。
 
-### Alternatives (Pre-Remote Control)
+### 替代方案（远程控制功能推出前）
 
-| Alternative | How it worked | Status |
-|-------------|---------------|--------|
-| [happy.engineering](https://happy.engineering) | Open-source remote access for Claude Code | Community-declared obsolete post-RC |
-| OpenClaw | Alternative Claude Code remote interface | Community-declared obsolete post-RC |
-| SSH + mobile terminal | SSH into dev machine, run claude | Still valid for Team/Enterprise users |
-| VS Code Remote | Remote SSH extension + Claude Code | Still valid, more complex setup |
+| 替代方案 | 工作原理 | 现状 |
+|----------|----------|------|
+| [happy.engineering](https://happy.engineering) | Claude Code 的开源远程访问方案 | 社区宣布在 RC 推出后已废弃 |
+| OpenClaw | 另一种 Claude Code 远程界面 | 社区宣布在 RC 推出后已废弃 |
+| SSH + 移动终端 | SSH 连接开发机，运行 claude | 对 Team/Enterprise 用户仍然有效 |
+| VS Code Remote | Remote SSH 扩展 + Claude Code | 仍然有效，但配置更复杂 |
 
-### Security Considerations
+### 安全注意事项
 
-> **Full threat model**: [Security Hardening Guide: Remote Control Security](./security/security-hardening.md#remote-control-security)
+> **完整威胁模型**：[安全加固指南：远程控制安全](./security/security-hardening.md#remote-control-security)
 
-**Quick summary:**
+**快速摘要：**
 
-- The session URL is a **live access key** — treat it like a password
-- Anyone with the URL can send commands to your local Claude session while active
-- Short-lived credentials + HTTPS outbound-only limits the exposure window
-- Per-command approval prompts on mobile guard against accidental execution (not against active attackers)
-- **Not recommended** on shared or untrusted workstations
-- Corporate machines: verify your security policy even on personal Pro/Max accounts
+- 会话 URL 是一把**实时访问密钥**——像对待密码一样保管它
+- 任何持有该 URL 的人，在会话活跃期间都可以向你的本地 Claude 会话发送命令
+- 短期凭证 + 仅限 HTTPS 出站，缩小了暴露窗口
+- 移动端的逐命令审批提示可防止误操作（但无法抵御主动攻击者）
+- **不建议**在共享或不受信任的工作站上使用
+- 企业机器：即使使用个人 Pro/Max 账户，也请先确认你的安全策略
 
-### Troubleshooting
+### 故障排查
 
-| Issue | Solution |
-|-------|----------|
-| Session not appearing in Claude app | Known bug (Research Preview) — use `claude.ai/code` in Safari instead (see below) |
-| QR code opens app but session not visible | Known bug on iOS — scan with native camera app, open in Safari rather than Claude app |
-| QR code not showing | Press spacebar after starting remote-control |
-| Slash commands not working | Type them in your local terminal instead |
-| Session expired | Reconnect: run `/rc` again |
-| Corporate firewall blocking | HTTPS outbound (port 443) must be allowed |
-| "Not available" error | Verify Pro or Max subscription (not Team/Enterprise) |
+| 问题 | 解决方案 |
+|------|----------|
+| 会话未出现在 Claude 应用中 | 已知 Bug（研究预览版）——改用 Safari 打开 `claude.ai/code`（见下文） |
+| 扫描二维码打开了应用但会话不可见 | iOS 已知 Bug——用系统相机扫码，在 Safari 中打开而非 Claude 应用 |
+| 二维码未显示 | 启动远程控制后按空格键 |
+| 斜杠命令无效 | 改在本地终端中输入 |
+| 会话已过期 | 重新连接：再次运行 `/rc` |
+| 企业防火墙拦截 | 必须允许 HTTPS 出站（端口 443） |
+| 出现"不可用"错误 | 确认订阅为 Pro 或 Max（非 Team/Enterprise） |
 
-> **Known bug (Research Preview, March 2026)**: On iOS (confirmed iPhone), scanning the QR code opens the Claude app but the remote session doesn't appear in the session list. The bug also affects automatic session discovery in the Claude mobile app. MacStories confirmed this is inconsistent on non-local machines.
+> **已知 Bug（研究预览版，2026 年 3 月）**：在 iOS（已确认 iPhone）上，扫描二维码会打开 Claude 应用，但远程会话不会出现在会话列表中。该 Bug 同样影响 Claude 移动应用的自动会话发现功能。MacStories 确认此问题在非本地机器上表现不一致。
 >
-> **Most reliable workaround**: open `claude.ai/code` in Safari on your phone — your active session appears in the list there. Alternatively, copy the session URL from the terminal and paste it directly in Safari. Both paths bypass the app's sync bug entirely.
+> **最可靠的变通方案**：在手机上用 Safari 打开 `claude.ai/code`——你的活跃会话会出现在列表中。或者，从终端复制会话 URL，直接粘贴到 Safari 中。两种方式都能完全绕过应用的同步 Bug。
 
-### Evolution Timeline
+### 演进时间线
 
-| Version | Feature |
-|---------|---------|
-| **2.1.51** | Initial Remote Control feature (Research Preview) |
-| **2.1.53** | Stability improvements and bug fixes |
-
----
-
-## 🎯 Section 9 Recap: Pattern Mastery Checklist
-
-Before moving to Section 10 (Reference), verify you understand:
-
-**Core Patterns**:
-
-- [ ] **Trinity Pattern**: Plan Mode → Extended Thinking → Sequential MCP for critical work
-- [ ] **Composition**: Agents + Skills + Hooks working together seamlessly
-- [ ] **CI/CD Integration**: Automated reviews and quality gates in pipelines
-- [ ] **IDE Integration**: VS Code + Claude Code = seamless development flow
-
-**Productivity Patterns**:
-
-- [ ] **Tight Feedback Loops**: Test-driven workflows with instant validation
-- [ ] **Todo as Instruction Mirrors**: Keep context aligned with reality
-- [ ] **Vibe Coding**: Skeleton → iterate → production-ready
-- [ ] **Batch Operations**: Process multiple files efficiently
-
-**Quality Awareness**:
-
-- [ ] **Common Pitfalls**: Understand security, performance, workflow mistakes
-- [ ] **Continuous Improvement**: Refine over multiple sessions with learning mindset
-- [ ] **Best Practices**: Do/Don't patterns for professional work
-- [ ] **Development Methodologies**: TDD, SDD, BDD, and other structured approaches
-- [ ] **Codebase Design for Agents**: Optimize code for agent productivity (domain knowledge, discoverability, testing)
-
-**Communication Patterns**:
-
-- [ ] **Named Prompting Patterns**: As If, Constraint, Explain First, Rubber Duck, Incremental, Boundary
-- [ ] **Mermaid Diagrams**: Generate visual documentation for architecture and flows
-
-**Advanced Workflows**:
-
-- [ ] **Session Teleportation**: Migrate sessions between cloud and local environments
-- [ ] **Remote Control**: Monitor/control local sessions from mobile or browser (Research Preview, Pro/Max)
-- [ ] **Background Tasks**: Run tasks in cloud while working locally (`%` prefix)
-- [ ] **Multi-Instance Scaling**: Understand when/how to orchestrate parallel Claude instances (advanced teams only)
-- [ ] **Agent Teams**: Multi-agent coordination for read-heavy tasks (experimental, Opus 4.6+)
-- [ ] **Permutation Frameworks**: Systematically test multiple approaches before committing
-- [ ] **Legacy Modernization**: 4-step workflow (Discovery → Risk → Planning → Incremental) for large legacy codebases
-
-### What's Next?
-
-**Section 10 is your command reference** — bookmark it for quick lookups during daily work.
-
-You've mastered the concepts and patterns. Now Section 10 gives you the technical reference for efficient execution.
+| 版本 | 功能 |
+|------|------|
+| **2.1.51** | 远程控制功能初始发布（研究预览版） |
+| **2.1.53** | 稳定性改进与 Bug 修复 |
 
 ---
 
-## 9.23 Configuration Lifecycle & The Update Loop
+## 🎯 第 9 章回顾：模式掌握清单
 
-**Reading time**: 8 minutes
-**Skill level**: Month 1+
+在进入第 10 章（参考手册）之前，确认你已理解以下内容：
 
-> **See also**: [§9.10 Continuous Improvement Mindset](#910-continuous-improvement-mindset) — the conceptual foundation for this section. §9.23 is the operational layer: detecting when to act, and how.
+**核心模式**：
 
-As your Claude Code setup matures — skills, agents, rules, CLAUDE.md — a silent failure mode emerges: **your configuration drifts away from how you actually work**. Skills accumulate assumptions that no longer hold. CLAUDE.md describes a codebase that has evolved. Rules cover edge cases that became the norm. The agent keeps making the same correctable mistakes because nothing captures what you learned last week.
+- [ ] **三位一体模式**：计划模式 → 扩展思考 → 顺序 MCP，用于关键工作
+- [ ] **组合能力**：智能体 + 技能 + 钩子无缝协作
+- [ ] **CI/CD 集成**：在流水线中实现自动化审查和质量门控
+- [ ] **IDE 集成**：VS Code + Claude Code = 流畅的开发体验
 
-This section covers how to detect that drift early and close the loop — turning session observations into concrete config improvements.
+**生产力模式**：
+
+- [ ] **紧密反馈循环**：测试驱动的工作流，即时验证
+- [ ] **Todo 作为指令镜像**：让上下文与现实保持同步
+- [ ] **凭感觉编程**：骨架 → 迭代 → 生产就绪
+- [ ] **批量操作**：高效处理多个文件
+
+**质量意识**：
+
+- [ ] **常见陷阱**：理解安全、性能和工作流方面的错误
+- [ ] **持续改进**：在多个会话中以学习心态不断精进
+- [ ] **最佳实践**：专业工作中的做与不做
+- [ ] **开发方法论**：TDD、SDD、BDD 及其他结构化方法
+- [ ] **面向智能体的代码库设计**：优化代码以提升智能体生产力（领域知识、可发现性、测试）
+
+**沟通模式**：
+
+- [ ] **命名提示词模式**：As If、约束、先解释、橡皮鸭、渐进式、边界
+- [ ] **Mermaid 图表**：为架构和流程生成可视化文档
+
+**高级工作流**：
+
+- [ ] **会话传送**：在云端与本地环境之间迁移会话
+- [ ] **远程控制**：从移动端或浏览器监控/控制本地会话（研究预览版，Pro/Max）
+- [ ] **后台任务**：在云端运行任务的同时在本地工作（`%` 前缀）
+- [ ] **多实例扩展**：了解何时以及如何编排并行 Claude 实例（仅限高级团队）
+- [ ] **智能体团队**：面向读密集型任务的多智能体协调（实验性，Opus 4.6+）
+- [ ] **排列组合框架**：在提交前系统性地测试多种方案
+- [ ] **遗留系统现代化**：针对大型遗留代码库的四步工作流（发现 → 风险 → 规划 → 渐进式迁移）
+
+### 下一步？
+
+**第 10 章是你的命令参考手册**——将它加入书签，日常工作中随时查阅。
+
+你已经掌握了概念和模式。第 10 章将为你提供高效执行所需的技术参考。
 
 ---
 
-### Why Configurations Go Stale
+## 9.23 配置生命周期与更新循环
 
-Staleness doesn't happen in one go. It accumulates from small gaps:
+**阅读时间**：8 分钟
+**适用阶段**：入门第 1 个月以上
 
-- A skill was written for a v1 API that's now v2 — the skill still "works" but generates code that needs manual fixing every time
-- CLAUDE.md has context that's 6 months old — the agent reasons from a mental model of the codebase that no longer exists
-- A rule was added for an edge case that's now the default pattern — it fires constantly and you've stopped reading its output
-- You've corrected the same mistake across 5 sessions — but nothing ever captured that correction as a rule
+> **另见**：[§9.10 持续改进心态](#910-continuous-improvement-mindset)——本节的概念基础。§9.23 是操作层面的内容：何时采取行动，以及如何行动。
 
-The signal is always there: you keep doing the same manual fixes. The work is identifying which fixes are worth encoding.
+随着你的 Claude Code 配置日趋成熟——技能、智能体、规则、CLAUDE.md——一种隐性的失效模式悄然浮现：**你的配置逐渐偏离了你实际的工作方式**。技能积累了不再成立的假设；CLAUDE.md 描述的是一个已经演进的代码库；规则覆盖的是已成为常态的边缘情况；智能体一再犯下同样可纠正的错误，因为上周学到的东西从未被记录下来。
+
+本节介绍如何尽早发现这种偏移并闭合循环——将会话中的观察转化为具体的配置改进。
 
 ---
 
-### Detecting Friction from Your JSONL Logs
+### 为什么配置会过时
 
-Your sessions are already logged (see [§Observability: Setting Up Session Logging](#setting-up-session-logging)). What's missing is reading them for **quality signals**, not just cost metrics.
+过时不是一蹴而就的，它由细小的缺口积累而成：
 
-Three patterns that reliably indicate a skill or rule needs updating:
+- 某个技能是为 v1 API 编写的，现在已是 v2——技能仍然"能用"，但每次都会生成需要手动修复的代码
+- CLAUDE.md 里的上下文已有 6 个月没更新——智能体基于一个早已不存在的代码库心智模型进行推理
+- 某条规则是为一个边缘情况添加的，而那个边缘情况现在已成为默认模式——它频繁触发，你早就不看它的输出了
+- 你在 5 个会话中纠正了同一个错误——但那个纠正从未被记录为规则
 
-| Pattern | Signal | Likely Cause |
-|---------|--------|--------------|
-| Same file read multiple times per session | Missing context | Content should move to CLAUDE.md or a skill |
-| Tool failure followed immediately by retry | Wrong assumption | A skill has an outdated command or path |
-| User correction immediately after assistant turn | Prompt gap | A skill or rule doesn't cover this case |
+信号始终存在：你一直在做同样的手动修复。关键在于识别哪些修复值得被编码。
 
-Run this script weekly against your session logs to surface these patterns:
+---
+
+### 从 JSONL 日志中发现摩擦点
+
+你的会话已经在记录日志（参见 [§可观测性：设置会话日志](#setting-up-session-logging)）。缺少的是从中读取**质量信号**，而不仅仅是成本指标。
+
+三种可靠指示技能或规则需要更新的模式：
+
+| 模式 | 信号 | 可能原因 |
+|------|------|----------|
+| 同一文件在一次会话中被多次读取 | 上下文缺失 | 内容应移入 CLAUDE.md 或某个技能 |
+| 工具失败后立即重试 | 假设有误 | 技能中存在过时的命令或路径 |
+| 智能体回复后用户立即纠正 | 提示词缺口 | 某个技能或规则未覆盖此情况 |
+
+每周对你的会话日志运行以下脚本，以浮现这些模式：
 
 ```bash
 #!/bin/bash
@@ -22494,23 +21679,23 @@ echo "→ For each friction point, ask: is there a skill, rule, or CLAUDE.md sec
 
 ---
 
-### Skills Lifecycle Management
+### 技能生命周期管理
 
-Skills accumulate. Without a lifecycle policy, you end up with 20+ skills where half are unused, two contradict each other, and none have version history.
+技能会不断积累。没有生命周期策略，你最终会拥有 20 多个技能，其中一半从未使用，两个互相矛盾，没有一个有版本历史。
 
-**When to create a skill:**
+**何时创建技能：**
 
-A task is worth encoding as a skill when you've done it manually 3+ times and the steps are stable enough to write down. If you're still figuring out the right approach, don't encode it yet — premature skills crystallize bad patterns.
+当你手动完成某项任务超过 3 次，且步骤已足够稳定可以写下来时，就值得将其编码为技能。如果你还在摸索正确的方法，先别急着编码——过早的技能会将糟糕的模式固化下来。
 
-**When to update a skill (patch):**
+**何时更新技能（补丁）：**
 
-- A command in the skill fails because an API or path changed
-- The output needs a small clarification you keep adding manually
-- You added a convention and the skill doesn't reflect it yet
+- 技能中的某个命令因 API 或路径变更而失败
+- 输出需要一个你每次都要手动补充的小说明
+- 你新增了一个约定，但技能尚未反映这一变化
 
-**When to version a skill (minor/major):**
+**何时对技能进行版本管理（次要/主要更新）：**
 
-Add a `version` field and `updated` date to your skill frontmatter:
+在技能的 frontmatter 中添加 `version` 字段和 `updated` 日期：
 
 ```yaml
 ---
@@ -22520,19 +21705,19 @@ breaking_since: null
 ---
 ```
 
-Use a simple policy:
+使用简单的策略：
 
-- **patch** (`x.x.Z`): rewording, clarification, examples added — no behavior change
-- **minor** (`x.Y.z`): new instructions, extended scope, new behavior opt-in
-- **major** (`X.y.z`): default behavior changes — annotate what broke and when in your CHANGELOG
+- **patch**（`x.x.Z`）：措辞调整、说明补充、添加示例——行为不变
+- **minor**（`x.Y.z`）：新增指令、扩展范围、新行为可选启用
+- **major**（`X.y.z`）：默认行为变更——在 CHANGELOG 中注明何处发生了破坏性变更及时间
 
-**When to deprecate a skill:**
+**何时废弃技能：**
 
-Add a `deprecated: true` flag and a note explaining what replaced it. Don't delete immediately — other skills or commands may reference it.
+添加 `deprecated: true` 标志，并附上说明其被何物替代的注释。不要立即删除——其他技能或命令可能仍在引用它。
 
-**CI staleness check — CLAUDE.md vs source modules:**
+**CI 过时检查——CLAUDE.md 与源模块的一致性：**
 
-If your CLAUDE.md is assembled from source modules (e.g., via a `pnpm ai:configure` pipeline), add a CI job to catch divergence before it causes silent failures:
+如果你的 CLAUDE.md 是从源模块组装而来（例如通过 `pnpm ai:configure` 流水线），可以添加一个 CI 任务，在静默失败发生之前捕获偏差：
 
 ```yaml
 # .github/workflows/ai-config-check.yml
@@ -22564,9 +21749,9 @@ jobs:
 
 ---
 
-### The Update Loop
+### 更新循环
 
-The update loop formalizes what you already do informally: something doesn't work well → you notice → you fix it. The difference is making the "notice" step systematic rather than accidental.
+更新循环将你已经在非正式地做的事情系统化：某件事效果不好 → 你注意到了 → 你修复它。区别在于让"注意到"这一步变得系统化，而非偶然发生。
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -22588,11 +21773,11 @@ The update loop formalizes what you already do informally: something doesn't wor
 └──────────────────────────────────────────────┘
 ```
 
-**The delta update principle:** when updating a skill or rule, make the smallest targeted edit that fixes the observed problem. Don't rewrite the whole skill — you'll lose what was working. One problem, one edit, one test.
+**增量更新原则：** 更新技能或规则时，做最小的针对性修改来解决观察到的问题。不要重写整个技能——你会丢失原本有效的部分。一个问题，一次修改，一次测试。
 
-**Integrating into `/tech:handoff`:**
+**集成到 `/tech:handoff`：**
 
-If you use a handoff command to persist session context, add a mandatory retrospective step before saving:
+如果你使用 handoff 命令来持久化会话上下文，在保存之前添加一个强制的回顾步骤：
 
 ```markdown
 # Append to your handoff command prompt
@@ -22605,9 +21790,9 @@ Before saving context, answer:
 Save conclusions via: write_memory("retro_[date]", your answers)
 ```
 
-**Canary testing a skill after update:**
+**更新后对技能进行金丝雀测试：**
 
-Before committing a skill change, verify it still produces the expected output on a known input:
+在提交技能变更之前，验证它在已知输入上仍能产生预期输出：
 
 ```bash
 # Example: test that typescript-aristote skill generates Zod validation
@@ -22617,46 +21802,46 @@ claude -p "Using the typescript-aristote skill: create a basic user tRPC router"
   || echo "❌ Canary failed — skill may have regressed"
 ```
 
-Run canary tests before merging skill changes, especially for skills that other agents depend on.
+在合并技能变更之前运行金丝雀测试，尤其是对其他智能体所依赖的技能。
 
 ---
 
-### Going Further
+### 进一步探索
 
-If you want to automate prompt optimization beyond the manual update loop, two frameworks are worth knowing:
+如果你想在手动更新循环之外实现提示词优化的自动化，有两个框架值得了解：
 
-**DSPy** (Stanford, open-source) — optimizes prompts programmatically given a metric and a set of examples. Requires 20+ labeled examples per skill for reliable results. Useful when you have a well-defined task and enough session history to build a dataset. [dspy.ai](https://dspy.ai)
+**DSPy**（斯坦福，开源）——在给定指标和示例集的情况下，以编程方式优化提示词。每个技能需要 20 个以上的标注样本才能获得可靠结果。适用于任务定义明确、且有足够会话历史来构建数据集的场景。[dspy.ai](https://dspy.ai)
 
-**TextGrad** — treats prompts as differentiable parameters and iterates using LLM-generated feedback as "gradients". Better for creative or domain-specific tasks where the evaluation is qualitative. [github.com/zou-group/textgrad](https://github.com/zou-group/textgrad)
+**TextGrad** ——将提示词视为可微分参数，使用 LLM 生成的反馈作为"梯度"进行迭代。更适合评估是定性的创意或领域特定任务。[github.com/zou-group/textgrad](https://github.com/zou-group/textgrad)
 
-Both require more setup than the manual loop above, and neither eliminates the need for human judgment on what to optimize. Start with the update loop and canary tests — they'll surface most of the value with a fraction of the overhead.
-
----
-
-**What's Next?**
-
-- [§9.10 Continuous Improvement Mindset](#910-continuous-improvement-mindset) — the decision framework for when to encode vs. accept as an edge case
-- [§Observability: Reading for Quality](#reading-for-quality-not-just-quantity) — qualitative JSONL analysis patterns
-- [§9.12 Git Best Practices](#912-git-best-practices--workflows) — version control for your config alongside your code
+两者都比上面的手动循环需要更多配置，也都无法消除人工判断"优化什么"的必要性。先从更新循环和金丝雀测试开始——它们能以极低的开销挖掘出大部分价值。
 
 ---
 
-## 9.24 Instinct-Based Continuous Learning
+**下一步？**
 
-**Reading time**: 6 minutes
-**Skill level**: Month 2+
+- [§9.10 持续改进心态](#910-continuous-improvement-mindset)——何时编码、何时接受为边缘情况的决策框架
+- [§可观测性：以质量为导向的阅读](#reading-for-quality-not-just-quantity)——定性 JSONL 分析模式
+- [§9.12 Git 最佳实践](#912-git-best-practices--workflows)——将配置与代码一起纳入版本控制
 
-> **Relationship to §9.23**: The Update Loop handles *deliberate* config maintenance — you notice drift, you fix it. Instinct-based learning handles *incidental* capture — useful observations you'd otherwise forget by end of session.
+---
 
-### The Problem with Manual Learning
+## 9.24 基于直觉的持续学习
 
-Standard session-end prompts ("what did you learn this session?") produce verbose summaries that rarely get acted on. The friction between "observation" and "encoded rule" is high enough that most corrections never make it back into your config.
+**阅读时间**：6 分钟
+**适用阶段**：入门第 2 个月以上
 
-What actually gets encoded: corrections you make twice, then a third time, until the repetition forces you to write a rule. That's too slow, and it only captures the painful patterns — not the useful ones.
+> **与 §9.23 的关系**：更新循环处理的是*刻意的*配置维护——你发现了偏移，你修复它。基于直觉的学习处理的是*偶发性的*捕获——那些你在会话结束前就会忘记的有用观察。
 
-### What Are Instincts?
+### 手动学习的问题
 
-**Instincts** are lightweight, low-commitment observations — candidate rules that haven't been validated yet. They sit below skills (stable, tested, promoted) and below memory (project context, decisions):
+标准的会话结束提示（"这次会话你学到了什么？"）会产生冗长的摘要，但很少被付诸行动。从"观察"到"编码为规则"之间的摩擦足够大，以至于大多数纠正从未回流到你的配置中。
+
+真正被编码的内容：你犯了两次、然后第三次的错误，直到重复迫使你写下一条规则。这太慢了，而且只能捕获痛苦的模式——而非有用的模式。
+
+### 什么是直觉？
+
+**直觉**是轻量级、低承诺的观察——尚未经过验证的候选规则。它们位于技能（稳定、经过测试、已晋升）和记忆（项目上下文、决策）之下：
 
 ```
 Session observation
@@ -22668,13 +21853,13 @@ Session observation
   Skill or CLAUDE.md rule (high confidence, 0.8+)
 ```
 
-Each instinct tracks: **content** (the observation), **confidence** (0.0–1.0, starts low and grows with confirmation), **source** (which session/context), and **decay** (confidence drops if not confirmed over time).
+每条直觉追踪：**内容**（观察本身）、**置信度**（0.0–1.0，从低开始随确认增长）、**来源**（哪个会话/上下文），以及**衰减**（若长期未被确认，置信度会下降）。
 
-### Capturing at the Right Moment
+### 在正确的时机捕获
 
-The key design choice: capture at the **Stop** hook, not at UserPromptSubmit.
+关键设计选择：在 **Stop** 钩子处捕获，而非在 UserPromptSubmit 处。
 
-**Why Stop, not UserPromptSubmit**: UserPromptSubmit runs before every message — adding extraction logic there adds latency to every interaction. Stop runs once when the session ends — zero impact on session speed, and the full session context is available for pattern extraction.
+**为什么选 Stop 而非 UserPromptSubmit**：UserPromptSubmit 在每条消息之前运行——在那里添加提取逻辑会给每次交互增加延迟。Stop 在会话结束时运行一次——对会话速度零影响，且完整的会话上下文可用于模式提取。
 
 ```bash
 #!/bin/bash
@@ -22703,9 +21888,9 @@ Format:
   >> "$INSTINCTS_FILE"
 ```
 
-### Promoting Instincts
+### 晋升直觉
 
-Instincts gain confidence through confirmation across different sessions. When one reaches high confidence, promote it to a concrete rule:
+直觉通过跨会话的确认积累置信度。当某条直觉达到高置信度时，将其晋升为具体规则：
 
 ```bash
 # View pending instincts
@@ -22716,149 +21901,149 @@ claude --print "Convert this instinct into a CLAUDE.md rule:
 $(grep -A3 'content: "your instinct text"' ~/.claude/instincts/pending.yaml)"
 ```
 
-The promotion step stays manual by design — you decide what gets encoded. The pipeline reduces the friction of *capturing* observations, not the friction of *validating* them.
+晋升步骤有意保持手动——由你决定什么被编码。这套流程降低的是*捕获*观察的摩擦，而非*验证*观察的摩擦。
 
-### Practical Setup
+### 实践配置
 
-1. Create `~/.claude/instincts/pending.yaml` (start empty)
-2. Add `capture-instincts.sh` as a Stop hook in `settings.json`
-3. Review weekly — 5 minutes maximum
-4. Promote 0–2 high-confidence instincts per week; delete the rest
+1. 创建 `~/.claude/instincts/pending.yaml`（初始为空）
+2. 在 `settings.json` 中将 `capture-instincts.sh` 添加为 Stop 钩子
+3. 每周回顾——最多 5 分钟
+4. 每周晋升 0–2 条高置信度直觉；删除其余的
 
-**What not to capture**: project-specific context (use memory), patterns you're already confident in (write the skill directly), one-off workarounds (let them go).
+**不值得捕获的内容**：项目特定的上下文（使用记忆）、你已经有把握的模式（直接写技能）、一次性的变通方案（放手让它去）。
 
-> **Credit**: Instinct-based learning pipeline and the Stop hook capture pattern from [Everything Claude Code v2](https://github.com/affaan-m/everything-claude-code) (Affaan Mustafa). The confidence scoring, decay model, and instinct → skill evolution pipeline are their original contribution.
+> **致谢**：基于直觉的学习流水线和 Stop 钩子捕获模式来自 [Everything Claude Code v2](https://github.com/affaan-m/everything-claude-code)（Affaan Mustafa）。置信度评分、衰减模型以及直觉 → 技能的演进流水线是其原创贡献。
 
-> **See also**: [§9.23 Configuration Lifecycle & The Update Loop](#923-configuration-lifecycle--the-update-loop) — deliberate maintenance vs. incidental capture
-
----
-
-# 10. Reference
-
-_Quick jump:_ [Commands Table](#101-commands-table) · [Keyboard Shortcuts](#102-keyboard-shortcuts) · [Configuration Reference](#103-configuration-reference) · [Troubleshooting](#104-troubleshooting) · [Cheatsheet](#105-cheatsheet) · [Daily Workflow](#106-daily-workflow--checklists)
+> **另见**：[§9.23 配置生命周期与更新循环](#923-configuration-lifecycle--the-update-loop)——刻意维护与偶发性捕获
 
 ---
 
-## 📌 Section 10 TL;DR (1 minute)
+# 10. 参考手册
 
-**What's inside**: Complete command reference, troubleshooting guides, and daily checklists.
-
-### Quick Navigation by Need:
-
-| I need to... | Go to |
-|--------------|-------|
-| Look up a command | [10.1 Commands Table](#101-commands-table) |
-| Find keyboard shortcut | [10.2 Keyboard Shortcuts](#102-keyboard-shortcuts) |
-| Configure settings | [10.3 Configuration Reference](#103-configuration-reference) |
-| Fix an error | [10.4 Troubleshooting](#104-troubleshooting) |
-| Quick daily reference | [10.5 Cheatsheet](#105-cheatsheet) |
-| Set up workflow | [10.6 Daily Workflow](#106-daily-workflow--checklists) |
-| **Copy ready-to-use templates** | **[examples/ directory](../examples/)** — Commands, hooks, agents |
-
-### Most Common Lookups:
-
-- **Context full?** → [10.4.1 Context Issues](#context-issues)
-- **MCP not working?** → [10.4.4 MCP Troubleshooting](#mcp-issues)
-- **Need clean reinstall?** → [10.4.3 Full Reinstall](#full-clean-reinstall-procedures)
-
-**Usage tip**: Bookmark this section — you'll reference it often.
+_快速跳转：_ [命令表](#101-commands-table) · [键盘快捷键](#102-keyboard-shortcuts) · [配置参考](#103-configuration-reference) · [故障排查](#104-troubleshooting) · [速查表](#105-cheatsheet) · [日常工作流](#106-daily-workflow--checklists)
 
 ---
 
-**Purpose**: Quick lookup for all Claude Code information
+## 📌 第 10 章 TL;DR（1 分钟）
 
-## 10.1 Commands Table
+**内容概览**：完整的命令参考、故障排查指南和日常清单。
 
-### Built-in Commands
+### 按需快速导航：
 
-| Command | Action | Category |
-|---------|--------|----------|
-| `/help` | Show all available commands | Navigation |
-| `/clear` | Clear conversation history | Session |
-| `/compact` | Summarize and compress context | Context |
-| `/status` | Show session info (context, cost) | Info |
-| `/usage` | Check rate limits and token allocation | Info |
-| `/stats` | View usage statistics with activity graphs | Info |
-| `/output-style` | **Deprecated** (Oct 2025) — use `/config` → "Preferred output style" instead (Default / Explanatory / Learning) | Display |
-| `/feedback` | Report bugs or send feedback to Anthropic | Support |
-| `/chrome` | Check Chrome connection, manage permissions | Mode |
-| `/config` | View and modify global settings | Config |
-| `/copy` | Copy last response to clipboard — interactive picker to select specific code blocks, or "Always copy full response" option (v2.1.59+) | Session |
-| `/debug` | Systematic troubleshooting and error investigation | Debug |
-| `/doctor` | Run diagnostics and troubleshooting checks | Debug |
-| `/execute` | Exit Plan Mode | Mode |
-| `/exit` | Exit Claude Code | Session |
-| `/fast` | Toggle fast mode (Opus 4.6, 2.5x faster, 6x price) | Mode |
-| `/hooks` | Interactive hook configuration | Config |
-| `/init` | Generate starter CLAUDE.md based on project structure — ⚠️ output is LLM-generated; review and prune before committing (ETH Zürich research shows auto-generated context files reduce agent task success by ~3% and add 20%+ inference cost) | Config |
-| `/login` | Log in to Claude account | Auth |
-| `/logout` | Log out and re-authenticate | Auth |
-| `/loop [interval] [prompt]` | Run a prompt or slash command on a recurring interval (e.g. `/loop 5m check the deploy`) — v2.1.71+ | Automation |
-| `/mcp` | Manage Model Context Protocol servers | Config |
-| `/memory` | View and edit auto-memory (context Claude automatically saved across sessions via MEMORY.md) — v2.1.59+ | Config |
-| `/mobile` | Show App Store and Google Play download links | Info |
-| `/model` | Change model (with left/right arrows for effort slider) | Mode |
-| `/permissions` | Configure permission allowlists | Config |
-| `/plan` | Enter Plan Mode | Mode |
-| `/plugin` | Browse and install Claude Code plugins | Config |
-| `/remote-control` (`/rc`) | Start remote control session (Pro/Max only) | Mode |
-| `/rename` | Give current session a descriptive name | Session |
-| `/resume` | Resume a previous session (from within a session) | Session |
-| `/rewind` | Open rewind menu to undo recent changes | Edit |
-| `/sandbox` | Enable OS-level isolation | Config |
-| `Ctrl+D` | Exit Claude Code | Session |
+| 我需要… | 前往 |
+|---------|------|
+| 查找命令 | [10.1 命令表](#101-commands-table) |
+| 查找键盘快捷键 | [10.2 键盘快捷键](#102-keyboard-shortcuts) |
+| 配置设置 | [10.3 配置参考](#103-configuration-reference) |
+| 修复错误 | [10.4 故障排查](#104-troubleshooting) |
+| 日常快速参考 | [10.5 速查表](#105-cheatsheet) |
+| 设置工作流 | [10.6 日常工作流](#106-daily-workflow--checklists) |
+| **复制即用模板** | **[examples/ 目录](../examples/)** — 命令、钩子、智能体 |
 
-### Quick Actions
+### 最常查找的内容：
 
-| Action | Shortcut |
-|--------|----------|
-| Run shell command | `!command` |
-| Reference file | `@filename` |
-| Cancel operation | `Ctrl+C` |
-| Search history | `Ctrl+R` |
-| Dismiss suggestion | `Esc` |
+- **上下文满了？** → [10.4.1 上下文问题](#context-issues)
+- **MCP 不工作？** → [10.4.4 MCP 故障排查](#mcp-issues)
+- **需要全新重装？** → [10.4.3 完整重装](#full-clean-reinstall-procedures)
 
-## 10.2 Keyboard Shortcuts
+**使用提示**：将本节加入书签——你会经常查阅它。
 
-### Session Control
+---
 
-| Shortcut | Action |
-|----------|--------|
-| `Enter` | Send message |
-| `Shift+Enter` | New line in message |
-| `Ctrl+C` | Cancel current operation |
-| `Ctrl+D` | Exit Claude Code |
-| `Ctrl+R` | Search command history |
-| `Ctrl+L` | Clear screen (keeps context) |
-| `Ctrl+B` | Run command in background |
-| `Esc` | Stop Claude mid-action (context preserved) |
-| `Esc×2` (double-tap) | Open rewind menu (same as `/rewind`) |
+**用途**：Claude Code 所有信息的快速查阅手册
 
-### Input & Navigation
+## 10.1 命令表
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+A` | Jump to beginning of line |
-| `Ctrl+E` | Jump to end of line |
-| `Ctrl+W` | Delete previous word |
-| `Ctrl+G` | Open plan in external text editor for editing |
-| `Tab` | Autocomplete file paths |
-| `↑` / `↓` | Navigate command history |
+### 内置命令
 
-### Mode & Model Toggles
+| 命令 | 功能 | 分类 |
+|------|------|------|
+| `/help` | 显示所有可用命令 | 导航 |
+| `/clear` | 清除对话历史 | 会话 |
+| `/compact` | 摘要并压缩上下文 | 上下文 |
+| `/status` | 显示会话信息（上下文、费用） | 信息 |
+| `/usage` | 查看速率限制和 Token 分配 | 信息 |
+| `/stats` | 查看带活动图表的使用统计 | 信息 |
+| `/output-style` | **已废弃**（2025 年 10 月）——改用 `/config` → "Preferred output style"（默认 / 解释性 / 学习模式） | 显示 |
+| `/feedback` | 向 Anthropic 报告 Bug 或发送反馈 | 支持 |
+| `/chrome` | 检查 Chrome 连接，管理权限 | 模式 |
+| `/config` | 查看和修改全局设置 | 配置 |
+| `/copy` | 将最后一条回复复制到剪贴板——交互式选择特定代码块，或选择"始终复制完整回复"（v2.1.59+） | 会话 |
+| `/debug` | 系统性故障排查和错误调查 | 调试 |
+| `/doctor` | 运行诊断和故障排查检查 | 调试 |
+| `/execute` | 退出计划模式 | 模式 |
+| `/exit` | 退出 Claude Code | 会话 |
+| `/fast` | 切换快速模式（Opus 4.6，速度提升 2.5 倍，价格提升 6 倍） | 模式 |
+| `/hooks` | 交互式钩子配置 | 配置 |
+| `/init` | 根据项目结构生成初始 CLAUDE.md——⚠️ 输出为 LLM 生成内容；提交前请审查并精简（苏黎世联邦理工学院研究表明，自动生成的上下文文件会使智能体任务成功率降低约 3%，并增加 20% 以上的推理成本） | 配置 |
+| `/login` | 登录 Claude 账户 | 认证 |
+| `/logout` | 退出登录并重新认证 | 认证 |
+| `/loop [interval] [prompt]` | 按循环间隔运行提示词或斜杠命令（例如 `/loop 5m check the deploy`）——v2.1.71+ | 自动化 |
+| `/mcp` | 管理 MCP 服务器 | 配置 |
+| `/memory` | 查看和编辑自动记忆（Claude 通过 MEMORY.md 跨会话自动保存的上下文）——v2.1.59+ | 配置 |
+| `/mobile` | 显示 App Store 和 Google Play 下载链接 | 信息 |
+| `/model` | 切换模型（用左右方向键调整努力程度滑块） | 模式 |
+| `/permissions` | 配置权限允许列表 | 配置 |
+| `/plan` | 进入计划模式 | 模式 |
+| `/plugin` | 浏览并安装 Claude Code 插件 | 配置 |
+| `/remote-control`（`/rc`） | 启动远程控制会话（仅限 Pro/Max） | 模式 |
+| `/rename` | 为当前会话命名 | 会话 |
+| `/resume` | 在会话内恢复之前的会话 | 会话 |
+| `/rewind` | 打开回退菜单以撤销最近的更改 | 编辑 |
+| `/sandbox` | 启用操作系统级隔离 | 配置 |
+| `Ctrl+D` | 退出 Claude Code | 会话 |
 
-| Shortcut | Action |
-|----------|--------|
-| `Alt+T` (`Option+T` on macOS) | Toggle thinking mode on/off |
-| `Ctrl+O` | View thinking blocks |
+### 快捷操作
 
-### Voice Input
+| 操作 | 快捷方式 |
+|------|----------|
+| 运行 Shell 命令 | `!command` |
+| 引用文件 | `@filename` |
+| 取消操作 | `Ctrl+C` |
+| 搜索历史 | `Ctrl+R` |
+| 关闭建议 | `Esc` |
 
-| Shortcut | Action |
-|----------|--------|
-| `Space` (hold) | Push-to-talk — hold to speak, release to send (default binding) |
+## 10.2 键盘快捷键
 
-**Rebinding**: The `voice:pushToTalk` binding is configurable in `~/.claude/keybindings.json` (v2.1.71+). Add a custom binding if Space conflicts with your workflow:
+### 会话控制
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Enter` | 发送消息 |
+| `Shift+Enter` | 在消息中换行 |
+| `Ctrl+C` | 取消当前操作 |
+| `Ctrl+D` | 退出 Claude Code |
+| `Ctrl+R` | 搜索命令历史 |
+| `Ctrl+L` | 清屏（保留上下文） |
+| `Ctrl+B` | 在后台运行��令 |
+| `Esc` | 中止 Claude 当前操作（保留上下文） |
+| `Esc×2`（双击） | 打开回退菜单（等同于 `/rewind`） |
+
+### 输入与导航
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl+A` | 跳到行首 |
+| `Ctrl+E` | 跳到行尾 |
+| `Ctrl+W` | 删除前一个单词 |
+| `Ctrl+G` | 在外部文本编辑器中打开计划进行编辑 |
+| `Tab` | 自动补全文件路径 |
+| `↑` / `↓` | 浏览命令历史 |
+
+### 模式与模型切换
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Alt+T`（macOS 上为 `Option+T`） | 切换思考模式开/关 |
+| `Ctrl+O` | 查看思考块 |
+
+### 语音输入
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Space`（长按） | 按住说话，松开发送（默认绑定） |
+
+**重新绑定**：`voice:pushToTalk` 绑定可在 `~/.claude/keybindings.json` 中配置（v2.1.71+）。如果空格键与你的工作流冲突，可添加自定义绑定：
 
 ```json
 {
@@ -22866,405 +22051,409 @@ _Quick jump:_ [Commands Table](#101-commands-table) · [Keyboard Shortcuts](#102
 }
 ```
 
-Toggle voice on/off with `/voice`. The push-to-talk binding only activates when voice mode is active.
+通过 `/voice` 切换语音模式开/关。按住说话的绑定仅在语音模式激活时有效。
 
-### Agent Teams Navigation
+### 智能体团队导航
 
-| Shortcut | Action |
-|----------|--------|
-| `Shift+Down` | Cycle through active teammates (in-process mode) |
-| `Ctrl+T` | Toggle task list visibility |
-| `Enter` | View selected teammate's session |
-| `Escape` | Interrupt current turn, return to prompt |
+| 快捷键 | 功能 |
+|--------|------|
+| `Shift+Down` | 在活跃队友之间循环切换（进程内模式） |
+| `Ctrl+T` | 切换任务列表可见性 |
+| `Enter` | 查看所选队友的会话 |
+| `Escape` | 中断当前轮次，返回提示符 |
 
-### Useful Flag Combinations
+### 实用参数组合
 
-| Flags | Purpose | Example |
-|-------|---------|---------|
-| `-c -p "msg"` | Resume session + single prompt | `claude -c -p "run tests"` |
-| `-r <id> -p` | Resume specific session + prompt | `claude -r abc123 -p "check status"` |
-| `-p -p` | Non-interactive automation | `claude -p -p "lint fix" < errors.txt` |
+| 参数 | 用途 | 示例 |
+|------|------|------|
+| `-c -p "msg"` | 恢复会话 + 单条提示词 | `claude -c -p "run tests"` |
+| `-r <id> -p` | 恢复指定会话 + 提示词 | `claude -r abc123 -p "check status"` |
+| `-p -p` | 非交互式自动化 | `claude -p -p "lint fix" < errors.txt` |
 
-> **Note**: Combine resume flags with `-p` for scripting and CI/CD workflows.
+> **注意**：将恢复参数与 `-p` 组合，可用于脚本和 CI/CD 工作流。
 
-## 10.3 Configuration Reference
+## 10.3 配置参考
 
-### CLAUDE.md Locations
+### CLAUDE.md 位置
 
-| Location | Scope | Committed |
-|----------|-------|-----------|
-| `~/.claude/CLAUDE.md` | All projects (global) | N/A |
-| `/project/CLAUDE.md` | This project (shared) | ✅ Yes |
-| `/project/CLAUDE.local.md` | This project (local overrides) | ❌ No (.gitignored) |
-| `/project/.claude/CLAUDE.md` | Personal project config | ❌ No |
-| Parent/child directories | Auto-loaded in monorepos | Depends on location |
+| 位置 | 作用范围 | 是否提交 |
+|------|----------|----------|
+| `~/.claude/CLAUDE.md` | 所有项目（全局） | N/A |
+| `/project/CLAUDE.md` | 当前项目（共享） | ✅ 是 |
+| `/project/CLAUDE.local.md` | 当前项目（本地覆盖） | ❌ 否（.gitignored） |
+| `/project/.claude/CLAUDE.md` | 个人项目配置 | ❌ 否 |
+| 父/子目录 | 在 monorepo 中自动加载 | 取决于位置 |
 
-### Settings Files
+### 配置文件
 
-| File | Purpose | Committed |
-|------|---------|-----------|
-| `settings.json` | Hook configuration | ✅ Yes |
-| `settings.local.json` | Permission overrides | ❌ No |
+| 文件 | 用途 | 是否提交 |
+|------|------|----------|
+| `settings.json` | 钩子配置 | ✅ 是 |
+| `settings.local.json` | 权限覆盖 | ❌ 否 |
 
-### Permission Patterns
+### 权限模式
 
-| Pattern | Matches |
-|---------|---------|
-| `Bash(git *)` | Any git command |
-| `Bash(npm test)` | Exactly npm test |
-| `Edit` | All file edits |
-| `Write` | All file writes |
-| `WebSearch` | Web search |
-| `mcp__serena__*` | All Serena tools |
-| `Read(file_path:*.env*)` | Block reading any `.env*` file path |
-| `Edit(file_path:*.pem)` | Block editing `.pem` certificates |
-| `Bash(command:*rm -rf*)` | Block destructive bash commands |
+| 模式 | 匹配范围 |
+|------|----------|
+| `Bash(git *)` | 任意 git 命令 |
+| `Bash(npm test)` | 精确匹配 npm test |
+| `Edit` | 所有文件编辑 |
+| `Write` | 所有文件写入 |
+| `WebSearch` | 网络搜索 |
+| `mcp__serena__*` | 所有 Serena 工具 |
+| `Read(file_path:*.env*)` | 阻止读取任何 `.env*` 文件路径 |
+| `Edit(file_path:*.pem)` | 阻止编辑 `.pem` 证书 |
+| `Bash(command:*rm -rf*)` | 阻止破坏性 bash 命令 |
 
-### CLI Flags Reference
+### CLI 参数参考
 
-Complete reference for all Claude Code command-line flags, subcommands, and startup environment variables.
+Claude Code 所有命令行参数、子命令和启动环境变量的完整参考。
 
-#### Session & Context
+#### 会话与上下文
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--continue` | `-c` | Continue the most recent conversation in the current directory |
-| `--resume <ID>` | `-r` | Resume a specific session by UUID or name, or show interactive picker |
-| `--from-pr <NUMBER\|URL>` | | Resume sessions linked to a specific GitHub PR |
-| `--fork-session` | | Create a new session ID when resuming (use with `--resume` or `--continue`) |
-| `--session-id <UUID>` | | Use a specific session UUID |
-| `--no-session-persistence` | | Disable session persistence (print mode only) |
-| `--remote` | | Create a new web session on claude.ai |
-| `--teleport` | | Resume a web session in your local terminal |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--continue` | `-c` | 继续当前目录中最近的对话 |
+| `--resume <ID>` | `-r` | 通过 UUID 或名称恢复指定会话，或显示交互式选择器 |
+| `--from-pr <NUMBER\|URL>` | | 恢复与指定 GitHub PR 关联的会话 |
+| `--fork-session` | | 恢复时创建新的会话 ID（与 `--resume` 或 `--continue` 配合使用） |
+| `--session-id <UUID>` | | 使用指定的会话 UUID |
+| `--no-session-persistence` | | 禁用会话持久化（仅限打印模式） |
+| `--remote` | | 在 claude.ai 上创建新的 Web 会话 |
+| `--teleport` | | 在本地终端中恢复 Web 会话 |
 
-#### Model & Configuration
+#### 模型与配置
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--model <NAME>` | | Set model with alias (`sonnet`, `opus`, `haiku`) or full model ID |
-| `--fallback-model <NAME>` | | Auto-fallback model when default is overloaded (print mode only) |
-| `--betas <LIST>` | | Beta headers to include in API requests (API key users only) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--model <NAME>` | | 通过别名（`sonnet`、`opus`、`haiku`）或完整模型 ID 设置模型 |
+| `--fallback-model <NAME>` | | 默认模型过载时的自动回退模型（仅限打印模式） |
+| `--betas <LIST>` | | API 请求中包含的 Beta 功能头（仅限 API Key 用户） |
 
-#### Output & Format
+#### 输出与格式
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--print` | `-p` | Print response and exit without interactive mode (headless/SDK mode) |
-| `--output-format <FORMAT>` | | Output format: `text`, `json`, `stream-json` |
-| `--input-format <FORMAT>` | | Input format: `text`, `stream-json` |
-| `--json-schema <SCHEMA>` | | Get validated JSON matching schema (print mode only) |
-| `--include-partial-messages` | | Include partial streaming events (requires `--print` and `stream-json`) |
-| `--verbose` | | Enable verbose logging with full turn-by-turn output |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--print` | `-p` | 打印回复后退出，不进入交互模式（无头/SDK 模式） |
+| `--output-format <FORMAT>` | | 输出格式：`text`、`json`、`stream-json` |
+| `--input-format <FORMAT>` | | 输入格式：`text`、`stream-json` |
+| `--json-schema <SCHEMA>` | | 获取符合 schema 的验证 JSON（仅限打印模式） |
+| `--include-partial-messages` | | 包含部分流式事件（需要 `--print` 和 `stream-json`） |
+| `--verbose` | | 启用详细日志，输出完整的逐轮内容 |
 
-#### Permissions & Security
+#### 权限与安全
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--dangerously-skip-permissions` | | Skip ALL permission prompts — use with extreme caution |
-| `--allow-dangerously-skip-permissions` | | Enable permission bypassing as an option without activating it |
-| `--permission-mode <MODE>` | | Begin in specified mode: `default`, `plan`, `acceptEdits`, `bypassPermissions` |
-| `--allowedTools <TOOLS>` | | Tools that execute without prompting (permission rule syntax) |
-| `--disallowedTools <TOOLS>` | | Tools removed from model context entirely |
-| `--tools <TOOLS>` | | Restrict which built-in tools Claude can use (use `""` to disable all) |
-| `--permission-prompt-tool <TOOL>` | | MCP tool to handle permission prompts in non-interactive mode |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--dangerously-skip-permissions` | | 跳过所有权限提示——请极度谨慎使用 |
+| `--allow-dangerously-skip-permissions` | | 将权限绕过作为选项启用，但不立即激活 |
+| `--permission-mode <MODE>` | | 以指定模式启动：`default`、`plan`、`acceptEdits`、`bypassPermissions` |
+| `--allowedTools <TOOLS>` | | 无需提示即可执行的工具（权限规则语法） |
+| `--disallowedTools <TOOLS>` | | 从模型上下文中完全移除的工具 |
+| `--tools <TOOLS>` | | 限制 Claude 可使用的内置工具（使用 `""` 禁用所有工具） |
+| `--permission-prompt-tool <TOOL>` | | 在非交互模式下处理权限提示的 MCP 工具 |
 
-#### System Prompt
+#### 系统提示词
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--system-prompt <TEXT>` | | Replace entire system prompt with custom text |
-| `--system-prompt-file <PATH>` | | Load system prompt from file, replacing default (print mode only) |
-| `--append-system-prompt <TEXT>` | | Append custom text to default system prompt |
-| `--append-system-prompt-file <PATH>` | | Append file contents to default prompt (print mode only) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--system-prompt <TEXT>` | | 用自定义文本替换整个系统提示词 |
+| `--system-prompt-file <PATH>` | | 从文件加载系统提示词，替换默认值（仅限打印模式） |
+| `--append-system-prompt <TEXT>` | | 在默认系统提示词后追加自定义文本 |
+| `--append-system-prompt-file <PATH>` | | 在默认提示词后追加文件内容（仅限打印模式） |
 
-#### Agent & Subagent
+#### 智能体与子智能体
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--agent <NAME>` | | Specify an agent for the current session |
-| `--agents <JSON>` | | Define custom subagents dynamically via JSON |
-| `--teammate-mode <MODE>` | | Set agent team display: `auto`, `in-process`, `tmux` |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--agent <NAME>` | | 为当前会话指定智能体 |
+| `--agents <JSON>` | | 通过 JSON 动态定义自定义子智能体 |
+| `--teammate-mode <MODE>` | | 设置智能体团队显示方式：`auto`、`in-process`、`tmux` |
 
-#### MCP & Plugins
+#### MCP 与插件
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--mcp-config <PATH\|JSON>` | | Load MCP servers from JSON file or inline JSON string |
-| `--strict-mcp-config` | | Only use MCP servers from `--mcp-config`, ignore all others |
-| `--plugin-dir <PATH>` | | Load plugins from directory for this session only (repeatable) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--mcp-config <PATH\|JSON>` | | 从 JSON 文件或内联 JSON 字符串加载 MCP 服务器 |
+| `--strict-mcp-config` | | 仅使用 `--mcp-config` 中的 MCP 服务器，忽略其他所有服务器 |
+| `--plugin-dir <PATH>` | | 仅在本次会话中从指定目录加载插件（可重复使用） |
 
-#### Directory & Workspace
+#### 目录与工作区
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--add-dir <PATH>` | | Add additional working directories for Claude to access |
-| `--worktree` | `-w` | Start Claude in an isolated git worktree (branched from HEAD) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--add-dir <PATH>` | | 为 Claude 添加额外的工作目录访问权限 |
+| `--worktree` | `-w` | 在隔离的 git 工作树中启动 Claude（从 HEAD 分支） |
 
-#### Budget & Limits
+#### 预算与限制
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--max-budget-usd <AMOUNT>` | | Maximum dollar amount for API calls before stopping (print mode only) |
-| `--max-turns <NUMBER>` | | Limit number of agentic turns (print mode only) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--max-budget-usd <AMOUNT>` | | API 调用的最大美元金额上限，超出后停止（仅限打印模式） |
+| `--max-turns <NUMBER>` | | 限制智能体化轮次数量（仅限打印模式） |
+| `--effort <LEVEL>` | | 设置思考深度：`low`、`medium`、`high`、`max`（仅 Opus 4.6，`max` 启用自适应思考） |
 
-#### Integration
+#### 集成
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--chrome` | | Enable Chrome browser integration for web automation |
-| `--no-chrome` | | Disable Chrome browser integration for this session |
-| `--ide` | | Automatically connect to IDE on startup if exactly one valid IDE is available |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--chrome` | | 启用 Chrome 浏览器集成以实现 Web 自动化 |
+| `--no-chrome` | | 在本次会话中禁用 Chrome 浏览器集成 |
+| `--ide` | | 启动时自动连接 IDE（仅当恰好有一个有效 IDE 可用时） |
 
-#### Initialization & Maintenance
+#### 初始化与维护
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--init` | | Run initialization hooks and start interactive mode |
-| `--init-only` | | Run initialization hooks and exit without starting a session |
-| `--maintenance` | | Run maintenance hooks and exit |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--init` | | 运行初始化钩子并启动交互模式 |
+| `--init-only` | | 运行初始化钩子后退出，不启动会话 |
+| `--maintenance` | | 运行维护钩子后退出 |
 
-#### Debug & Diagnostics
+#### 调试与诊断
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--debug <CATEGORIES>` | | Enable debug mode with optional category filtering (e.g., `"api,hooks"`) |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--debug <CATEGORIES>` | | 启用调试模式，可选类别过滤（例如 `"api,hooks"`） |
 
-#### Settings Override
+#### 设置覆盖
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--settings <PATH\|JSON>` | | Path to settings JSON file or inline JSON string to load |
-| `--setting-sources <LIST>` | | Comma-separated sources to load: `user`, `project`, `local` |
-| `--disable-slash-commands` | | Disable all skills and slash commands for this session |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--settings <PATH\|JSON>` | | 加载设置 JSON 文件的路径或内联 JSON 字符串 |
+| `--setting-sources <LIST>` | | 以逗号分隔的加载来源：`user`、`project`、`local` |
+| `--disable-slash-commands` | | 在本次会话中禁用所有技能和斜杠命令 |
 
-#### Version & Help
+#### 版本与帮助
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--version` | `-v` | Output the current version number |
-| `--help` | `-h` | Show help information |
+| 参数 | 简写 | 说明 |
+|------|------|------|
+| `--version` | `-v` | 输出当前版本号 |
+| `--help` | `-h` | 显示帮助信息 |
 
-### Subcommands
+### 子命令
 
-Top-level commands run as `claude <subcommand>`:
+以 `claude <subcommand>` 形式运行的顶级命令：
 
-| Subcommand | Description |
-|------------|-------------|
-| `claude "query"` | Start REPL with an initial prompt |
-| `claude agents` | List configured agents |
-| `claude auth login / logout / status` | Manage Claude Code authentication |
-| `claude doctor` | Run diagnostics from the command line |
-| `claude install` | Install or switch Claude Code native builds |
-| `claude mcp add / remove / list / get / enable` | Configure MCP servers |
-| `claude plugin` | Manage Claude Code plugins |
-| `claude remote-control` | Manage remote control sessions |
-| `claude setup-token` | Create a long-lived token for subscription usage |
-| `claude update` / `claude upgrade` | Update to the latest version |### Startup Environment Variables
+| 子命令 | 说明 |
+|--------|------|
+| `claude "query"` | 以初始提示词启动 REPL |
+| `claude agents` | 列出已配置的智能体 |
+| `claude auth login / logout / status` | 管理 Claude Code 认证 |
+| `claude auto-mode defaults` | 以 JSON 格式输出内置自动模式分类规则 |
+| `claude doctor` | 从命令行运行诊断 |
+| `claude install` | 安装或切换 Claude Code 原生构建版本 |
+| `claude mcp add / remove / list / get / enable` | 配置 MCP 服务器 |
+| `claude plugin` | 管理 Claude Code 插件 |
+| `claude remote-control` | 启动远程控制服务器（服务器模式，无本地会话，仅 Pro/Max） |
+| `claude setup-token` | 生成用于 CI/脚本的长期 OAuth Token（需要 Claude 订阅） |
+| `claude update` / `claude upgrade` | 更新到最新版本 |
+### 启动环境变量
 
-Set these in your shell before launching Claude Code (these cannot be configured via `settings.json`):
+在启动 Claude Code 之前，你可以在 shell 中设置以下变量（这些无法通过 `settings.json` 配置）：
 
-| Variable | Description |
-|----------|-------------|
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | Enable experimental agent teams |
-| `CLAUDE_CODE_TMPDIR` | Override temp directory for internal files |
-| `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` | Enable additional directory CLAUDE.md loading |
-| `DISABLE_AUTOUPDATER=1` | Disable automatic updates |
-| `CLAUDE_CODE_EFFORT_LEVEL` | Control thinking depth for extended thinking models |
-| `USE_BUILTIN_RIPGREP=0` | Use system ripgrep instead of built-in (useful on Alpine Linux) |
-| `CLAUDE_CODE_SIMPLE` | Enable simple mode (Bash + Edit tools only, no agents/hooks/MCP) |
-| `CLAUDE_BASH_NO_LOGIN=1` | Skip login shell invocation for BashTool |
+| 变量 | 说明 |
+|------|------|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | 启用实验性智能体团队 |
+| `CLAUDE_CODE_TMPDIR` | 覆盖内部文件的临时目录 |
+| `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` | 启用额外目录的 CLAUDE.md 加载 |
+| `DISABLE_AUTOUPDATER=1` | 禁用自动更新 |
+| `CLAUDE_CODE_EFFORT_LEVEL` | 控制扩展思考模型的思考深度 |
+| `USE_BUILTIN_RIPGREP=0` | 使用系统 ripgrep 而非内置版本（在 Alpine Linux 上很有用） |
+| `CLAUDE_CODE_SIMPLE` | 启用简单模式（仅 Bash + Edit 工具，无智能体/钩子/MCP） |
+| `CLAUDE_BASH_NO_LOGIN=1` | 跳过 BashTool 的登录 shell 调用 |
+| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` | 从子进程（Bash、hook、MCP stdio）中剥离 API key 和云厂商凭证（v2.1.83+） |
 
-For variables configurable via the `"env"` key in `settings.json` (including `MAX_THINKING_TOKENS`, `CLAUDE_CODE_SHELL`, `CLAUDE_CODE_ENABLE_TASKS`, `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and more), see section 10.3 Configuration Reference.
+对于可通过 `settings.json` 中 `"env"` 键配置的变量（包括 `MAX_THINKING_TOKENS`、`CLAUDE_CODE_SHELL`、`CLAUDE_CODE_ENABLE_TASKS`、`ANTHROPIC_API_KEY`、`ANTHROPIC_BASE_URL` 等），请参阅 10.3 配置参考部分。
 
-**Common Combinations:**
+**常用组合：**
 
 ```bash
-# CI/CD mode - non-interactive with auto-accept
+# CI/CD 模式 - 非交互式且自动接受
 claude -p "fix linting errors" --dangerously-skip-permissions
 
-# JSON output for scripting
+# JSON 输出，便于脚本处理
 claude -p "analyze code quality" --output-format json
 
-# Economic analysis with Haiku
+# 使用 Haiku 进行经济型分析
 claude -p "review this file" --model haiku
 
-# Allow access to a directory outside CWD
+# 允许访问 CWD 外的目录
 claude --add-dir ./src/components
 
-# Plan mode for safety
+# 计划模式，确保安全
 claude --permission-mode plan
 
-# Multi-directory project
+# 多目录项目
 claude --add-dir ../shared-lib ../utils ../config
 
-# Limit agentic turns in automation
+# 在自动化中限制智能体化回合数
 claude -p "refactor this module" --max-turns 10
 
-# Resume specific session non-interactively
+# 非交互式恢复特定会话
 claude -r abc123 -p "summarize progress"
 ```
 
-**Safety Guidelines:**
+**安全指南：**
 
-| Flag | Risk Level | Use When |
-|------|-----------|----------|
-| `--dangerously-skip-permissions` | High | Only in CI/CD, never on production |
-| `--allowedTools` | Safe | Restricting tool access |
-| `--disallowedTools` | Safe | Blocking specific tools |
-| `--permission-mode plan` | Safe | Read-only exploration |
-| `--debug` | Medium | Troubleshooting (verbose logs) |
+| 标志 | 风险等级 | 使用场景 |
+|------|---------|---------|
+| `--dangerously-skip-permissions` | 高 | 仅用于 CI/CD，绝不在生产环境使用 |
+| `--allowedTools` | 安全 | 限制工具访问 |
+| `--disallowedTools` | 安全 | 屏蔽特定工具 |
+| `--permission-mode plan` | 安全 | 只读探索 |
+| `--debug` | 中 | 故障排查（详细日志） |
 
-## 10.4 Troubleshooting
+## 10.4 故障排查
 
-> **Interactive Troubleshooting**: Use the `/diagnose` command for guided, interactive problem-solving. It auto-scans your environment and provides targeted solutions. See [examples/commands/diagnose.md](../examples/commands/diagnose.md).
+> **交互式故障排查**：使用 `/diagnose` 命令进行引导式交互问题排查。它会自动扫描你的环境并提供针对性解决方案。详见 [examples/commands/diagnose.md](../examples/commands/diagnose.md)。
 
-### Quick Diagnostic Guide
+### 快速诊断指南
 
-Use this symptom-based guide for rapid issue identification and resolution:
+根据症状快速定位并解决问题：
 
-| Symptom | Likely Cause | Quick Fix | Prevention |
-|---------|--------------|-----------|------------|
-| "Context too long" error | Session accumulated too much context | `/compact` first, then `/clear` if needed | Compact regularly at 70% |
-| Slow/delayed responses | High context usage (>75%) | Check `/status`, run `/compact` | Monitor context with `/status` |
-| "Rate limit exceeded" | API throttling from frequent requests | Wait 2 minutes, use `--model haiku` for simple tasks, or use [cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge) for flat-rate access | Batch operations, use `/compact`, consider Copilot Pro |
-| Claude forgets instructions | Context overflow, CLAUDE.md lost | Create checkpoint, `/clear`, reload CLAUDE.md | Keep CLAUDE.md concise (<500 lines) |
-| MCP server not connecting | Server crashed or config error | `claude mcp list`, check paths, restart server | Test servers after config changes |
-| Permission prompts every time | Tool not in `allowedTools` | Add pattern to `settings.json` allowedTools | Use wildcards: `Bash(git *)` |
-| Changes not taking effect | Cached configuration | Restart Claude Code session | Use `/exit` before config changes |
-| Session won't resume | Corrupted session file | Start fresh with `/clear` | Exit cleanly with `/exit` or `Ctrl+D` |
+| 症状 | 可能原因 | 快速修复 | 预防措施 |
+|------|---------|---------|---------|
+| "Context too long" 错误 | 会话积累了过多上下文 | 先用 `/compact`，必要时再用 `/clear` | 在 70% 时定期 compact |
+| 响应缓慢/延迟 | 上下文使用率过高（>75%） | 查看 `/status`，运行 `/compact` | 用 `/status` 监控上下文 |
+| "Rate limit exceeded" | 频繁请求导致 API 限流 | 等待 2 分钟，简单任务用 `--model haiku`，或使用 [cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge) 享受 flat-rate | 批量操作，使用 `/compact`，考虑 Copilot Pro |
+| Claude 忘记指令 | 上下文溢出，CLAUDE.md 丢失 | 创建检查点，`/clear`，重新加载 CLAUDE.md | 保持 CLAUDE.md 简洁（<500 行） |
+| MCP 服务器无法连接 | 服务器崩溃或配置错误 | `claude mcp list`，检查路径，重启服务器 | 配置变更后测试服务器 |
+| 每次都弹出权限提示 | 工具不在 `allowedTools` 中 | 在 `settings.json` 的 allowedTools 中添加模式 | 使用通配符：`Bash(git *)` |
+| 更改未生效 | 配置缓存 | 重启 Claude Code 会话 | 配置变更前使用 `/exit` |
+| 会话无法恢复 | 会话文件损坏 | 用 `/clear` 重新开始 | 用 `/exit` 或 `Ctrl+D` 干净退出 |
 
-**Quick Diagnosis Flow:**
+**快速诊断流程：**
 
-1. Check context: `/status` → If >70%, run `/compact`
-2. Check connectivity: Try simple command → If fails, check network
-3. Check configuration: `claude mcp list` → Verify MCP servers
-4. Check permissions: Review error message → Add to allowedTools if needed
-5. Still failing: `/doctor` → Run diagnostics and verify system health
+1. 检查上下文：`/status` → 如果 >70%，运行 `/compact`
+2. 检查连接：尝试简单命令 → 如果失败，检查网络
+3. 检查配置：`claude mcp list` → 验证 MCP 服务器
+4. 检查权限：查看错误信息 → 如需则添加到 allowedTools
+5. 仍然失败：`/doctor` → 运行诊断并验证系统健康
 
-### Common Issues Reference
+### 常见问题参考
 
-| Symptom | Cause | Solution |
-|---------|-------|----------|
-| "Context too long" | Used 100% context | `/clear` or `/compact` |
-| Slow responses | High context usage | `/compact` |
-| "Permission denied" | Security settings | Check `settings.local.json` |
-| Hook not running | Registration error | Check `settings.json` matcher |
-| MCP tool not found | Server not running | Check `mcp.json` config |
-| Agent not found | File naming | Check `.claude/agents/` |
-| Command not found | Path error | Check `.claude/commands/` |
+| 症状 | 原因 | 解决方案 |
+|------|------|---------|
+| "Context too long" | 使用了 100% 上下文 | `/clear` 或 `/compact` |
+| 响应缓慢 | 上下文使用率过高 | `/compact` |
+| "Permission denied" | 安全设置 | 检查 `settings.local.json` |
+| Hook 未运行 | 注册错误 | 检查 `settings.json` 的 matcher |
+| MCP 工具未找到 | 服务器未运行 | 检查 `mcp.json` 配置 |
+| Agent 未找到 | 文件命名问题 | 检查 `.claude/agents/` |
+| Command 未找到 | 路径错误 | 检查 `.claude/commands/` |
 
-### Context Recovery
+### 上下文恢复
 
-| Context Level | Recommended Action |
-|---------------|-------------------|
-| 0-50% | Continue normally |
-| 50-75% | Be more specific in queries |
-| 75-90% | Use `/compact` |
-| 90%+ | Use `/clear` |
+| 上下文级别 | 建议操作 |
+|-----------|---------|
+| 0-50% | 正常继续 |
+| 50-75% | 查询时更具体 |
+| 75-90% | 使用 `/compact` |
+| 90%+ | 使用 `/clear` |
 
-### Common Errors
+### 常见错误
 
 **"Tool execution failed"**
 
-- Check tool permissions in `settings.local.json`
-- Verify command syntax
-- Check for missing dependencies
+- 检查 `settings.local.json` 中的工具权限
+- 验证命令语法
+- 检查是否缺少依赖
 
 **"Agent not available"**
 
-- Verify agent file exists in `.claude/agents/`
-- Check YAML frontmatter syntax
-- Restart Claude Code session
+- 验证 agent 文件是否存在于 `.claude/agents/`
+- 检查 YAML frontmatter 语法
+- 重启 Claude Code 会话
 
 **"Hook blocked operation"**
 
-- Check hook exit code (2 = blocked)
-- Review hook error message
-- Adjust hook rules if needed
+- 检查 hook 退出码（2 = 被阻止）
+- 查看 hook 错误信息
+- 按需调整 hook 规则
 
-### MCP Server Issues
+### MCP 服务器问题
 
-**Common MCP Errors and Solutions**
+**常见 MCP 错误及解决方案**
 
-#### Error 1: Tool Name Validation Failed
+#### 错误 1：工具名称验证失败
 
 ```
 API Error 400: "tools.11.custom.name: String should match pattern '^[a-zA-Z0-9_-]{1,64}'"
 ```
 
-**Cause**: MCP server name contains invalid characters.
+**原因**：MCP 服务器名称包含无效字符。
 
-**Solution**:
+**解决方案**：
 
-- Server names must only contain: letters, numbers, underscores, hyphens
-- Maximum 64 characters
-- No special characters or spaces
+- 服务器名称只能包含：字母、数字、下划线、连字符
+- 最多 64 个字符
+- 不能包含特殊字符或空格
 
-**Example:**
+**示例：**
 
 ```bash
-# ❌ Wrong
+# ❌ 错误
 claude mcp add my-server@v1 -- npx server
 
-# ✅ Correct
+# ✅ 正确
 claude mcp add my-server-v1 -- npx server
 ```
 
-#### Error 2: MCP Server Not Found
+#### 错误 2：MCP 服务器未找到
 
 ```
 MCP server 'my-server' not found
 ```
 
-**Cause**: Server not properly registered or wrong scope.
+**原因**：服务器未正确注册，或作用域错误。
 
-**Solution**:
+**解决方案**：
 
-1. Check scope settings (local/user/project)
+1. 检查作用域设置（local/user/project）
    ```bash
-   claude mcp list  # Verify server is listed
+   claude mcp list  # 验证服务器是否已列出
    ```
-2. Ensure you're in the correct directory for local scope
-3. Restart Claude Code session
-4. Re-add server if needed:
+2. 确保你在 local 作用域的正确目录中
+3. 重启 Claude Code 会话
+4. 如需则重新添加服务器：
    ```bash
    claude mcp add my-server -s user -- npx @my/server
    ```
 
-#### Error 3: Windows Path Issues
+#### 错误 3：Windows 路径问题
 
 ```
 Error: Cannot find module 'C:UsersusernameDocuments'
 ```
 
-**Cause**: Backslashes in Windows paths not properly escaped.
+**原因**：Windows 路径中的反斜杠未正确转义。
 
-**Solution**:
+**解决方案**：
 
 ```bash
-# ❌ Wrong
+# ❌ 错误
 claude mcp add fs -- npx -y @modelcontextprotocol/server-filesystem C:\Users\username\Documents
 
-# ✅ Correct - Use forward slashes
+# ✅ 正确 - 使用正斜杠
 claude mcp add fs -- npx -y @modelcontextprotocol/server-filesystem C:/Users/username/Documents
 
-# ✅ Correct - Escape backslashes
+# ✅ 正确 - 转义反斜杠
 claude mcp add fs -- npx -y @modelcontextprotocol/server-filesystem "C:\\Users\\username\\Documents"
 ```
 
-#### MCP Debugging Techniques
+#### MCP 调试技巧
 
-**Enable Debug Mode:**
+**启用调试模式：**
 
 ```bash
-# Debug all MCP connections
+# 调试所有 MCP 连接
 claude --mcp-debug
 
-# View MCP status inside Claude Code
+# 在 Claude Code 内查看 MCP 状态
 /mcp
 ```
 
-**View Log Files:**
+**查看日志文件：**
 
 ```bash
 # macOS
@@ -23277,51 +22466,51 @@ tail -f ~/.local/share/claude/logs/mcp*.log
 Get-Content "$env:APPDATA\Claude\logs\mcp*.log" -Wait -Tail 50
 ```
 
-**Manual Server Test:**
+**手动测试服务器：**
 
 ```bash
-# Test if server works standalone
+# 测试服务器是否能独立运行
 npx -y @modelcontextprotocol/server-filesystem ~/Documents
 
-# Expected: Server should start and output JSON-RPC messages
-# If it crashes immediately, check server logs
+# 预期：服务器应启动并输出 JSON-RPC 消息
+# 如果立即崩溃，检查服务器日志
 ```
 
-**Quick Diagnostic Commands:**
+**快速诊断命令：**
 
 ```bash
-# List all configured servers
+# 列出所有已配置的服务器
 claude mcp list
 
-# Test specific server
+# 测试特定服务器
 claude --mcp-debug -p "List available tools"
 
-# Remove and re-add server
+# 移除并重新添加服务器
 claude mcp remove my-server
 claude mcp add my-server -s user -- npx @my/server
 ```
 
-**Connection Failed: Common Causes**
+**连接失败：常见原因**
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `ECONNREFUSED` | Server not running | Check `mcp.json` command is correct |
-| `Timeout after 30s` | Slow initialization | Increase timeout or check server logs |
-| `Module not found` | Missing dependencies | Run `npm install` in server directory |
-| `Permission denied` | File access | Check file permissions on server executable |
-| `ENOENT` | Server binary not found | Verify npx/npm is in PATH |
-| `Invalid JSON` | Server output malformed | Check server version compatibility |
+| 错误 | 原因 | 解决方案 |
+|------|------|---------|
+| `ECONNREFUSED` | 服务器未运行 | 检查 `mcp.json` 中的命令是否正确 |
+| `Timeout after 30s` | 初始化过慢 | 增加超时时间或检查服务器日志 |
+| `Module not found` | 缺少依赖 | 在服务器目录运行 `npm install` |
+| `Permission denied` | 文件访问权限 | 检查服务器可执行文件的权限 |
+| `ENOENT` | 服务器二进制文件未找到 | 验证 npx/npm 是否在 PATH 中 |
+| `Invalid JSON` | 服务器输出格式错误 | 检查服务器版本兼容性 |
 
-**Serena MCP specific issues:**
+**Serena MCP 特定问题：**
 
 ```bash
-# Index not found
+# 索引未找到
 serena list-memories
-# If empty, re-index:
-# In your project, ask Claude: "Index this project with Serena"
+# 如果为空，重新索引：
+# 在你的项目中，让 Claude 执行："Index this project with Serena"
 
-# Session not persisting
-# Check mcp.json has correct data directory:
+# 会话未持久化
+# 检查 mcp.json 是否有正确的数据目录：
 {
   "mcpServers": {
     "serena": {
@@ -23335,306 +22524,318 @@ serena list-memories
 }
 ```
 
-**Context7 MCP issues:**
+**Context7 MCP 问题：**
 
 ```bash
-# Documentation not found
-# Ensure you're searching for official libraries:
+# 文档未找到
+# 确保你在搜索官方库：
 # ✅ "React useState documentation"
-# ❌ "my-custom-lib documentation" (not in Context7)
+# ❌ "my-custom-lib documentation"（不在 Context7 中）
 
-# Slow lookups
-# Context7 fetches from official docs - network dependent
-# Check your internet connection
+# 查询缓慢
+# Context7 从官方文档获取 - 取决于网络
+# 检查你的网络连接
 ```
 
-**Sequential Thinking MCP issues:**
+**Sequential Thinking MCP 问题：**
 
 ```bash
 # "Sequential not responding"
-# Sequential uses significant compute - expect 10-30s responses
-# Not an error, just be patient
+# Sequential 消耗大量计算资源 - 预计需要 10-30 秒响应
+# 不是错误，只需耐心等待
 
-# Quality seems off
-# Sequential works best with specific, well-defined problems
+# 质量似乎不佳
+# Sequential 最适合具体、定义明确的问题
 # ✅ "Debug why user authentication fails on mobile"
 # ❌ "Make the app better"
 ```
 
-### Permission Issues
+### 权限问题
 
-**Pattern matching problems:**
+**模式匹配问题：**
 
 ```json
-// ❌ Wrong - too specific
+// ❌ 错误 - 过于具体
 {
   "allowedTools": ["Bash(npm test)"]
 }
-// This ONLY allows exactly "npm test"
+// 这只允许精确的 "npm test"
 
-// ✅ Right - use wildcards
+// ✅ 正确 - 使用通配符
 {
   "allowedTools": ["Bash(npm *)"]
 }
-// This allows any npm command
+// 这允许任何 npm 命令
 ```
 
-**Common permission patterns:**
+**常见权限模式：**
 
 ```json
 {
   "allowedTools": [
-    "Bash(git *)",           // All git commands
-    "Bash(npm *)",           // All npm commands
-    "Bash(pytest *)",        // All pytest commands
-    "Edit",                  // All file edits
-    "Write",                 // All file writes
-    "Read",                  // All file reads
-    "mcp__serena__*",        // All Serena tools
-    "mcp__context7__*",      // All Context7 tools
-    "Task"                   // Allow agent delegation
+    "Bash(git *)",           // 所有 git 命令
+    "Bash(npm *)",           // 所有 npm 命令
+    "Bash(pytest *)",        // 所有 pytest 命令
+    "Edit",                  // 所有文件编辑
+    "Write",                 // 所有文件写入
+    "Read",                  // 所有文件读取
+    "mcp__serena__*",        // 所有 Serena 工具
+    "mcp__context7__*",      // 所有 Context7 工具
+    "Task"                   // 允许智能体委托
   ]
 }
 ```
 
-### Timeout Issues
+### 超时问题
 
-**Claude stops responding mid-task:**
+**Claude 在任务中途停止响应：**
 
-Possible causes:
+可能原因：
 
-1. **Network interruption** - Check your internet connection
-2. **API rate limit** - Wait 1-2 minutes and retry
-3. **Context exhausted** - Use `/compact` or `/clear`
-4. **Long-running operation** - Some MCP operations take 30s+
+1. **网络中断** - 检查你的网络连接
+2. **API 速率限制** - 等待 1-2 分钟后重试
+3. **上下文耗尽** - 使用 `/compact` 或 `/clear`
+4. **长时间运行操作** - 某些 MCP 操作需要 30 秒以上
 
-**Workaround for long operations:**
+**长时间操作的变通方案：**
 
 ```bash
-# Instead of:
+# 不要这样：
 "Analyze all 500 files in the codebase"
 
-# Break into chunks:
+# 拆分成块：
 "Analyze files in /src/components/ first"
 "Now analyze /src/utils/"
 "Finally analyze /src/services/"
 ```
 
-### Installation Issues
+### 安装问题
 
-**Windows-specific problems:**
+**Windows 特定问题：**
 
 ```powershell
-# npm global install fails
-# Run PowerShell as Administrator
+# 推荐安装方式（自动更新）
+irm https://claude.ai/install.ps1 | iex
+
+# 或使用 WinGet（不支持自动更新）
+winget install Anthropic.ClaudeCode
+
+# npm 全局安装失败
+# 以管理员身份运行 PowerShell
 npm install -g @anthropic-ai/claude-code
 
-# PATH not updated
-# Manually add to PATH:
+# PATH 未更新
+# 手动添加到 PATH：
 $env:Path += ";$env:APPDATA\npm"
 
-# Permission errors
-# Check antivirus isn't blocking Node.js
+# 权限错误
+# 检查杀毒软件是否未阻止 Node.js
 ```
 
-**macOS-specific problems:**
+**macOS 特定问题：**
 
 ```bash
-# "Command not found" after install
-# Check shell config loaded:
-source ~/.zshrc  # or ~/.bashrc
+# 推荐安装方式（自动更新）
+curl -fsSL https://claude.ai/install.sh | bash
 
-# Permission denied on /usr/local
-# Don't use sudo with npm
-# Fix permissions:
+# 或使用 Homebrew cask（不支持自动更新，版本约落后 1 周）
+brew install --cask claude-code
+
+# 安装后显示 "Command not found"
+# 检查 shell 配置是否已加载：
+source ~/.zshrc  # 或 ~/.bashrc
+
+# /usr/local 权限被拒绝
+# 不要对 npm 使用 sudo
+# 修复权限：
 sudo chown -R $(whoami) /usr/local
 
-# curl install blocked
-# Check firewall/VPN settings
+# curl 安装被阻止
+# 检查防火墙/VPN 设置
 ```
 
-**Linux-specific problems:**
+**Linux 特定问题：**
 
 ```bash
-# npm not found
-# Install Node.js first:
+# npm 未找到
+# 先安装 Node.js：
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Global install permission issues
-# Configure npm to use home directory:
+# 全局安装权限问题
+# 配置 npm 使用主目录：
 mkdir ~/.npm-global
 npm config set prefix '~/.npm-global'
 echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### One-Shot Health Check Scripts
+### 一键健康检查脚本
 
-Diagnostic scripts for instant troubleshooting. Get them from:
+用于即时故障排查的诊断脚本。获取地址：
 
 - Windows: [`examples/scripts/check-claude.ps1`](../examples/scripts/check-claude.ps1)
 - macOS/Linux: [`examples/scripts/check-claude.sh`](../examples/scripts/check-claude.sh)
-- Bridge health: `python examples/scripts/bridge.py --health` (LM Studio connectivity)
+- Bridge 健康检查：`python examples/scripts/bridge.py --health`（LM Studio 连通性）
 
-### Full Clean Reinstall Procedures
+### 完全干净重装流程
 
-⚠️ **Nuclear option for corrupted installations.** Use when all else fails.
+⚠️ **损坏安装的终极手段。** 当其他方法都无效时使用。
 
-Get the scripts from:
+获取脚本：
 
 - Windows: [`examples/scripts/clean-reinstall-claude.ps1`](../examples/scripts/clean-reinstall-claude.ps1)
 - macOS/Linux: [`examples/scripts/clean-reinstall-claude.sh`](../examples/scripts/clean-reinstall-claude.sh)
 
-**When to use clean reinstall:**
+**何时使用干净重装：**
 
-- Mysterious errors that persist after normal troubleshooting
-- Corrupted configuration files
-- Breaking changes after Claude Code updates
-- Migration to new machine (export/import workflow)
+- 常规故障排查后仍然存在的神秘错误
+- 配置文件损坏
+- Claude Code 更新后出现破坏性变更
+- 迁移到新机器（导出/导入工作流）
 
-**What gets deleted:**
+**会被删除的内容：**
 
-- ✓ Claude Code binary and npm packages
-- ✓ Downloaded models and cache
-- ✓ Local session data
-- ⚠️ Config file (optional - backed up by default)
+- ✓ Claude Code 二进制文件和 npm 包
+- ✓ 下载的模型和缓存
+- ✓ 本地会话数据
+- ⚠️ 配置文件（默认会备份）
 
-**What survives:**
+**会保留的内容：**
 
-- ✓ Project-level `.claude/` folders
-- ✓ Project `CLAUDE.md` files
-- ✓ Custom agents, skills, commands, hooks (in projects)
-- ✓ MCP server configurations (in `mcp.json`)
+- ✓ 项目级 `.claude/` 文件夹
+- ✓ 项目 `CLAUDE.md` 文件
+- ✓ 自定义 agents、skills、commands、hooks（在项目中）
+- ✓ MCP 服务器配置（在 `mcp.json` 中）
 
-## 10.5 Cheatsheet
+## 10.5 速查表
 
-### One-Page Quick Reference
+### 单页快速参考
 
 ```
 ╔══════════════════════════════════════════════════════════╗
-║                 CLAUDE CODE CHEATSHEET                   ║
+║                 CLAUDE CODE 速查表                        ║
 ╠══════════════════════════════════════════════════════════╣
 ║                                                          ║
-║  ESSENTIAL COMMANDS                                      ║
-║  ─────────────────                                       ║
-║  /help      Show commands     /clear    Fresh start      ║
-║  /status    Session info      /compact  Save context     ║
-║  /plan      Safe mode         /rewind   Undo changes     ║
-║  /exit      Quit              Ctrl+C    Cancel           ║
+║  必备命令                                                ║
+║  ───────────                                             ║
+║  /help      显示命令        /clear    重新开始           ║
+║  /status    会话信息        /compact  节省上下文         ║
+║  /plan      安全模式        /rewind   撤销更改           ║
+║  /exit      退出            Ctrl+C    取消               ║
 ║                                                          ║
-║  QUICK ACTIONS                                           ║
+║  快速操作                                                ║
+║  ───────────                                             ║
+║  !command   运行 shell      @file     引用文件           ║
+║  Ctrl+R     搜索            ↑/↓       历史记录           ║
+║                                                          ║
+║  上下文管理                                              ║
+║  ───────────                                             ║
+║  🟢 0-50%   自由工作                                     ║
+║  🟡 50-75%  有选择地提问                                 ║
+║  🔴 75-90%  立即 /compact                                ║
+║  ⚫ 90%+    需要 /clear                                  ║
+║                                                          ║
+║  权限模式                                                ║
+║  ───────────                                             ║
+║  Default     更改前询问                                  ║
+║  Auto-accept 无需询问直接执行                            ║
+║  Plan Mode   只读探索                                    ║
+║                                                          ║
+║  配置                                                    ║
+║  ──────                                                  ║
+║  ~/.claude/CLAUDE.md         全局设置                    ║
+║  /project/CLAUDE.md          项目设置                    ║
+║  .claude/settings.json       钩子配置                    ║
+║  .claude/settings.local.json 权限覆盖                    ║
+║                                                          ║
+║  .claude/ 文件夹                                         ║
+║  ───────────────                                         ║
+║  agents/    自定义智能体    commands/  斜杠命令          ║
+║  hooks/     事件脚本        rules/     自动加载规则      ║
+║  skills/    知识模块                                     ║
+║                                                          ║
+║  思考模式（Opus 4.5/4.6：4.6 中为自适应深度）            ║
+║  ─────────────────────────────────────────               ║
+║  Alt+T          切换开/关     当前会话                   ║
+║  /config        全局设置      跨会话持久化               ║
+║  注意："ultrathink" 关键字现在仅具装饰性                 ║
+║                                                          ║
+║  MCP 服务器                                              ║
+║  ───────────                                             ║
+║  Serena       语义代码分析                               ║
+║  Context7     库文档查询                                 ║
+║  Sequential   结构化推理                                 ║
+║  Postgres     数据库查询                                 ║
+║  Playwright   浏览器自动化                               ║
+║                                                          ║
+║  钩子（事件）                                            ║
 ║  ─────────────                                           ║
-║  !command   Run shell         @file     Reference file   ║
-║  Ctrl+R     Search            ↑/↓       History          ║
+║  PreToolUse       工具使用前（安全）                     ║
+║  PostToolUse      工具使用后（格式化、日志）             ║
+║  UserPromptSubmit 发送消息时（丰富上下文）               ║
 ║                                                          ║
-║  CONTEXT MANAGEMENT                                      ║
-║  ──────────────────                                      ║
-║  🟢 0-50%   Work freely                                  ║
-║  🟡 50-75%  Be selective                                 ║
-║  🔴 75-90%  /compact now                                 ║
-║  ⚫ 90%+    /clear required                              ║
+║  工作流                                                  ║
+║  ───────                                                 ║
+║  描述 → 分析 → 审查 → 接受/拒绝 → 验证                   ║
 ║                                                          ║
-║  PERMISSION MODES                                        ║
-║  ────────────────                                         ║
-║  Default     Ask before changes                           ║
-║  Auto-accept Execute without asking                       ║
-║  Plan Mode   Read-only exploration                        ║
-║                                                           ║
-║  CONFIGURATION                                            ║
-║  ─────────────                                            ║
-║  ~/.claude/CLAUDE.md         Global settings              ║
-║  /project/CLAUDE.md          Project settings             ║
-║  .claude/settings.json       Hooks config                 ║
-║  .claude/settings.local.json Permission overrides         ║
-║                                                           ║
-║  .claude/ FOLDER                                          ║
-║  ───────────────                                          ║
-║  agents/    Custom agents     commands/  Slash commands   ║
-║  hooks/     Event scripts     rules/     Auto-load rules  ║
-║  skills/    Knowledge modules                             ║
-║                                                           ║
-║  THINKING MODE (Opus 4.5/4.6: adaptive depth in 4.6)      ║
-║  ─────────────────────────────────────────                ║
-║  Alt+T          Toggle on/off   Current session           ║
-║  /config        Global setting  Persists across sessions  ║
-║  Note: "ultrathink" keywords are now cosmetic only        ║
-║                                                           ║
-║  MCP SERVERS                                              ║
-║  ───────────                                              ║
-║  Serena       Semantic code analysis                      ║
-║  Context7     Library documentation                       ║
-║  Sequential   Structured reasoning                        ║
-║  Postgres     Database queries                            ║
-║  Playwright   Browser automation                          ║
-║                                                           ║
-║  HOOKS (events)                                           ║
-║  ──────────────                                           ║
-║  PreToolUse       Before tool (security)                  ║
-║  PostToolUse      After tool (format, log)                ║
-║  UserPromptSubmit On message (enrich context)             ║
-║                                                           ║
-║  WORKFLOW                                                 ║
-║  ────────                                                 ║
-║  Describe → Analyze → Review → Accept/Reject → Verify     ║
-║                                                           ║
-║  BEST PRACTICE: Always read the diff before accepting!    ║
-║                                                           ║
+║  最佳实践：接受前务必阅读 diff！                         ║
+║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
 ```
 
-## 10.6 Daily Workflow & Checklists
+## 10.6 日常工作流与检查清单
 
-### Daily Workflow Pattern
+### 日常工作流模式
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    DAILY WORKFLOW                           │
+│                    日常工作流                                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  MORNING (Setup)                                            │
-│  ───────────────                                            │
-│  □ Git pull latest changes                                  │
-│  □ Review context with /status                              │
-│  □ Load project memory (/sc:load if using Serena)           │
-│  □ Review yesterday's progress                              │
+│  早晨（准备）                                               │
+│  ───────────                                                │
+│  □ Git pull 最新更改                                        │
+│  □ 用 /status 检查上下文                                    │
+│  □ 加载项目记忆（如使用 Serena，则执行 /sc:load）           │
+│  □ 回顾昨日进展                                             │
 │                                                             │
-│  WORK SESSION                                               │
-│  ────────────                                               │
-│  □ Define task clearly before starting                      │
-│  □ Use TodoWrite for multi-step work                        │
-│  □ Commit after each completed task                         │
-│  □ /compact when context >70%                               │
-│  □ Take breaks every 90 minutes                             │
+│  工作时段                                                   │
+│  ─────────                                                  │
+│  □ 开始前清晰定义任务                                       │
+│  □ 多步骤工作使用 TodoWrite                                 │
+│  □ 每完成一个任务就提交                                     │
+│  □ 上下文 >70% 时执行 /compact                              │
+│  □ 每 90 分钟休息一次                                       │
 │                                                             │
-│  END OF DAY                                                 │
-│  ──────────                                                 │
-│  □ Commit all work in progress                              │
-│  □ Save session (/sc:save)                                  │
-│  □ Note blockers or next steps                              │
-│  □ Push to remote                                           │
+│  结束一天                                                   │
+│  ─────────                                                  │
+│  □ 提交所有进行中的工作                                     │
+│  □ 保存会话（/sc:save）                                     │
+│  □ 记录阻塞项或下一步                                       │
+│  □ 推送到远程                                               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Prompt Quality Checklist
+### 提示词质量检查清单
 
-Use this before sending complex requests:
-
-```
-□ WHAT: Clear deliverable described?
-□ WHERE: File paths/locations specified?
-□ HOW: Constraints/approach mentioned?
-□ WHY: Context for decision-making?
-□ VERIFY: Success criteria defined?
-```
-
-**Example applying checklist:**
+在发送复杂请求前使用：
 
 ```
-❌ Vague: "Add user authentication"
+□ WHAT: 是否描述了清晰的交付物？
+□ WHERE: 是否指定了文件路径/位置？
+□ HOW: 是否提到了约束/方法？
+□ WHY: 是否提供了决策所需的上下文？
+□ VERIFY: 是否定义了成功标准？
+```
 
-✅ Complete:
+**应用检查清单的示例：**
+
+```
+❌ 模糊："Add user authentication"
+
+✅ 完整：
 "Add JWT authentication to the /api/login endpoint.
 - WHERE: src/api/auth/login.ts
 - HOW: Use jsonwebtoken library (already in deps),
@@ -23645,11 +22846,11 @@ Use this before sending complex requests:
 
 ---
 
-# Appendix: Templates Collection
+# 附录：模板集合
 
-> **💡 Production-Ready Examples**: For complete, battle-tested templates including advanced commands (`/pr`, `/release-notes`, `/sonarqube`) and security hooks, see the [`examples/`](../examples/) directory. The templates below are minimal starting points.
+> **💡 生产就绪示例**：如需完整、经过实战检验的模板，包括高级命令（`/pr`、`/release-notes`、`/sonarqube`）和安全钩子，请参见 [`examples/`](../examples/) 目录。下面的模板是最小化起点。
 
-## A.1 Agent Template
+## A.1 Agent 模板
 
 ```markdown
 ---
@@ -23682,7 +22883,7 @@ Use this agent when:
 [Concrete usage examples]
 ```
 
-## A.2 Skill Template
+## A.2 Skill 模板
 
 ```markdown
 ---
@@ -23710,7 +22911,7 @@ argument-hint: "[--option] <required_arg>"   # if the skill accepts $ARGUMENTS
 [Good and bad patterns]
 ```
 
-## A.3 Command Template
+## A.3 Command 模板
 
 ```markdown
 ---
@@ -23734,14 +22935,14 @@ argument-hint: "<first_arg> [second_arg] [--flag]"
 [Expected output]
 ```
 
-## A.4 Hook Templates
+## A.4 Hook 模板
 
-### PreToolUse (Security)
+### PreToolUse（安全）
 
 ```bash
 #!/bin/bash
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
+COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""
 
 # Block dangerous patterns
 [[ "$COMMAND" =~ "dangerous-pattern" ]] && { echo "BLOCKED" >&2; exit 2; }
@@ -23749,12 +22950,12 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 exit 0
 ```
 
-### PostToolUse (Formatting)
+### PostToolUse（格式化）
 
 ```bash
 #!/bin/bash
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""
 
 # Auto-format
 [[ "$FILE_PATH" =~ \.(ts|tsx)$ ]] && npx prettier --write "$FILE_PATH" 2>/dev/null
@@ -23762,7 +22963,7 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
 exit 0
 ```
 
-### UserPromptSubmit (Context)
+### UserPromptSubmit（上下文）
 
 ```bash
 #!/bin/bash
@@ -23773,7 +22974,7 @@ EOF
 exit 0
 ```
 
-## A.5 settings.json Template
+## A.5 settings.json 模板
 
 ```json
 {
@@ -23800,7 +23001,7 @@ exit 0
 }
 ```
 
-## A.6 settings.local.json Template
+## A.6 settings.local.json 模板
 
 ```json
 {
@@ -23824,7 +23025,7 @@ exit 0
 }
 ```
 
-## A.7 CLAUDE.md Template
+## A.7 CLAUDE.md 模板
 
 ```markdown
 # Project Name
@@ -23848,112 +23049,112 @@ exit 0
 
 ---
 
-# 11. AI Ecosystem: Complementary Tools
+# 11. AI 生态：互补工具
 
-_Quick jump:_ [Why Complementarity](#111-why-complementarity-matters) · [Tool Matrix](#112-tool-matrix) · [Practical Workflows](#113-practical-workflows) · [Integration Patterns](#114-integration-patterns)
+_快速跳转：_[为何互补很重要](#111-为何互补很重要) · [工具矩阵](#112-工具矩阵) · [实用工作流](#113-实用工作流) · [集成模式](#114-集成模式)
 
 ---
 
-**Reading time**: 10 minutes
+**阅读时间**：10 分钟
 
-**Skill level**: Intermediate
+**技能水平**：中级
 
-**Goal**: Chain Claude Code with the right AI tools for optimal workflows
+**目标**：将 Claude Code 与合适的 AI 工具链式组合，打造最优工作流
 
-> **TL;DR**: Claude Code excels at contextual reasoning and multi-file implementation. Combine it with Perplexity (research), Gemini (images), Kimi (slides), and NotebookLM (synthesis) for a complete AI-powered development workflow.
+> **TL;DR**：Claude Code 擅长上下文推理和多文件实现。将其与 Perplexity（研究）、Gemini（图像）、Kimi（幻灯片）和 NotebookLM（综合）结合，构建完整的 AI 驱动开发工作流。
 
-## 11.1 Why Complementarity Matters
+## 11.1 为何互补很重要
 
-Claude Code is designed to be your **implementation partner** with deep codebase understanding. It deliberately doesn't try to do everything—and that's a strength.
+Claude Code 的设计定位是你的**实现伙伴**，具备深度代码库理解能力。它刻意不追求全能——这正是它的优势所在。
 
-### What Claude Code Does Best
+### Claude Code 最擅长什么
 
-| Capability | Why Claude Excels |
+| 能力 | Claude 为何出色 |
 |-----------|------------------|
-| **Contextual reasoning** | Reads entire project, understands patterns |
-| **Multi-file editing** | Coordinates changes across modules |
-| **Test integration** | Generates tests that understand your code |
-| **CLI automation** | Perfect for CI/CD pipelines |
-| **Persistent memory** | CLAUDE.md files maintain context |
+| **上下文推理** | 读取整个项目，理解模式 |
+| **多文件编辑** | 跨模块协调变更 |
+| **测试集成** | 生成理解你代码的测试 |
+| **CLI 自动化** | 完美适配 CI/CD 流水线 |
+| **持久记忆** | CLAUDE.md 文件保持上下文 |
 
-### Where Other Tools Add Value
+### 其他工具在哪些方面增值
 
-| Gap | Why | Solution |
+| 缺口 | 原因 | 解决方案 |
 |-----|-----|----------|
-| **Deep research with sources** | WebSearch is limited (~5-10 sources) | Perplexity Pro (100+ verified sources) |
-| **Image → Code** | No visual understanding | Gemini 2.5 (superior image analysis) |
-| **Slide generation** | Limited PPTX (via Claude in PowerPoint add-in, research preview) | Kimi (native PowerPoint generation) |
-| **Audio synthesis** | No TTS capability | NotebookLM (podcast-style overviews) |
-| **Live browser prototyping** | No visual preview | v0.dev, Bolt (instant preview) |
-| **Rate limits / cost control** | Per-token billing, API limits | cc-copilot-bridge (flat-rate via Copilot) |
+| **带来源的深度研究** | WebSearch 有限（约 5-10 个来源） | Perplexity Pro（100+ 已验证来源） |
+| **图像 → 代码** | 无视觉理解能力 | Gemini 2.5（卓越的图像分析） |
+| **幻灯片生成** | PPTX 能力有限（通过 Claude in PowerPoint 插件，研究预览版） | Kimi（原生 PowerPoint 生成） |
+| **音频合成** | 无 TTS 能力 | NotebookLM（播客式概览） |
+| **实时浏览器原型** | 无视觉预览 | v0.dev、Bolt（即时预览） |
+| **速率限制 / 成本控制** | 按 Token 计费，API 限制 | cc-copilot-bridge（通过 Copilot 的 flat-rate） |
 
-The goal isn't replacement—it's **chaining the right tool for each step**.
+目标不是替代——而是**为每个步骤链式调用合适的工具**。
 
-## 11.2 Tool Matrix
+## 11.2 工具矩阵
 
-### Quick Decision Guide
+### 快速决策指南
 
-| I need to... | Use | Why Not Claude |
+| 我需要... | 使用 | 为何不用 Claude |
 |--------------|-----|----------------|
-| Implement a feature | **Claude Code** | ✅ Best choice |
-| Research before implementing | **Perplexity** | Limited sources, no citations |
-| Convert mockup to code | **Gemini → Claude** | Limited visual understanding |
-| Create stakeholder deck | **Claude in PowerPoint (add-in)** or **Kimi** | Native PPTX generation limited to add-in |
-| Understand new codebase quickly | **NotebookLM → Claude** | No audio synthesis |
-| Rapid UI prototype | **v0/Bolt → Claude** | No live preview |
-| Quick inline edits | **IDE + Copilot** | Context switching overhead |
+| 实现功能 | **Claude Code** | ✅ 最佳选择 |
+| 实现前做研究 | **Perplexity** | 来源有限，无引用 |
+| 将设计稿转为代码 | **Gemini → Claude** | 视觉理解有限 |
+| 创建利益相关者演示文稿 | **Claude in PowerPoint（插件）** 或 **Kimi** | 原生 PPTX 生成仅限于插件 |
+| 快速理解新代码库 | **NotebookLM → Claude** | 无音频合成能力 |
+| 快速 UI 原型 | **v0/Bolt → Claude** | 无实时预览 |
+| 快速内联编辑 | **IDE + Copilot** | 上下文切换开销 |
 
-### Complementary Tools Overview
+### 互补工具概览
 
-| Tool | Primary Strength | Free Tier | Pro Cost |
+| 工具 | 核心优势 | 免费版 | 专业版价格 |
 |------|-----------------|-----------|----------|
-| **[Perplexity](https://perplexity.ai)** | Research with verified sources | 5 Pro searches/day | $20/month |
-| **[Gemini](https://gemini.google.com)** | Image understanding → code | Generous | $19.99/month |
-| **[Kimi](https://kimi.ai)** | PPTX generation, 128K context | Generous | Free |
-| **[NotebookLM](https://notebooklm.google.com)** | Doc synthesis + audio + **MCP integration** | Full features | Free |
-| **[v0.dev](https://v0.dev)** | UI prototyping (Shadcn) | Limited | $20/month |
-| **[Cursor](https://cursor.sh)** | IDE with AI autocomplete | Limited | $20/month |
-| **[cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge)** | Multi-provider switching | Full | Copilot Pro $10/month |
+| **[Perplexity](https://perplexity.ai)** | 带已验证来源的研究 | 每天 5 次 Pro 搜索 | $20/月 |
+| **[Gemini](https://gemini.google.com)** | 图像理解 → 代码 | 慷慨 | $19.99/月 |
+| **[Kimi](https://kimi.ai)** | PPTX 生成，128K 上下文 | 慷慨 | 免费 |
+| **[NotebookLM](https://notebooklm.google.com)** | 文档综合 + 音频 + **MCP 集成** | 完整功能 | 免费 |
+| **[v0.dev](https://v0.dev)** | UI 原型（Shadcn） | 有限 | $20/月 |
+| **[Cursor](https://cursor.sh)** | 带 AI 自动补全的 IDE | 有限 | $20/月 |
+| **[cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge)** | 多供应商切换 | 完整 | Copilot Pro $10/月 |
 
-### Multi-Provider Setup: cc-copilot-bridge
+### 多供应商设置：cc-copilot-bridge
 
-For heavy Claude Code usage, **cc-copilot-bridge** routes requests through GitHub Copilot Pro ($10/month) instead of Anthropic's per-token billing.
+对于重度 Claude Code 用户，**cc-copilot-bridge** 可以将请求通过 GitHub Copilot Pro（$10/月）路由，而不是 Anthropic 的按 Token 计费。
 
-**What it solves:**
+**它解决的问题：**
 
-- Rate limits during intensive development sessions
-- Cost optimization for high-volume usage (99%+ savings possible)
-- Offline development with Ollama for proprietary code
+- 高强度开发会话期间的速率限制
+- 高用量场景的成本优化（可节省 99%+）
+- 使用 Ollama 进行专有代码的离线开发
 
-**Quick Setup:**
+**快速设置：**
 
 ```bash
-# Install
+# 安装
 git clone https://github.com/FlorianBruniaux/cc-copilot-bridge.git
 cd cc-copilot-bridge && ./install.sh
 
-# Use (3-character aliases)
-ccc   # Copilot mode (flat $10/month via Copilot Pro)
-ccd   # Direct mode (Anthropic per-token)
-cco   # Offline mode (Ollama, 100% local)
+# 使用（3 字符别名）
+ccc   # Copilot 模式（通过 Copilot Pro 的 flat $10/月）
+ccd   # 直连模式（Anthropic 按 Token）
+cco   # 离线模式（Ollama，100% 本地）
 ```
 
-**Cost Comparison:**
+**成本对比：**
 
-| Scenario | Anthropic Direct | With Copilot Pro | Savings |
+| 场景 | Anthropic 直连 | 搭配 Copilot Pro | 节省 |
 |----------|------------------|-------------------|---------|
-| Heavy daily usage | ~$300/month | $10/month | ~97% |
-| 100M tokens/month | $1,500 | $10 | 99.3% |
+| 重度日常使用 | ~$300/月 | $10/月 | ~97% |
+| 每月 1 亿 Token | $1,500 | $10 | 99.3% |
 
-> **Note**: Requires GitHub Copilot Pro subscription ($10/month) which provides access to Claude models through VS Code's API.
+> **注意**：需要 GitHub Copilot Pro 订阅（$10/月），该订阅通过 VS Code 的 API 提供 Claude 模型访问。
 
-See: [cc-copilot-bridge Quick Start](https://github.com/FlorianBruniaux/cc-copilot-bridge#-quick-start)
+参见：[cc-copilot-bridge 快速入门](https://github.com/FlorianBruniaux/cc-copilot-bridge#-quick-start)
 
-### Local Execution Bridge (Opus Plan → LM Studio Execute)
+### 本地执行桥接（Opus Plan → LM Studio Execute）
 
-For maximum cost savings, use Claude Code (Opus) for planning only, then execute locally via LM Studio.
+为最大化节省成本，仅使用 Claude Code（Opus）进行规划，然后通过 LM Studio 本地执行。
 
-**Architecture:**
+**架构：**
 
 ```
 ┌──────────────┐     store_memory      ┌─────────────────┐
@@ -23975,31 +23176,31 @@ For maximum cost savings, use Claude Code (Opus) for planning only, then execute
                                        └─────────────────┘
 ```
 
-**Cost model:**
+**成本模型：**
 
-- Planning (Opus): ~$0.50-2.00 per complex plan
-- Execution (LM Studio): Free (100% local)
-- **ROI**: 80-90% cost reduction on implementation tasks
+- 规划（Opus）：每个复杂计划约 $0.50-2.00
+- 执行（LM Studio）：免费（100% 本地）
+- **ROI**：实现任务成本降低 80-90%
 
-**Setup:**
+**设置：**
 
 ```bash
-# Requires doobidoo MCP and LM Studio running
+# 需要 doobidoo MCP 和运行中的 LM Studio
 pip install httpx
 
-# Health check
+# 健康检查
 python examples/scripts/bridge.py --health
 
-# List pending plans
+# 列出待处理计划
 python examples/scripts/bridge.py --list
 
-# Execute all pending plans
+# 执行所有待处理计划
 python examples/scripts/bridge.py
 ```
 
-**Workflow:**
+**工作流：**
 
-1. **Claude Code creates plan** (stored in doobidoo):
+1. **Claude Code 创建计划**（存储在 doobidoo 中）：
 
 ```json
 {
@@ -24017,34 +23218,34 @@ python examples/scripts/bridge.py
 }
 ```
 
-2. **Bridge executes locally** via LM Studio
-3. **Results stored** back in doobidoo for Claude Code to review
+2. **Bridge 通过 LM Studio 本地执行**
+3. **结果存回** doobidoo，供 Claude Code 审查
 
-**When to use:**
+**何时使用：**
 
-- Implementation tasks (not architectural decisions)
-- Code generation with clear specs
-- Bulk transformations
-- When Opus planning + local execution beats Opus end-to-end
+- 实现任务（非架构决策）
+- 有明确规范的代码生成
+- 批量转换
+- 当 Opus 规划 + 本地执行优于 Opus 端到端时
 
-See: [`examples/scripts/bridge.py`](../examples/scripts/bridge.py), [`examples/scripts/README.md`](../examples/scripts/README.md)
+参见：[`examples/scripts/bridge.py`](../examples/scripts/bridge.py)、[`examples/scripts/README.md`](../examples/scripts/README.md)
 
-## 11.3 Practical Workflows
+## 11.3 实用工作流
 
-### Research → Code Pipeline
+### 研究 → 代码流水线
 
-Use when: You need to understand best practices before implementing.
+使用场景：在实现前需要了解最佳实践。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ 1. PERPLEXITY (Deep Research Mode - 5 min)              │
+│ 1. PERPLEXITY（深度研究模式 - 5 分钟）                   │
 │                                                         │
 │    "Research JWT refresh token best practices for       │
 │     Next.js 15. Include security, common pitfalls,      │
 │     and compare jose vs jsonwebtoken libraries."        │
 │                                                         │
-│    → Output: 2000-word spec with 20+ sources           │
-│    → Export: Copy as Markdown → spec.md                │
+│    → 输出：2000 字规范文档，含 20+ 来源                 │
+│    → 导出：复制为 Markdown → spec.md                    │
 └───────────────────────────┬─────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -24055,27 +23256,27 @@ Use when: You need to understand best practices before implementing.
 │     Use jose library as recommended.                    │
 │     Add to src/lib/auth/. Include tests."               │
 │                                                         │
-│    → Output: Working implementation + tests            │
+│    → 输出：可工作的实现 + 测试                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**When to use**: Any implementation requiring ecosystem knowledge, library comparisons, or security considerations.
+**何时使用**：任何需要生态知识、库对比或安全考虑的实现。
 
-### Visual → Code Pipeline
+### 视觉 → 代码流水线
 
-Use when: You have mockups, screenshots, or diagrams to implement.
+使用场景：你有需要实现的设计稿、截图或图表。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 1. GEMINI 2.5 PRO                                       │
 │                                                         │
-│    Upload: dashboard-mockup.png                         │
+│    上传：dashboard-mockup.png                           │
 │    "Convert to React component with Tailwind.           │
 │     Include responsive breakpoints and accessibility."  │
 │                                                         │
-│    → Output: Initial JSX + Tailwind code               │
+│    → 输出：初始 JSX + Tailwind 代码                     │
 └───────────────────────────┬─────────────────────────────┘
-                            ↓ Copy to clipboard
+                            ↓ 复制到剪贴板
 ┌─────────────────────────────────────────────────────────┐
 │ 2. CLAUDE CODE                                          │
 │                                                         │
@@ -24085,53 +23286,53 @@ Use when: You have mockups, screenshots, or diagrams to implement.
 │     - Connect to getUserProfile API hook                │
 │     - Add loading and error states"                     │
 │                                                         │
-│    → Output: Production-ready integrated component     │
+│    → 输出：生产就绪的集成组件                            │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**When to use**: Figma exports, whiteboard sketches, architecture diagrams, error screenshots.
+**何时使用**：Figma 导出、白板草图、架构图、错误截图。
 
-### Documentation Pipeline
+### 文档流水线
 
-Use when: You need to quickly understand a new codebase or create audio overviews.
+使用场景：你需要快速理解新代码库或创建音频概览。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ 1. EXPORT DOCS (Claude Code)                            │
+│ 1. 导出文档（Claude Code）                               │
 │                                                         │
 │    "Combine all markdown from docs/ into one file.      │
 │     Include README.md and CLAUDE.md."                   │
 │                                                         │
-│    → Output: combined-docs.md                          │
+│    → 输出：combined-docs.md                              │
 └───────────────────────────┬─────────────────────────────┘
-                            ↓ Upload to NotebookLM
+                            ↓ 上传到 NotebookLM
 ┌─────────────────────────────────────────────────────────┐
 │ 2. NOTEBOOKLM                                           │
 │                                                         │
-│    - Add combined-docs.md as source                     │
-│    - Click "Generate Audio Overview"                    │
-│    - Listen during commute (10-15 min)                  │
+│    - 将 combined-docs.md 添加为来源                     │
+│    - 点击 "Generate Audio Overview"                     │
+│    - 通勤时收听（10-15 分钟）                            │
 │                                                         │
-│    → Output: Podcast-style system overview             │
+│    → 输出：播客式系统概览                                │
 └───────────────────────────┬─────────────────────────────┘
-                            ↓ Take notes, return to Claude
+                            ↓ 做笔记，回到 Claude
 ┌─────────────────────────────────────────────────────────┐
 │ 3. CLAUDE CODE                                          │
 │                                                         │
 │    "Based on my understanding from the audio:           │
 │     Help me deep-dive into the payment flow."           │
 │                                                         │
-│    → Output: Contextual explanation + code walkthrough │
+│    → 输出：上下文解释 + 代码走读                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**When to use**: Joining new team, reviewing unfamiliar codebase, onboarding prep.
+**何时使用**：加入新团队、审查不熟悉的代码库、入职准备。
 
-> **💡 MCP Integration Available**: You can now query NotebookLM notebooks directly from Claude Code using the NotebookLM MCP server. See [ai-ecosystem.md § 4.1](./ecosystem/ai-ecosystem.md#41-notebooklm-mcp-integration) for installation and usage guide.
+> **💡 MCP 集成可用**：你现在可以通过 NotebookLM MCP 服务器直接从 Claude Code 查询 NotebookLM 笔记本。安装和使用指南见 [ai-ecosystem.md § 4.1](./ecosystem/ai-ecosystem.md#41-notebooklm-mcp-integration)。
 
-### Presentation Pipeline
+### 演示文稿流水线
 
-Use when: You need to communicate technical changes to stakeholders.
+使用场景：你需要向利益相关者传达技术变更。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -24141,9 +23342,9 @@ Use when: You need to communicate technical changes to stakeholders.
 │     Format: Overview, Key Features, Breaking Changes,   │
 │     Migration Steps. Use business-friendly language."   │
 │                                                         │
-│    → Output: changes-summary.md                        │
+│    → 输出：changes-summary.md                            │
 └───────────────────────────┬─────────────────────────────┘
-                            ↓ Upload to Kimi
+                            ↓ 上传到 Kimi
 ┌─────────────────────────────────────────────────────────┐
 │ 2. KIMI                                                 │
 │                                                         │
@@ -24151,187 +23352,187 @@ Use when: You need to communicate technical changes to stakeholders.
 │     One key message per slide.                          │
 │     Include summary and next steps."                    │
 │                                                         │
-│    → Output: stakeholder-update.pptx                   │
+│    → 输出：stakeholder-update.pptx                       │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**When to use**: Sprint demos, release announcements, executive updates.
+**何时使用**：Sprint 演示、发布公告、高管汇报。
 
-## 11.4 Integration Patterns
+## 11.4 集成模式
 
-### Full Workflow: Research-Heavy Feature
+### 完整工作流：研究密集型功能
 
 ```bash
-# 1. Research (Perplexity - 10 min)
+# 1. 研究（Perplexity - 10 分钟）
 # → "Best practices for WebSocket in Next.js 15"
-# → Export to websocket-spec.md
+# → 导出到 websocket-spec.md
 
-# 2. Implementation (Claude Code - 40 min)
+# 2. 实现（Claude Code - 40 分钟）
 claude
 > "Implement WebSocket per websocket-spec.md.
    Add to src/lib/websocket/. Include reconnection."
 
-# 3. Stakeholder update (Kimi - 5 min)
-# → Upload changes + screenshots
-# → Generate 5-slide deck
+# 3. 利益相关者更新（Kimi - 5 分钟）
+# → 上传变更 + 截图
+# → 生成 5 页幻灯片
 ```
 
-### Full Workflow: Visual-Heavy Feature
+### 完整工作流：视觉密集型功能
 
 ```bash
-# 1. UI Prototype (v0 - 10 min)
-# → Generate dashboard layout
+# 1. UI 原型（v0 - 10 分钟）
+# → 生成仪表板布局
 
-# 2. Visual refinement (Gemini - 5 min)
-# → Upload Figma polish → Get refined code
+# 2. 视觉优化（Gemini - 5 分钟）
+# → 上传 Figma 精修稿 → 获取优化后的代码
 
-# 3. Integration (Claude Code - 30 min)
+# 3. 集成（Claude Code - 30 分钟）
 claude
 > "Integrate this dashboard.
    Connect to our data hooks. Add TypeScript types."
 ```
 
-### Recommended Tool Stack by Budget
+### 按预算推荐的工具栈
 
-| Budget | Stack | Monthly |
+| 预算 | 栈 | 月费 |
 |--------|-------|---------|
-| **Minimal** | Claude Code + Perplexity Pro | $40-70 |
-| **Balanced** | + Gemini + Cursor | $80-110 |
-| **Power** | + v0 Pro | $100-130 |
+| **极简** | Claude Code + Perplexity Pro | $40-70 |
+| **均衡** | + Gemini + Cursor | $80-110 |
+| **强力** | + v0 Pro | $100-130 |
 
-### Cost Optimization Tips
+### 成本优化技巧
 
-1. **Use Haiku** for simple tasks (`/model haiku`)
-2. **Batch research** in Perplexity Deep Research sessions
-3. **Use free tiers**: NotebookLM, Kimi, Gemini Flash are free
-4. **Check context** regularly (`/status`) to avoid waste
-5. **Use Opus sparingly** - reserve for architectural decisions
+1. **简单任务用 Haiku**（`/model haiku`）
+2. **批量研究**在 Perplexity 深度研究会话中完成
+3. **使用免费版**：NotebookLM、Kimi、Gemini Flash 均免费
+4. **定期检查上下文**（`/status`）以避免浪费
+5. **谨慎使用 Opus** - 仅保留给架构决策
 
 ---
 
-> **📖 Deep Dive**: For detailed integration patterns, ready-to-use prompts, and tool comparisons, see the [complete AI Ecosystem guide](./ecosystem/ai-ecosystem.md).
+> **📖 深度阅读**：如需详细的集成模式、即用型提示词和工具对比，请参见 [完整的 AI 生态指南](./ecosystem/ai-ecosystem.md)。
 
-### For Non-Developers: Claude Cowork
+### 非开发者之选：Claude Cowork
 
-If you work with non-technical team members, **Cowork** brings Claude's agentic capabilities to knowledge workers without requiring terminal access.
+如果你与非技术团队成员协作，**Cowork** 将 Claude 的智能体化能力带给知识工作者，无需终端访问。
 
-| Aspect | Claude Code | Cowork |
+| 方面 | Claude Code | Cowork |
 |--------|-------------|--------|
-| Target | Developers | Knowledge workers |
-| Interface | Terminal | Desktop app |
-| Execute code | Yes | No (files only) |
-| Outputs | Code, scripts | Excel, PPT, docs |
-| Status | Production | Research preview |
+| 目标用户 | 开发者 | 知识工作者 |
+| 界面 | 终端 | 桌面应用 |
+| 执行代码 | 是 | 否（仅文件） |
+| 输出 | 代码、脚本 | Excel、PPT、文档 |
+| 状态 | 生产版 | 研究预览版 |
 
-**Collaboration pattern**: Developers use Claude Code for specs → PMs use Cowork for stakeholder summaries. Shared context via `~/Shared/CLAUDE.md`.
+**协作模式**：开发者用 Claude Code 写规范 → 产品经理用 Cowork 生成利益相关者摘要。通过 `~/Shared/CLAUDE.md` 共享上下文。
 
-> **Availability**: Pro ($20/mo) or Max ($100-200/mo) subscribers, macOS only (Jan 2026).
-> See [AI Ecosystem Section 9](./ecosystem/ai-ecosystem.md#9-claude-cowork-research-preview) for details.
+> **可用性**：Pro（$20/月）或 Max（$100-200/月）订阅用户，仅限 macOS（2026 年 1 月）。
+> 详情见 [AI 生态第 9 节](./ecosystem/ai-ecosystem.md#9-claude-cowork-research-preview)。
 
-## Further Reading
+## 延伸阅读
 
-### Whitepapers (FR + EN)
+### 白皮书（法文 + 英文）
 
-A series of 9 focused whitepapers covering Claude Code topics in depth, available in French and English:
+共 9 篇聚焦 Claude Code 主题的深度白皮书，提供法文和英文版本：
 
-| # | Topic | Scope |
-|---|-------|-------|
-| 00 | Foundations | First steps, core concepts |
-| 01 | Effective Prompts | Prompting method, context, hooks |
-| 02 | Customization | CLAUDE.md, agents, skills |
-| 03 | Security | 17 hooks, threat DB, permissions |
-| 04 | Architecture | Agent loop, context, token pricing |
-| 05 | Team Deployment | CI/CD, observability, 50+ devs |
-| 06 | Privacy & Compliance | Anthropic data, ZDR, retention |
-| 07 | Reference Guide | Complete synthesis + workflows |
-| 08 | Agent Teams | Multi-agent orchestration |
+| # | 主题 | 范围 |
+|---|-------|------|
+| 00 | 基础 | 第一步、核心概念 |
+| 01 | 高效提示词 | 提示方法、上下文、钩子 |
+| 02 | 自定义 | CLAUDE.md、agents、skills |
+| 03 | 安全 | 17 个钩子、威胁数据库、权限 |
+| 04 | 架构 | 智能体循环、上下文、Token 定价 |
+| 05 | 团队部署 | CI/CD、可观测性、50+ 开发者 |
+| 06 | 隐私与合规 | Anthropic 数据、ZDR、保留策略 |
+| 07 | 参考指南 | 完整综合 + 工作流 |
+| 08 | 智能体团队 | 多智能体编排 |
 
-→ **[Download all whitepapers (FR + EN)](https://www.florian.bruniaux.com/guides)**
+→ **[下载所有白皮书（法文 + 英文）](https://www.florian.bruniaux.com/guides)**
 
 ---
 
-### Advanced Workflows
+### 高级工作流
 
-For advanced autonomous workflows, see Nick Tune's [Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa) - a pipeline-driven approach focusing on fully autonomous PR generation with multi-tool orchestration.
+如需高级自主工作流，请参见 Nick Tune 的 [Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa)——一种以流水线为驱动的方法，专注于通过多工具编排实现完全自主的 PR 生成。
 
-### Community Resources
+### 社区资源
 
-The Claude Code ecosystem is growing rapidly. Here are curated resources to continue learning:
+Claude Code 生态正在快速发展。以下是精选的学习资源：
 
 #### Awesome Lists
 
-| Repository | Focus |
+| 仓库 | 焦点 |
 |------------|-------|
-| [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | Commands, workflows, IDE integrations |
-| [awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) | Custom skills collection |
-| [awesome-claude-skills (BehiSecc)](https://github.com/BehiSecc/awesome-claude-skills) | Skills taxonomy (62 skills, 12 categories) |
-| [awesome-claude](https://github.com/alvinunreal/awesome-claude) | General Claude resources (SDKs, tools) |
+| [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | 命令、工作流、IDE 集成 |
+| [awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) | 自定义技能集合 |
+| [awesome-claude-skills (BehiSecc)](https://github.com/BehiSecc/awesome-claude-skills) | 技能分类（62 个技能，12 个类别） |
+| [awesome-claude](https://github.com/alvinunreal/awesome-claude) | 通用 Claude 资源（SDK、工具） |
 
-#### Frameworks
+#### 框架
 
-| Framework | Description | Link |
+| 框架 | 描述 | 链接 |
 |-----------|-------------|------|
-| **SuperClaude** | Advanced configuration framework with 30+ commands (`/sc:*`), cognitive personas, and MCP integration | [GitHub](https://github.com/SuperClaude-Org/SuperClaude_Framework) |
+| **SuperClaude** | 高级配置框架，含 30+ 命令（`/sc:*`）、认知角色和 MCP 集成 | [GitHub](https://github.com/SuperClaude-Org/SuperClaude_Framework) |
 
-SuperClaude transforms Claude Code into a structured development platform through behavioral instruction injection. Key features:
+SuperClaude 通过行为指令注入将 Claude Code 转变为结构化开发平台。核心特性：
 
-- 30+ specialized commands for common dev tasks
-- Smart personas for different contexts
-- MCP server integration
-- Task management and session persistence
-- **Behavioral modes** for optimized workflows
+- 30+ 个常见开发任务的专用命令
+- 针对不同场景的智能角色
+- MCP 服务器集成
+- 任务管理和会话持久化
+- **行为模式**用于优化工作流
 
-#### Production Config Collections
+#### 生产配置集合
 
-For **battle-tested, ready-to-use configurations** from production environments:
+如需来自生产环境的**经过实战检验、即开即用的配置**：
 
-| Repository | Author | Stats | Focus |
-|------------|--------|-------|-------|
-| [**everything-claude-code**](https://github.com/affaan-m/everything-claude-code) | Affaan Mustafa (Anthropic hackathon winner) | ⭐ 31.9k | Production configs from 10+ months intensive use |
+| 仓库 | 作者 | 数据 | 焦点 |
+|------------|--------|-------|------|
+| [**everything-claude-code**](https://github.com/affaan-m/everything-claude-code) | Affaan Mustafa（Anthropic 黑客马拉松冠军） | ⭐ 31.9k | 10 个月以上高强度使用的生产配置 |
 
-**Why this matters**: This is the **largest community-validated Claude Code resource** (31.9k stars in 9 days). Unlike tutorials, these are **configs proven in production** through winning Anthropic's hackathon (Zenith project).
+**为何重要**：这是**最大的社区验证 Claude Code 资源**（9 天内 31.9k star）。与教程不同，这些是**在生产环境中验证过的配置**，源自赢得 Anthropic 黑客马拉松（Zenith 项目）。
 
-**Unique innovations not found elsewhere**:
+**别处找不到的独特创新**：
 
-- **hookify**: Conversational hook creation (describe need → JSON generated)
-- **pass@k metrics**: Formal verification approach (k=3 → 91% success rate)
-- **Sandboxed subagents**: Tool restrictions per agent (security-reviewer can't Edit files)
-- **Strategic compaction skills**: Manual compaction suggestions to manage context growth
-- **Plugin ecosystem**: One-command installation for all configs
+- **hookify**：对话式钩子创建（描述需求 → 生成 JSON）
+- **pass@k 指标**：形式化验证方法（k=3 → 91% 成功率）
+- **沙箱子智能体**：每个智能体的工具限制（安全审查员不能编辑文件）
+- **策略性压缩技能**：手动压缩建议以管理上下文增长
+- **插件生态**：一键安装所有配置
 
-**Positioning**: Complementary to this guide—we teach concepts ("why"), they provide production configs ("how").
+**定位**：与本指南互补——我们教授概念（"为什么"），他们提供生产配置（"怎么做"）。
 
-**See also**: [Comprehensive evaluation](../docs/resource-evaluations/015-everything-claude-code-github-repo.md) (Score 5/5)
+**另见**：[综合评估](../docs/resource-evaluations/015-everything-claude-code-github-repo.md)（评分 5/5）
 
 ---
 
-#### SuperClaude Behavioral Modes
+#### SuperClaude 行为模式
 
-> ⚠️ **Non-official Extension**: SuperClaude flags (`--learn`, `--uc`, `--think`, etc.) are **NOT Claude Code CLI flags**. They work via prompt injection in CLAUDE.md files and require installing the SuperClaude framework.
+> ⚠️ **非官方扩展**：SuperClaude 标志（`--learn`、`--uc`、`--think` 等）**不是 Claude Code CLI 标志**。它们通过 CLAUDE.md 文件中的提示词注入工作，需要安装 SuperClaude 框架。
 
-SuperClaude includes configurable behavioral modes stored in `~/.claude/MODE_*.md` files:
+SuperClaude 包含存储在 `~/.claude/MODE_*.md` 文件中的可配置行为模式：
 
-| Mode | Purpose | Activation |
+| 模式 | 用途 | 激活方式 |
 |------|---------|------------|
-| **Orchestration** | Smart tool selection, parallel execution | Auto (multi-tool ops, >75% context) |
-| **Task Management** | Hierarchical task tracking with memory | Auto (>3 steps, >2 directories) |
-| **Token Efficiency** | Symbol-enhanced compression (30-50% reduction) | Auto (>75% context) or `--uc` |
-| **Learning** | Just-in-time skill development | `--learn` flag or "why/how" questions |
+| **Orchestration** | 智能工具选择、并行执行 | 自动（多工具操作、>75% 上下文） |
+| **Task Management** | 带记忆的层级任务跟踪 | 自动（>3 步、>2 目录） |
+| **Token Efficiency** | 符号增强压缩（减少 30-50%） | 自动（>75% 上下文）或 `--uc` |
+| **Learning** | 即时技能发展 | `--learn` 标志或 "why/how" 问题 |
 
-#### Learning Mode: Installation & Usage
+#### 学习模式：安装与使用
 
-Learning Mode provides contextual explanations when techniques are first used, without overwhelming you with repeated explanations.
+学习模式在首次使用某项技术时提供上下文解释，而不会用重复说明淹没你。
 
-**Installation**:
+**安装**：
 
-1. Create the mode file:
+1. 创建模式文件：
 
 ```bash
-# Create MODE_Learning.md in your global Claude config
+# 在全局 Claude 配置中创建 MODE_Learning.md
 touch ~/.claude/MODE_Learning.md
 ```
 
-2. Add the content (or copy from SuperClaude framework):
+2. 添加内容（或从 SuperClaude 框架复制）：
 
 ```markdown
 # Learning Mode
@@ -24349,14 +23550,14 @@ touch ~/.claude/MODE_Learning.md
 When active, tracks techniques explained this session to avoid repetition.
 ```
 
-3. Register in `~/.claude/CLAUDE.md`:
+3. 在 `~/.claude/CLAUDE.md` 中注册：
 
 ```markdown
 # Behavioral Modes
 @MODE_Learning.md
 ```
 
-4. Add flags to `~/.claude/FLAGS.md`:
+4. 在 `~/.claude/FLAGS.md` 中添加标志：
 
 ```markdown
 **--learn**
@@ -24368,60 +23569,60 @@ When active, tracks techniques explained this session to avoid repetition.
 - Behavior: Suppress all learning mode offers
 ```
 
-**Usage**:
+**使用**：
 
 ```bash
-# Activate for entire session
+# 为整个会话激活
 claude --learn
 
-# Focus on specific domain
+# 聚焦特定领域
 claude --learn focus:git
 claude --learn focus:architecture
 claude --learn focus:security
 
-# Batch explanations at end
+# 批量解释，放在最后
 claude --learn batch
 ```
 
-**Offer Format**:
+**提供格式**：
 
-When Learning Mode is active, Claude offers explanations after technical actions:
+学习模式激活时，Claude 会在技术操作后主动提供解释：
 
 ```
 git rebase -i HEAD~3
 -> Explain: rebase vs merge? (y/detail/skip)
 ```
 
-Response options:
+响应选项：
 
-- `y` → Surface explanation (20-50 tokens)
-- `detail` → Medium depth (100-200 tokens)
-- `skip` → Continue without explanation
+- `y` → 表面解释（20-50 tokens）
+- `detail` → 中等深度（100-200 tokens）
+- `skip` → 跳过解释，继续
 
-**With Token Efficiency Mode** (compressed format):
+**搭配 Token Efficiency 模式**（压缩格式）：
 
 ```
 git rebase -i HEAD~3
 -> ?rebase
 ```
 
-**Integration with Other Modes**:
+**与其他模式集成**：
 
-| Combined With | Behavior |
+| 组合 | 行为 |
 |---------------|----------|
-| Token Efficiency (`--uc`) | Compressed offer format: `-> ?[concept]` |
-| Task Management | Batch explanations at phase completion |
-| Brutal Advisor | Brutal on diagnosis, pedagogical on explanation |
+| Token Efficiency (`--uc`) | 压缩提供格式：`-> ?[concept]` |
+| Task Management | 阶段完成时批量解释 |
+| Brutal Advisor | 诊断犀利，解释 pedagogical |
 
-**Priority Rules**:
+**优先级规则**：
 
 ```
 --no-learn > --uc > --learn
-Token Efficiency constraints > Learning verbosity
-Task flow > Individual explanations
+Token Efficiency 约束 > Learning 冗长
+任务流 > 单独解释
 ```
 
-**Example Session**:
+**示例会话**：
 
 ```bash
 $ claude --learn
@@ -24440,611 +23641,610 @@ Use rebase for clean history before push, merge for shared branches.
 [Continues work - won't ask about rebase again this session]
 ```
 
-**When to Use Learning Mode**:
+**何时使用学习模式**：
 
-| Use `--learn` | Use `--no-learn` |
+| 使用 `--learn` | 使用 `--no-learn` |
 |---------------|------------------|
-| New to a technology | Expert in the domain |
-| Onboarding to project | Time-critical tasks |
-| Want to understand decisions | Already know the patterns |
-| Mentoring yourself | High context pressure |#### Learning Sites
+| 某项技术新手 | 该领域专家 |
+| 项目入职 | 时间紧迫的任务 |
+| 想理解决策原因 | 已经了解模式 |
+| 自我指导式学习 | 高上下文压力 |
+#### 学习站点
 
-| Site | Description |
-|------|-------------|
-| [Claudelog.com](https://claudelog.com/) | Tips, patterns, tutorials, and best practices |
-| [ykdojo/claude-code-tips](https://github.com/ykdojo/claude-code-tips) | Practical productivity tips (voice workflows, context management, terminal efficiency) |
-| [Official Docs](https://docs.anthropic.com/en/docs/claude-code) | Anthropic's official Claude Code documentation |
+| 站点 | 说明 |
+|------|------|
+| [Claudelog.com](https://claudelog.com/) | 技巧、模式、教程与最佳实践 |
+| [ykdojo/claude-code-tips](https://github.com/ykdojo/claude-code-tips) | 实用生产力技巧（语音工作流、上下文管理、终端效率） |
+| [官方文档](https://docs.anthropic.com/en/docs/claude-code) | Anthropic 官方 Claude Code 文档 |
 
-> **Tip**: These resources evolve quickly. Star repos you find useful to track updates.
+> **提示**：这些资源更新很快。遇到有用的仓库，记得点 Star 以便追踪最新动态。
 
-**Additional topics from ykdojo worth exploring** (not yet integrated in this guide):
+**来自 ykdojo 的更多值得探索的主题**（尚未整合进本指南）：
 
-- **Voice transcription workflows** - Native voice input now available via `/voice` (rolling out, Pro/Max/Team/Enterprise). Hold Space to speak, release to send. Transcription is free and doesn't count against rate limits. Previously required superwhisper/MacWhisper as external workarounds.
-- **Tmux for autonomous testing** - Running interactive tools in tmux sessions for automated testing
-- **cc-safe security tool** - Auditing approved commands to prevent accidental deletions
-- **Cascade method** - Multitasking pattern with 3-4 terminal tabs for parallel work streams
-- **Container experimentation** - Using Docker with `--dangerously-skip-permissions` for safe experimental work
-- **Half-clone technique** - Manual context trimming to keep recent conversation history only
+- **语音转录工作流** — 现在原生支持 `/voice` 语音输入（逐步推出中，Pro/Max/Team/Enterprise 可用）。按住空格说话，松开发送。转录免费，不计入速率限制。以前只能靠 superwhisper/MacWhisper 等外部工具曲线救国。
+- **tmux 自主测试** — 在 tmux 会话中运行交互式工具，实现自动化测试
+- **cc-safe 安全工具** — 审计已批准的命令，防止误删
+- **Cascade 方法** — 多任务模式，用 3-4 个终端标签页并行处理多个工作流
+- **容器实验** — 配合 `--dangerously-skip-permissions` 用 Docker 做安全的实验性工作
+- **半克隆技巧** — 手动裁剪上下文，只保留最近的对话历史
 
-### Tools
+### 工具
 
-#### Audit Your Setup
+#### 审计你的配置
 
-Use the included audit prompt to analyze your current Claude Code configuration:
+使用附带的审计提示词来分析你当前的 Claude Code 配置：
 
-**File**: [`tools/audit-prompt.md`](../tools/audit-prompt.md)
+**文件**：[`tools/audit-prompt.md`](../tools/audit-prompt.md)
 
-**What it does**:
+**作用**：
 
-1. Scans your global (`~/.claude/`) and project (`.claude/`) configuration
-2. Compares against best practices from this guide
-3. Generates a prioritized report with actionable recommendations
-4. Provides ready-to-use templates tailored to your tech stack
+1. 扫描你的全局（`~/.claude/`）和项目级（`.claude/`）配置
+2. 与本指南的最佳实践进行对比
+3. 生成带优先级的报告和可执行的建议
+4. 根据你的技术栈提供即用的模板
 
-**How to use**:
+**使用方法**：
 
-1. Copy the prompt from the file
-2. Run `claude` in your project directory
-3. Paste the prompt and review findings
-4. Choose which recommendations to implement
+1. 复制文件中的提示词
+2. 在项目目录下运行 `claude`
+3. 粘贴提示词并查看分析结果
+4. 选择要采纳的建议并实施
 
-**Example output**:
+**示例输出**：
 
-| Priority | Element | Status | Action |
+| 优先级 | 项目 | 状态 | 操作 |
 |----------|---------|--------|--------|
-| 🔴 High | Project CLAUDE.md | ❌ | Create with tech stack + conventions |
-| 🟡 Medium | Security hooks | ⚠️ | Add PreToolUse for secrets check |
-| 🟢 Low | MCP Serena | ❌ | Configure for large codebase |
+| 🔴 高 | 项目 CLAUDE.md | ❌ | 创建，包含技术栈与约定 |
+| 🟡 中 | 安全钩子 | ⚠️ | 添加 PreToolUse 用于密钥检查 |
+| 🟢 低 | MCP Serena | ❌ | 为大型代码库配置 |
 
-The audit covers: Memory files, folder structure, agents, hooks, MCP servers, context management, and CI/CD integration patterns.
+审计范围涵盖：记忆文件、文件夹结构、智能体、钩子、MCP 服务器、上下文管理以及 CI/CD 集成模式。
 
 ---
 
-## Appendix A: File Locations Reference
+## 附录 A：文件位置参考
 
-Quick reference for where Claude Code stores files and configuration.
+快速查阅 Claude Code 存储文件和配置的位置。
 
 ### Windows
 
-| Component | Location |
+| 组件 | 位置 |
 |-----------|----------|
-| **npm global bin** | `C:\Users\<username>\AppData\Roaming\npm` |
-| **Node.js install** | `C:\Program Files\nodejs` |
-| **Claude data directory** | `C:\Users\<username>\.claude\` |
-| **Claude config file** | `C:\Users\<username>\.claude.json` |
-| **Log files** | `%APPDATA%\Claude\logs\` |
-| **MCP config** | `C:\Users\<username>\.claude.json` (`mcpServers` field) |
-| **Session data** | `C:\Users\<username>\.claude\local\` |
-| **Downloads/cache** | `C:\Users\<username>\.claude\downloads\` |
+| **npm 全局 bin** | `C:\Users\<username>\AppData\Roaming\npm` |
+| **Node.js 安装目录** | `C:\Program Files\nodejs` |
+| **Claude 数据目录** | `C:\Users\<username>\.claude\` |
+| **Claude 配置文件** | `C:\Users\<username>\.claude.json` |
+| **日志文件** | `%APPDATA%\Claude\logs\` |
+| **MCP 配置** | `C:\Users\<username>\.claude.json`（`mcpServers` 字段） |
+| **会话数据** | `C:\Users\<username>\.claude\local\` |
+| **下载/缓存** | `C:\Users\<username>\.claude\downloads\` |
 
-**Quick Access (PowerShell):**
+**快速访问（PowerShell）：**
 
 ```powershell
-# Open Claude data directory
+# 打开 Claude 数据目录
 explorer "$env:USERPROFILE\.claude"
 
-# Open config file
+# 打开配置文件
 notepad "$env:USERPROFILE\.claude.json"
 
-# View logs
+# 查看日志
 Get-Content "$env:APPDATA\Claude\logs\mcp*.log" -Wait -Tail 50
 ```
 
 ### macOS
 
-| Component | Location |
+| 组件 | 位置 |
 |-----------|----------|
-| **npm global bin** | `/usr/local/bin` or `$(npm config get prefix)/bin` |
-| **Node.js install** | `/usr/local/bin/node` (Homebrew) or `/opt/homebrew/bin/node` (M1/M2) |
-| **Claude data directory** | `~/.claude/` |
-| **Claude config file** | `~/.claude.json` |
-| **Log files** | `~/Library/Logs/Claude/` |
-| **MCP config** | `~/.claude.json` (`mcpServers` field) |
-| **Session data** | `~/.claude/local/` |
-| **Downloads/cache** | `~/.claude/downloads/` |
+| **npm 全局 bin** | `/usr/local/bin` 或 `$(npm config get prefix)/bin` |
+| **Node.js 安装目录** | `/usr/local/bin/node`（Homebrew）或 `/opt/homebrew/bin/node`（M1/M2） |
+| **Claude 数据目录** | `~/.claude/` |
+| **Claude 配置文件** | `~/.claude.json` |
+| **日志文件** | `~/Library/Logs/Claude/` |
+| **MCP 配置** | `~/.claude.json`（`mcpServers` 字段） |
+| **会话数据** | `~/.claude/local/` |
+| **下载/缓存** | `~/.claude/downloads/` |
 
-**Quick Access:**
+**快速访问：**
 
 ```bash
-# Open Claude data directory
+# 打开 Claude 数据目录
 open ~/.claude
 
-# Edit config file
+# 编辑配置文件
 code ~/.claude.json  # VS Code
-# or
-nano ~/.claude.json  # Terminal editor
+# 或
+nano ~/.claude.json  # 终端编辑器
 
-# View logs
+# 查看日志
 tail -f ~/Library/Logs/Claude/mcp*.log
 ```
 
 ### Linux
 
-| Component | Location |
+| 组件 | 位置 |
 |-----------|----------|
-| **npm global bin** | `/usr/local/bin` or `~/.npm-global/bin` |
-| **Node.js install** | `/usr/bin/node` |
-| **Claude data directory** | `~/.claude/` |
-| **Claude config file** | `~/.claude.json` |
-| **Log files** | `~/.local/share/claude/logs/` or `~/.cache/claude/logs/` |
-| **MCP config** | `~/.claude.json` (`mcpServers` field) |
-| **Session data** | `~/.claude/local/` |
-| **Downloads/cache** | `~/.claude/downloads/` |
+| **npm 全局 bin** | `/usr/local/bin` 或 `~/.npm-global/bin` |
+| **Node.js 安装目录** | `/usr/bin/node` |
+| **Claude 数据目录** | `~/.claude/` |
+| **Claude 配置文件** | `~/.claude.json` |
+| **日志文件** | `~/.local/share/claude/logs/` 或 `~/.cache/claude/logs/` |
+| **MCP 配置** | `~/.claude.json`（`mcpServers` 字段） |
+| **会话数据** | `~/.claude/local/` |
+| **下载/缓存** | `~/.claude/downloads/` |
 
-**Quick Access:**
+**快速访问：**
 
 ```bash
-# Open Claude data directory
+# 打开 Claude 数据目录
 cd ~/.claude
 
-# Edit config file
+# 编辑配置文件
 nano ~/.claude.json
-# or
+# 或
 vim ~/.claude.json
 
-# View logs
+# 查看日志
 tail -f ~/.local/share/claude/logs/mcp*.log
 ```
 
-### Project-Level Files
+### 项目级文件
 
-These are the same across all platforms:
+以下文件在所有平台上位置一致：
 
-| File/Directory | Location | Purpose | Commit to Git? |
+| 文件/目录 | 位置 | 用途 | 是否提交到 Git？ |
 |----------------|----------|---------|----------------|
-| `CLAUDE.md` | Project root | Project memory (team) | ✅ Yes |
-| `.claude/CLAUDE.md` | Project root | Personal memory | ❌ No |
-| `.claude/settings.json` | Project root | Hook configuration | ✅ Yes |
-| `.claude/settings.local.json` | Project root | Personal permissions | ❌ No |
-| `.claude/agents/` | Project root | Custom agents | ✅ Yes (team) |
-| `.claude/commands/` | Project root | Custom commands | ✅ Yes (team) |
-| `.claude/hooks/` | Project root | Event hooks | ✅ Yes (team) |
-| `.claude/skills/` | Project root | Knowledge modules | ✅ Yes (team) |
-| `.claude/rules/` | Project root | Auto-load rules | ✅ Yes (team) |
-| `.claude/.serena/` | Project root | Serena MCP index | ❌ No |
+| `CLAUDE.md` | 项目根目录 | 项目记忆（团队） | ✅ 是 |
+| `.claude/CLAUDE.md` | 项目根目录 | 个人记忆 | ❌ 否 |
+| `.claude/settings.json` | 项目根目录 | 钩子配置 | ✅ 是 |
+| `.claude/settings.local.json` | 项目根目录 | 个人权限配置 | ❌ 否 |
+| `.claude/agents/` | 项目根目录 | 自定义智能体 | ✅ 是（团队） |
+| `.claude/commands/` | 项目根目录 | 自定义命令 | ✅ 是（团队） |
+| `.claude/hooks/` | 项目根目录 | 事件钩子 | ✅ 是（团队） |
+| `.claude/skills/` | 项目根目录 | 知识模块 | ✅ 是（团队） |
+| `.claude/rules/` | 项目根目录 | 自动加载规则 | ✅ 是（团队） |
+| `.claude/.serena/` | 项目根目录 | Serena MCP 索引 | ❌ 否 |
 
-### Environment Variables
+### 环境变量
 
-Set these in your shell profile (`~/.zshrc`, `~/.bashrc`, or Windows System Properties):
+在 shell 配置文件（`~/.zshrc`、`~/.bashrc` 或 Windows 系统属性）中设置：
 
-| Variable | Purpose | Example |
+| 变量 | 用途 | 示例 |
 |----------|---------|---------|
-| `ANTHROPIC_API_KEY` | API authentication | `sk-ant-api03-...` |
-| `ANTHROPIC_BASE_URL` | Alternative API endpoint | `https://api.deepseek.com/anthropic` |
-| `ANTHROPIC_MODEL` | Default model | `claude-sonnet-4-20250514` |
-| `ANTHROPIC_SMALL_FAST_MODEL` | Fast model for simple tasks | `claude-haiku-4-20250514` |
-| `BASH_DEFAULT_TIMEOUT_MS` | Bash command timeout | `60000` |
-| `ANTHROPIC_AUTH_TOKEN` | Alternative auth token | Your auth token |
-| `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Disable 1M context window support (v2.1.50+) | `true` |
-| `CLAUDE_CODE_SIMPLE` | Fully minimal mode: disables skills, agents, MCP, hooks, CLAUDE.md loading (v2.1.50+) | `true` |
+| `ANTHROPIC_API_KEY` | API 认证 | `sk-ant-api03-...` |
+| `ANTHROPIC_BASE_URL` | 备用 API 端点 | `https://api.deepseek.com/anthropic` |
+| `ANTHROPIC_MODEL` | 默认模型 | `claude-sonnet-4-20250514` |
+| `ANTHROPIC_SMALL_FAST_MODEL` | 简单任务用的高速模型 | `claude-haiku-4-20250514` |
+| `BASH_DEFAULT_TIMEOUT_MS` | Bash 命令超时 | `60000` |
+| `ANTHROPIC_AUTH_TOKEN` | 备用认证令牌 | 你的 auth token |
+| `CLAUDE_CODE_DISABLE_1M_CONTEXT` | 禁用 1M 上下文窗口支持（v2.1.50+） | `true` |
+| `CLAUDE_CODE_SIMPLE` | 完全极简模式：禁用技能、智能体、MCP、钩子、CLAUDE.md 加载（v2.1.50+） | `true` |
 
-### Finding Your Paths
+### 查找你的路径
 
-**Can't find npm global bin?**
+**找不到 npm 全局 bin？**
 
 ```bash
-# Universal command
+# 通用命令
 npm config get prefix
 
-# Should output something like:
-# macOS/Linux: /usr/local or ~/.npm-global
+# 预期输出类似：
+# macOS/Linux: /usr/local 或 ~/.npm-global
 # Windows: C:\Users\<username>\AppData\Roaming\npm
 ```
 
-**Can't find Claude executable?**
+**找不到 Claude 可执行文件？**
 
 ```bash
 # macOS/Linux
 which claude
 
-# Windows (PowerShell)
+# Windows（PowerShell）
 where.exe claude
 
-# Windows (CMD)
+# Windows（CMD）
 where claude
 ```
 
-**Can't find log files?**
+**找不到日志文件？**
 
 ```bash
-# Run Claude with debug and check output
+# 以调试模式运行 Claude 并检查输出
 claude --debug 2>&1 | grep -i "log"
 ```
 
-### Recommended .gitignore
+### 推荐的 .gitignore
 
-Add these to your project's `.gitignore`:
+将这些添加到你项目的 `.gitignore`：
 
 ```gitignore
-# Claude Code - Personal/Local
+# Claude Code - 个人/本地
 .claude/settings.local.json
 .claude/CLAUDE.md
 .claude/.serena/
 .claude/local/
 
-# Claude Code - Team (DO commit these)
+# Claude Code - 团队（建议提交这些）
 # .claude/agents/
 # .claude/commands/
 # .claude/hooks/
 # .claude/skills/
 # .claude/settings.json
 
-# API Keys
+# API 密钥
 .env
 .env.local
 .env.*.local
 *.key
 
-# OS Files
+# 系统文件
 .DS_Store
 Thumbs.db
 ```
 
 ---
 
-## Appendix B: FAQ
+## 附录 B：常见问题
 
-### Claude Code vs ClawdBot: What's the Difference?
+### Claude Code 与 ClawdBot：有什么区别？
 
-**Question**: Both tools use "Claude" in their name and I've seen buzz about both recently. Are they competitors? Which should I choose?
+**问题**：两个工具名字里都带 "Claude"，最近也都很火。它们是竞争对手吗？我该选哪个？
 
-**Short answer**: They serve completely different use cases. Not competitors—complementary tools for different audiences.
+**简短回答**：它们服务完全不同的场景。不是竞争对手——而是面向不同受众的互补工具。
 
-**Detailed comparison**:
+**详细对比**：
 
-| Aspect | Claude Code | ClawdBot |
+| 方面 | Claude Code | ClawdBot |
 |--------|-------------|----------|
-| **Interface** | Terminal/CLI + IDE integration (VS Code, Cursor, etc.) | Messaging apps (WhatsApp, Telegram, Discord, Signal, iMessage) |
-| **Primary audience** | Software developers, DevOps, tech leads | Everyone (personal assistants, smart home, knowledge workers) |
-| **Core use case** | Software development (code generation, refactoring, debugging, architecture) | Personal automation, task management, smart home control, 24/7 assistance |
-| **Access model** | Local terminal session, requires being at computer or SSH | Remote access via messaging apps from any device (phone, watch, tablet) |
-| **Installation** | `npm install -g claude-code` (simple CLI install) | Self-hosted (Docker/VPS ~$5/month + LLM API costs) |
-| **Architecture** | CLI tool + MCP servers + hooks/skills/agents system | Agent + Gateway + Skills + Memory (4-component architecture) |
-| **Smart home** | Not covered (development-focused) | ✅ Native Home Assistant integration, monitoring, automation |
-| **Code development** | ✅ Core use case (pair programming, code review, refactoring) | Possible but not the primary focus |
-| **Pricing** | Anthropic API usage (pay-as-you-go, ~$3-15/project typical) | Open-source (free) + infrastructure (VPS ~$5/mo + LLM API costs) |
-| **Ideal for** | Writing code, reviewing PRs, debugging, architectural decisions | Daily reminders, email management, calendar, monitoring, personal tasks |
+| **界面** | 终端/CLI + IDE 集成（VS Code、Cursor 等） | 即时通讯应用（WhatsApp、Telegram、Discord、Signal、iMessage） |
+| **主要受众** | 软件开发人员、DevOps、技术负责人 | 所有人（个人助理、智能家居、知识工作者） |
+| **核心场景** | 软件开发（代码生成、重构、调试、架构） | 个人自动化、任务管理、智能家居控制、7x24 小时助理 |
+| **访问模式** | 本地终端会话，需要在电脑前或 SSH 连接 | 通过即时通讯应用远程访问，任何设备（手机、手表、平板）均可 |
+| **安装方式** | `npm install -g claude-code`（简单 CLI 安装） | 自托管（Docker/VPS，约 $5/月 + LLM API 费用） |
+| **架构** | CLI 工具 + MCP 服务器 + 钩子/技能/智能体系统 | 智能体 + 网关 + 技能 + 记忆（四组件架构） |
+| **智能家居** | 不涉及（专注开发） | ✅ 原生 Home Assistant 集成、监控、自动化 |
+| **代码开发** | ✅ 核心场景（结对编程、代码审查、重构） | 可行，但不是主要焦点 |
+| **定价** | Anthropic API 按量付费（典型项目约 $3-15） | 开源免费 + 基础设施（VPS 约 $5/月 + LLM API 费用） |
+| **适合人群** | 写代码、审 PR、调试、做架构决策 | 日常提醒、邮件管理、日历、监控、个人任务 |
 
-**When to choose Claude Code**:
+**何时选择 Claude Code**：
 
-- You're a developer working in terminal/IDE
-- You need pair programming, code reviews, refactoring help
-- Your workflow is codebase analysis and software architecture
-- You want deep IDE integration and git workflow automation
+- 你是开发者，在终端/IDE 中工作
+- 你需要结对编程、代码审查、重构帮助
+- 你的工作流是代码库分析和软件架构
+- 你想要深度 IDE 集成和 Git 工作流自动化
 
-**When to choose ClawdBot**:
+**何时选择 ClawdBot**：
 
-- You want a 24/7 personal assistant accessible from your phone
-- You need smart home automation (Home Assistant, IoT devices)
-- Your use cases are: task management, reminders, email/calendar, monitoring
-- You want messaging app interface (WhatsApp, Telegram, etc.)
+- 你想要一个随时随地用手机访问的 7x24 个人助理
+- 你需要智能家居自动化（Home Assistant、IoT 设备）
+- 你的场景是：任务管理、提醒、邮件/日历、监控
+- 你想要即时通讯应用界面（WhatsApp、Telegram 等）
 
-**Can you use both?**:
+**可以同时用吗？**
 
-Yes! They complement each other well:
+可以！它们相辅相成：
 
-- **ClawdBot**: Handles daily personal automation, monitoring, reminders
-- **Claude Code**: Handles software development work when at your computer
+- **ClawdBot**：处理日常个人自动化、监控、提醒
+- **Claude Code**：在电脑前处理软件开发工作
 
-Example workflow:
-
-```
-ClawdBot (on phone): "Remind me to review the PR when I'm at my desk"
-  → Get notification
-Claude Code (at desk): "Review the authentication PR, check for security issues"
-  → Deep code analysis with full codebase context
-```
-
-**Quick decision tree**:
+示例工作流：
 
 ```
-What's your primary goal?
-├─ Write/review code → Claude Code
-├─ Personal automation/smart home → ClawdBot
-└─ Both? → Use both (they don't conflict)
+ClawdBot（手机上）："我到办公桌时提醒我看 PR"
+  → 收到通知
+Claude Code（办公桌前）："审查认证相关的 PR，检查安全问题"
+  → 基于完整代码库上下文做深度代码分析
 ```
 
-**Resources**:
+**快速决策树**：
 
-- **ClawdBot**: [https://clawd.bot/](https://clawd.bot/) | [GitHub](https://github.com/clawdbot/clawdbot) | [Setup guide](https://docs.clawd.bot/start/getting-started) | [Community adoption analysis](https://docs.google.com/document/d/1Mz4xt1yAqb2gDxjr0Vs_YOu9EeO-6JYQMSx4WWI8KUA/preview?pru=AAABnBoVzFA*FCvVY_gbqraEBXgWPRJfQw&tab=t.0)
-- **Claude Code**: This guide | [GitHub](https://github.com/anthropics/claude-code)
+```
+你的主要目标是什么？
+├─ 写代码/审代码 → Claude Code
+├─ 个人自动化/智能家居 → ClawdBot
+└─ 两者都要？→ 一起用（不冲突）
+```
 
-**Community confusion**:
+**资源**：
 
-Common misconceptions we've seen:
+- **ClawdBot**：[https://clawd.bot/](https://clawd.bot/) | [GitHub](https://github.com/clawdbot/clawdbot) | [安装指南](https://docs.clawd.bot/start/getting-started) | [社区采用分析](https://docs.google.com/document/d/1Mz4xt1yAqb2gDxjr0Vs_YOu9EeO-6JYQMSx4WWI8KUA/preview?pru=AAABnBoVzFA*FCvVY_gbqraEBXgWPRJfQw&tab=t.0)
+- **Claude Code**：本指南 | [GitHub](https://github.com/anthropics/claude-code)
 
-- ❌ "ClawdBot is Claude Code but with messaging interface" → **False**. Different architectures, different use cases.
-- ❌ "I need to choose one or the other" → **False**. They complement each other.
-- ❌ "ClawdBot is a fork of Claude Code" → **False**. Independent projects with different creators.
+**社区常见误解**：
 
-**Final note**: This comparison reflects Jan 2026 state of both tools. ClawdBot has documented strong community adoption (5,600+ social mentions, use cases ranging from smart home to radio decoding). Both are evolving rapidly. Check official documentation for latest capabilities.
+- ❌ "ClawdBot 就是带消息界面的 Claude Code" → **错误**。架构不同，场景不同。
+- ❌ "我必须二选一" → **错误**。它们互补。
+- ❌ "ClawdBot 是 Claude Code 的分支" → **错误**。独立项目，不同作者。
 
-### Can Product Managers use Claude Code?
+**最后说明**：本对比反映的是 2026 年 1 月两款工具的状态。ClawdBot 已有 documented 的强劲社区采用（5,600+ 社交提及，场景涵盖智能家居到无线电解码）。两者都在快速演进，请查阅官方文档了解最新能力。
 
-**Short answer**: Yes, but consider your primary workflow first.
+### 产品经理能用 Claude Code 吗？
 
-**Code-adjacent PMs** (reviewing technical specs, PRDs, architecture feasibility):
+**简短回答**：可以，但先考虑你的主要工作流。
 
-- ✅ Claude Code CLI is appropriate for technical validation workflows
-- Example: Granola meeting notes → ChatPRD generation → Claude Code refinement
-- Use case: Auditing technical feasibility, generating specs from PRDs
+**偏技术的产品经理**（审查技术规格、PRD、架构可行性）：
 
-**Non-coding PMs** (strategy, research, stakeholder management):
+- ✅ Claude Code CLI 适合技术验证工作流
+- 示例：Granola 会议笔记 → ChatPRD 生成 → Claude Code 润色
+- 场景：审计技术可行性、从 PRD 生成规格
 
-- ⚠️ Claude Code CLI overhead not justified
-- ✅ Better fit: Claude Desktop (see [Cowork Guide](https://github.com/FlorianBruniaux/claude-cowork-guide))
-- Use case: Research synthesis, stakeholder communication, roadmap planning
+**非技术产品经理**（战略、研究、干系人管理）：
 
-**Tool Stack Example** (via [Stilyan Mitrev, Head of Product StableLab](https://www.linkedin.com/pulse/how-i-currently-ai-product-manager-stilyan-mitrev-ycvvf/)):
+- ⚠️ Claude Code CLI 的投入产出比不高
+- ✅ 更合适的选择：Claude Desktop（参见 [Cowork Guide](https://github.com/FlorianBruniaux/claude-cowork-guide)）
+- 场景：研究综合、干系人沟通、路线图规划
 
-- Meeting capture: Granola + Wispr Flow (dictation)
-- PRD generation: ChatPRD → Claude Code review
-- UI prototyping: v0 → Claude Code feasibility check
-- Workflow pattern: Base context project + specialized projects per domain
+**工具栈示例**（来自 [Stilyan Mitrev，StableLab 产品负责人](https://www.linkedin.com/pulse/how-i-currently-ai-product-manager-stilyan-mitrev-ycvvf/)）：
 
-**Reality check**: PM workflows with Claude Code are an **emerging area** with limited community validation. We currently have 1 practitioner report (the source practitioner noted they tried Claude Code but didn't adopt it long-term). If you're a PM using Claude Code successfully, [contribute your workflow](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/discussions) to help the community.
+- 会议记录：Granola + Wispr Flow（语音输入）
+- PRD 生成：ChatPRD → Claude Code 审查
+- UI 原型：v0 → Claude Code 可行性检查
+- 工作流模式：基础上下文项目 + 每个领域的专项项目
 
-**See also**:
+**现实检查**：产品经理使用 Claude Code 仍是一个**新兴领域**，社区验证有限。目前仅有 1 位从业者的报告（该从业者提到尝试过 Claude Code，但并未长期采用）。如果你是成功将 Claude Code 融入工作流的产品经理，欢迎[分享你的工作流](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/discussions)，帮助社区。
 
-- [AI Ecosystem Guide](ai-ecosystem.md) — Complementary tools (Granola, Wispr Flow, ChatPRD, v0)
-- [Cowork Guide](https://github.com/FlorianBruniaux/claude-cowork-guide) — Claude Desktop for non-technical PMs
-- [Design-to-Code Workflow](workflows/design-to-code.md#for-product-managers) — PM perspective on Figma MCP
+**另见**：
+
+- [AI 生态指南](ai-ecosystem.md) — 互补工具（Granola、Wispr Flow、ChatPRD、v0）
+- [Cowork Guide](https://github.com/FlorianBruniaux/claude-cowork-guide) — 面向非技术产品经理的 Claude Desktop 指南
+- [Design-to-Code 工作流](workflows/design-to-code.md#for-product-managers) — 产品经理视角下的 Figma MCP
 
 ---
 
-### Can I continue a session from a different project folder?
+### 我能在不同项目文件夹之间继续同一个会话吗？
 
-**Short answer**: Not with native \`--resume\`, but manual filesystem operations work reliably.
+**简短回答**：不能用原生的 `--resume`，但手动操作文件系统可以可靠实现。
 
-**The limitation**: Claude Code's \`--resume\` command is scoped to the current working directory by design. Sessions are stored at \`~/.claude/projects/<encoded-path>/\` where the path is derived from your project's absolute location. Moving a project or forking a session to a new folder breaks the resume capability.
+**限制**：Claude Code 的 `--resume` 命令按设计限定在当前工作目录。会话存储在 `~/.claude/projects/<encoded-path>/`，路径由项目的绝对位置派生而来。移动项目或把会话 fork 到新文件夹会破坏恢复能力。
 
-**Why this design?**: Sessions store absolute file paths, project-specific context (MCP server configurations, \`.claudeignore\` rules, environment variables). Cross-folder resume would require path rewriting and context validation, which isn't implemented yet.
+**为何这样设计？**：会话中存储了绝对文件路径、项目特定的上下文（MCP 服务器配置、`.claudeignore` 规则、环境变量）。跨文件夹恢复需要路径重写和上下文验证，目前尚未实现。
 
-**Workaround - Manual migration** (recommended):
+**变通方案 - 手动迁移**（推荐）：
 
-\`\`\`bash
+```bash
 
-# When moving a project folder
+# 移动项目文件夹时
 
 cd ~/.claude/projects/
 mv -- -old-location-myapp- -new-location-myapp-
 
-# When forking sessions to a new project
+# 将会话 fork 到新项目时
 
 cp -n ./-source-project-/*.jsonl ./-target-project-/
 cp -r ./-source-project-/subagents ./-target-project-/ 2>/dev/null || true
 
 cd /path/to/target/project && claude --continue
-\`\`\`
+```
 
-**⚠️ Migration risks**:
+**⚠️ 迁移风险**：
 
-- Hardcoded secrets/credentials may not transfer correctly
-- Absolute paths in session context may break
-- MCP server configurations may differ between projects
-- \`.claudeignore\` rules are project-specific
+- 硬编码的密钥/凭证可能无法正确转移
+- 会话上下文中的绝对路径可能失效
+- MCP 服务器配置在不同项目间可能不同
+- `.claudeignore` 规则是项目特定的
 
-**Community automation**: The [claude-migrate-session](https://github.com/jimweller/dotfiles/tree/main/dotfiles/claude-code/skills/claude-migrate-session) skill by Jim Weller automates this process, but has limited testing (0 stars/forks as of Feb 2026). Manual approach is safer.
+**社区自动化**：Jim Weller 的 [claude-migrate-session](https://github.com/jimweller/dotfiles/tree/main/dotfiles/claude-code/skills/claude-migrate-session) 技能可自动化此过程，但测试有限（截至 2026 年 2 月为 0 star/fork）。手动方式更安全。
 
-**Detailed guide**: See [Session Resume Limitations & Cross-Folder Migration](observability.md#session-resume-limitations--cross-folder-migration) for complete workflow and edge cases.
+**详细指南**：参见 [会话恢复限制与跨文件夹迁移](observability.md#session-resume-limitations--cross-folder-migration) 获取完整工作流和边界情况。
 
-**Related**: GitHub issue [#1516](https://github.com/anthropics/claude-code/issues/1516) tracks community requests for native cross-folder support.
+**相关**：GitHub issue [#1516](https://github.com/anthropics/claude-code/issues/1516) 追踪社区对原生跨文件夹支持的需求。
 
 ---
 
-## Appendix C: Resource Evaluation Process
+## 附录 C：资源评估流程
 
-This guide systematically evaluates external resources (tools, methodologies, articles, frameworks) before integration to maintain quality and prevent noise.
+本指南在整合外部资源（工具、方法论、文章、框架）前会进行系统性评估，以保证质量、避免噪音。
 
-### Evaluation Methodology
+### 评估方法论
 
-**5-Point Scoring System** (Critical → Low):
+**5 分制评分**（关键 → 低）：
 
-| Score | Action | Timeline |
+| 分数 | 操作 | 时间线 |
 |-------|--------|----------|
-| 5 | Critical - Integrate immediately | <24h |
-| 4 | High Value - Integrate within 1 week | 1 week |
-| 3 | Moderate - Integrate when time available | Flexible |
-| 2 | Marginal - Minimal mention or skip | - |
-| 1 | Low - Reject | - |
+| 5 | 关键 — 立即整合 | <24h |
+| 4 | 高价值 — 1 周内整合 | 1 周 |
+| 3 | 中等 — 有空时整合 | 灵活 |
+| 2 | 边缘 — 极简提及或跳过 | - |
+| 1 | 低 — 拒绝 | - |
 
-**Full methodology**: See [`docs/resource-evaluations/README.md`](../docs/resource-evaluations/README.md)
+**完整方法论**：参见 [`docs/resource-evaluations/README.md`](../docs/resource-evaluations/README.md)
 
-### Current Evaluations
+### 当前评估
 
-**14 documented assessments** in `docs/resource-evaluations/`:
+`docs/resource-evaluations/` 中已有 **14 份 documented 评估**：
 
-- **Methodologies**: GSD (Get Shit Done), Vibe Coding patterns
-- **Tools**: Worktrunk, AST-grep, SE-CoVe plugin
-- **Content**: Boris Cherny Cowork video, ClawdBot Twitter analysis
-- **Research**: Prompt repetition papers, self-improvement skills
-- **And more**: Nick Jensen plugins, Wooldridge productivity stack
+- **方法论**：GSD（Get Shit Done）、Vibe Coding 模式
+- **工具**：Worktrunk、AST-grep、SE-CoVe 插件
+- **内容**：Boris Cherny Cowork 视频、ClawdBot Twitter 分析
+- **研究**：提示词重复论文、自我改进技能
+- **更多**：Nick Jensen 插件、Wooldridge 生产力栈
 
-**Browse all evaluations**: [`docs/resource-evaluations/`](../docs/resource-evaluations/)
+**浏览全部评估**：[`docs/resource-evaluations/`](../docs/resource-evaluations/)
 
-### Why Public Evaluations?
+### 为什么公开评估？
 
-**Transparency**: Contributors can see exactly why resources were:
+**透明度**：贡献者可以清楚看到资源被：
 
-- ✅ **Integrated** (score 3+): Added to guide with attribution
-- ⚠️ **Mentioned** (score 2): Brief reference without deep coverage
-- ❌ **Rejected** (score 1): Documented reason for exclusion
+- ✅ **整合**（3 分+）：加入指南并注明来源
+- ⚠️ **提及**（2 分）：简要引用，不做深入覆盖
+- ❌ **拒绝**（1 分）：记录排除原因
 
-**Quality Control**: Technical review + challenge phase by specialized agents ensures objectivity and prevents marketing hype from influencing decisions.
+**质量控制**：技术审查 + 由专业智能体执行的挑战阶段，确保客观性，防止营销炒作影响决策。
 
-**Community Contribution**: Evaluation template available in `docs/resource-evaluations/README.md` for suggesting new resources with systematic assessment.
+**社区贡献**：`docs/resource-evaluations/README.md` 中提供了评估模板，可用于系统化地推荐新资源。
 
 ---
 
-## Appendix D: Myths vs Reality
+## 附录 D：谣言与真相
 
-This section addresses common misconceptions about Claude Code circulating in online communities, social media, and discussions.
+本节澄清在线社区、社交媒体和讨论中流传的关于 Claude Code 的常见误解。
 
-### ❌ Myth: "Claude Code has hidden features you can unlock with secret flags"
+### ❌ 谣言："Claude Code 有秘密 flag 才能解锁的隐藏功能"
 
-**Reality**: All public features are documented in the [official CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md).
+**真相**：所有公开功能都在[官方 CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) 中有记录。
 
-**What people confuse**:
+**人们混淆了什么**：
 
-- **Progressive rollout ≠ Hidden features**: Anthropic uses feature flags for staged deployment (standard industry practice)
-- **Experimental features ≠ Secrets**: Features like TeammateTool exist but are clearly marked as experimental/unstable
-- **Community discovery ≠ Hacking**: When users discover unreleased features in compiled code, that's exploration, not "unlocking secrets"
+- **渐进式推出 ≠ 隐藏功能**：Anthropic 使用功能 flag 进行分阶段部署（行业标准做法）
+- **实验性功能 ≠ 秘密**：像 TeammateTool 这样的功能确实存在，但明确标记为实验性/不稳定
+- **社区发现 ≠ 破解**：用户在编译代码中发现未发布功能，这是探索，不是"解锁秘密"
 
-**The truth about feature flags**:
+**关于功能 flag 的真相**：
 
-| Flag | Purpose | Status |
+| Flag | 用途 | 状态 |
 |------|---------|--------|
-| `CLAUDE_CODE_ENABLE_TASKS=false` | **Revert** to old TodoWrite system (v2.1.19+) | Official migration path |
-| TeammateTool flags | Progressive deployment of multi-agent orchestration | Experimental, unstable |
-| Other internal flags | Quality assurance, A/B testing, staged rollout | Not meant for end users |
+| `CLAUDE_CODE_ENABLE_TASKS=false` | **回退**到旧版 TodoWrite 系统（v2.1.19+） | 官方迁移路径 |
+| TeammateTool flags | 多智能体编排的渐进式部署 | 实验性，不稳定 |
+| 其他内部 flag | 质量保证、A/B 测试、分阶段推出 | 非终端用户用途 |
 
-**Best practice**: Read the [CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) and official release notes. Features become public when they're stable and documented. Using experimental features via workarounds can cause:
+**最佳实践**：阅读 [CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) 和官方发布说明。功能在稳定且有文档时才会公开。通过变通方法使用实验性功能可能导致：
 
-- Data loss or corruption
-- Crashes and instability
-- Incompatibility with future versions
-- Loss of official support
+- 数据丢失或损坏
+- 崩溃和不稳定
+- 与未来版本不兼容
+- 失去官方支持
 
-**Red flags to watch for** (signs of misinformation):
+**需要警惕的红旗**（ misinformation 的迹象）：
 
-- "Hidden feature that will blow your mind!"
-- "Secret trick the devs don't want you to know"
-- No citation of official sources (CHANGELOG, docs, GitHub issues)
-- FOMO language: "If you're not using this, you're falling behind"
-- Dramatic claims: "This changes everything" without evidence
-
----
-
-### ❌ Myth: "Tasks API allows fully autonomous parallel agents"
-
-**Reality**: The Tasks API (v2.1.16+) enables **coordination** of parallel work, but agents are **not autonomous**.
-
-**What Tasks API actually does**:
-
-- Creates a shared task list with dependency tracking
-- Allows main session + sub-agents to coordinate work
-- Persists tasks across sessions for resumption
-- Notifies sessions when tasks complete
-
-**What it does NOT do**:
-
-- ❌ Automatically spawn agents for each task
-- ❌ Create self-organizing "swarms" of independent agents
-- ❌ Enable agents to make decisions without human approval
-- ❌ Replace your need to manage and direct the work
-
-**How parallel execution actually works**:
-
-```
-You → Create tasks with TaskCreate
-You → Spawn sub-agents with Task tool (explicit action)
-You → Sub-agents work independently in parallel
-You → Sub-agents return summaries
-You → Coordinate next steps
-```
-
-**Sources**:
-
-- [CHANGELOG v2.1.16](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#2116---2026-01-22) - Official task management release
-- [Section 2.6 - Task Management](ultimate-guide.md#26-task-management) - Full documentation
+- "有一个隐藏功能会让你震惊！"
+- "开发者不想让你知道的秘密技巧"
+- 没有引用官方来源（CHANGELOG、文档、GitHub issue）
+- 制造 FOMO 的话术："如果你不用这个，你就落后了"
+- 没有证据的夸张说法："这改变了一切"
 
 ---
 
-### ❌ Myth: "Claude Code is 100x faster than other AI coding tools"
+### ❌ 谣言："Tasks API 支持完全自主的并行智能体"
 
-**Reality**: Performance depends on task complexity, model choice, and how you use the tool. No tool is universally "100x faster."
+**真相**：Tasks API（v2.1.16+）支持并行工作的**协调**，但智能体**并非自主**运行。
 
-**What affects speed**:
+**Tasks API 实际做的事**：
 
-- **Model selection**: Haiku (fast) vs Sonnet (balanced) vs Opus (thorough)
-- **Context management**: Effective use of sub-agents, MCP servers, strategic compaction
-- **Prompt quality**: Clear requirements vs vague instructions
-- **Task complexity**: Simple refactoring vs architectural analysis
+- 创建带依赖追踪的共享任务列表
+- 允许主会话 + 子智能体协调工作
+- 跨会话持久化任务以便恢复
+- 任务完成时通知会话
 
-**Honest comparison** (typical use cases):
+**它不做的事**：
 
-| Task | Claude Code | Other Tools | Winner |
+- ❌ 自动为每个任务生成智能体
+- ❌ 创建自组织的独立智能体"集群"
+- ❌ 让智能体无需人类批准就做决策
+- ❌ 取代你管理和指导工作的需要
+
+**并行执行的实际流程**：
+
+```
+你 → 用 TaskCreate 创建任务
+你 → 用 Task 工具显式生成子智能体
+你 → 子智能体并行独立工作
+你 → 子智能体返回摘要
+你 → 协调下一步
+```
+
+**来源**：
+
+- [CHANGELOG v2.1.16](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#2116---2026-01-22) — 官方任务管理发布说明
+- [2.6 节 - 任务管理](ultimate-guide.md#26-task-management) — 完整文档
+
+---
+
+### ❌ 谣言："Claude Code 比其他 AI 编程工具快 100 倍"
+
+**真相**：性能取决于任务复杂度、模型选择以及你的使用方式。没有工具能 universally "快 100 倍"。
+
+**影响速度的因素**：
+
+- **模型选择**：Haiku（快）vs Sonnet（平衡）vs Opus（深入）
+- **上下文管理**：有效使用子智能体、MCP 服务器、策略性压缩
+- **提示词质量**：清晰的需求 vs 模糊的指令
+- **任务复杂度**：简单重构 vs 架构分析
+
+**诚实的对比**（典型场景）：
+
+| 任务 | Claude Code | 其他工具 | 胜者 |
 |------|-------------|-------------|--------|
-| Simple edits (typos, formatting) | ~5-10s | ~5-10s | ≈ Tie |
-| Multi-file refactoring | 30-60s | 60-120s | Claude Code (2x) |
-| Complex architecture analysis | 2-5min | 5-15min | Claude Code (3x) |
-| Learning curve (first week) | Moderate | Varies | Depends on tool |
+| 简单编辑（错字、格式化） | ~5-10s | ~5-10s | ≈ 平局 |
+| 多文件重构 | 30-60s | 60-120s | Claude Code（约 2 倍） |
+| 复杂架构分析 | 2-5min | 5-15min | Claude Code（约 3 倍） |
+| 学习曲线（第一周） | 中等 | 因工具而异 | 取决于工具 |
 
-**The truth**: Claude Code is **powerful and efficient**, but claims of "100x faster" are marketing hyperbole. Real advantage comes from:
+**真相**：Claude Code **强大且高效**，但"快 100 倍"的说法是营销夸张。真正的优势来自：
 
-- Deep context window (200K tokens)
-- Smart sub-agent system (prevents context pollution)
-- MCP ecosystem (specialized tools)
-- Strong system prompts (high-quality outputs)
-
----
-
-### ✅ Reality: What Makes Claude Code Actually Special
-
-**Documented, verifiable strengths**:
-
-1. **Context Window**: 200K tokens (~150K words) - one of the largest in the industry
-2. **Sub-Agent System**: Isolated context windows prevent pollution during exploration
-3. **MCP Ecosystem**: 100+ community servers for specialized tasks
-4. **Permission System**: Granular control over tool access and dangerous operations
-5. **CLI-First Design**: Terminal integration, git workflows, IDE compatibility
-6. **Transparent Pricing**: Pay-as-you-go, no subscriptions, predictable costs
-7. **Active Development**: Weekly releases with community-driven features
-
-**Sources**: All claims verifiable in [official documentation](https://code.claude.com/docs) and [CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md).
+- 深度上下文窗口（200K tokens）
+- 智能子智能体系统（防止上下文污染）
+- MCP 生态（专业工具）
+- 强大的系统提示词（高质量输出）
 
 ---
 
-### How to Spot Reliable Information
+### ✅ 真相：Claude Code 真正特别之处
 
-✅ **Trust these sources**:
+**有据可查、可验证的优势**：
 
-- Official [Claude Code documentation](https://code.claude.com/docs)
+1. **上下文窗口**：200K tokens（约 15 万字）—— 业内最大之一
+2. **子智能体系统**：隔离的上下文窗口，防止探索期间的污染
+3. **MCP 生态**：100+ 社区服务器，覆盖各类专业任务
+4. **权限系统**：对工具访问和危险操作的细粒度控制
+5. **CLI 优先设计**：终端集成、Git 工作流、IDE 兼容
+6. **透明定价**：按量付费，无订阅，成本可预测
+7. **活跃开发**：每周发布，功能由社区驱动
+
+**来源**：所有说法均可在[官方文档](https://code.claude.com/docs)和 [CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) 中验证。
+
+---
+
+### 如何辨别可靠信息
+
+✅ **可信来源**：
+
+- 官方 [Claude Code 文档](https://code.claude.com/docs)
 - [GitHub CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)
-- [GitHub Issues](https://github.com/anthropics/claude-code/issues) with Anthropic staff responses
-- Community resources citing official sources (like [Claudelog.com](https://claudelog.com/))
-- This guide (with 14 evaluated resources and clear sourcing)
+- 有 Anthropic 员工回复的 [GitHub Issues](https://github.com/anthropics/claude-code/issues)
+- 引用官方来源的社区资源（如 [Claudelog.com](https://claudelog.com/)）
+- 本指南（14 份已评估资源，来源清晰）
 
-❌ **Be skeptical of**:
+❌ **需要警惕的**：
 
-- Social media posts with no sources
-- "Secret tricks" without CHANGELOG references
-- Percentage claims without benchmarks ("50% faster", "10x productivity")
-- Dramatic language designed to create FOMO
-- Content that discourages reading official docs
-
----
-
-### Contributing to This Section
-
-Found a new myth circulating online? [Open an issue](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/issues) with:
-
-- The myth/misconception
-- Where you saw it (platform, approximate reach)
-- Why it's misleading (with sources)
-
-We'll evaluate and add it to this section if it meets quality criteria.
+- 没有来源的社交媒体帖子
+- 没有 CHANGELOG 引用的"秘密技巧"
+- 没有基准的百分比宣称（"快 50%"、"10 倍生产力"）
+- 制造 FOMO 的夸张语言
+- 不鼓励阅读官方文档的内容
 
 ---
 
-## About This Guide
+### 为本节贡献内容
 
-**End of Guide**
+在网上发现了新的谣言？[提交 issue](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/issues)，附上：
+
+- 谣言/误解内容
+- 你在哪里看到的（平台、大致传播范围）
+- 为什么它误导人（附来源）
+
+我们会进行评估，符合质量标准后将其加入本节。
 
 ---
 
-**Author**: [Florian BRUNIAUX](https://github.com/FlorianBruniaux) | Founding Engineer [@Méthode Aristote](https://methode-aristote.fr)
+## 关于本指南
 
-**Written with**: Claude (Anthropic) - This guide was collaboratively written with Claude Code, demonstrating the tool's capabilities for technical documentation.
+**指南结束**
 
-**Inspired by**:
+---
 
-- [Claudelog.com](https://claudelog.com/) - An excellent resource for Claude Code tips, patterns, and advanced techniques that served as a major reference for this guide.
-- [ykdojo/claude-code-tips](https://github.com/ykdojo/claude-code-tips) - Practical productivity techniques that informed keyboard shortcuts, context handoffs, and terminal workflow optimizations in sections 1.3, 2.2, and 10.2.
-- [Nick Tune's Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa) - Advanced workflow patterns integrated in sections 3.1, 7.1, 9.3, and 9.10.
+**作者**：[Florian BRUNIAUX](https://github.com/FlorianBruniaux) | 创始工程师 [@Méthode Aristote](https://methode-aristote.fr)
 
-**License**: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) - Feel free to use, adapt, and share with attribution.
+**与谁共创**：Claude (Anthropic) — 本指南是与 Claude Code 协作完成的，展示了该工具在技术文档撰写方面的能力。
 
-**Contributions**: Issues and PRs welcome.
+**灵感来源**：
 
-**Last updated**: January 2026 | **Version**: 3.38.12
+- [Claudelog.com](https://claudelog.com/) — 关于 Claude Code 技巧、模式和高级技术的优秀资源，是本指南的重要参考。
+- [ykdojo/claude-code-tips](https://github.com/ykdojo/claude-code-tips) — 实用的生产力技巧，影响了 1.3、2.2 和 10.2 节中关于键盘快捷键、上下文交接和终端工作流优化的内容。
+- [Nick Tune's Coding Agent Development Workflows](https://medium.com/nick-tune-tech-strategy-blog/coding-agent-development-workflows-af52e6f912aa) — 高级工作流模式，整合于 3.1、7.1、9.3 和 9.10 节。
+
+**许可协议**：[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) — 欢迎自由使用、改编和分享，请注明出处。
+
+**贡献**：欢迎提交 issue 和 PR。
+
+**最后更新**：2026 年 1 月 | **版本**：3.38.12
