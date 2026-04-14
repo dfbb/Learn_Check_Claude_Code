@@ -4,6 +4,7 @@ Claude Code / Codex 使用情况统计工具
 统计过去 30 天内的使用数据，输出多维度报告和综合得分。
 """
 import json
+import math
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -269,32 +270,36 @@ class StatsCollector:
 
     def calculate_score(self) -> dict:
         """
-        加权平衡评分，各维度贡献均衡。
-        返回各分项和总分的字典。
+        加权平衡评分，各维度使用对数缩放并设上限，避免 token 量碾压其他指标。
+        log1p(x) = ln(1+x)，x=0 时得 0，增长随 x 增大而放缓。
+        每个维度：raw = scale * log1p(value / unit)，再 min(raw, cap) 截断。
         """
         total_cached = self.total_cached_input_tokens + self.total_cache_read_input_tokens
         total_active, max_streak = self.compute_streak()
-
-        # 代码工具调用总次数
         code_tool_calls = sum(self.tool_counts[t] for t in CODE_TOOLS)
-        # 高级工具种类数（去重）
         advanced_tool_types = sum(
             1 for t in self.tool_counts
             if t in ADVANCED_TOOLS or t.startswith("Agent:")
         )
-        # 使用次数超过 5 次的 Skill 数量
         skills_over_5 = sum(1 for c in self.skill_counts.values() if c > 5)
 
+        def scored(value: float, unit: float, scale: float, cap: float) -> float:
+            """对数缩放后截断到上限"""
+            return min(scale * math.log1p(value / unit), cap)
+
         breakdown = {
-            "消息量":    (self.total_messages // 500) * 0.2,
-            "会话数":    (self.total_sessions // 30) * 0.3,
-            "输入Token": (self.total_input_tokens // 5_000_000) * 0.3,
-            "缓存Token": (total_cached // 5_000_000) * 0.15,
-            "输出Token": (self.total_output_tokens // 50_000) * 0.1,
-            "Skill深度": skills_over_5 * 0.4,
-            "工具多样性": advanced_tool_types * 0.3,
-            "代码操作量": (code_tool_calls // 200) * 0.2,
-            "活跃天数":  total_active * 0.1,
+            # 非 token 维度（满分 100 中占 30 分）
+            "消息量":    min(self.total_messages / 500 * 0.48,  12.0),
+            "会话数":    min(self.total_sessions / 30 * 0.6,    10.0),
+            "活跃天数":  min(total_active * 0.267,               8.0),
+            # token 维度：对数缩放 + 上限（共 30 分）
+            "输入Token": scored(self.total_input_tokens,  5_000_000, 4.0, 10.0),
+            "缓存Token": scored(total_cached,             5_000_000, 3.0, 10.0),
+            "输出Token": scored(self.total_output_tokens,   50_000,  3.0, 10.0),
+            # 行为维度（共 40 分，权重最高）
+            "Skill深度": min(skills_over_5 * 1.0,              15.0),
+            "工具多样性": min(advanced_tool_types * 0.77,       10.0),
+            "代码操作量": scored(code_tool_calls,          200, 4.5, 15.0),
         }
         breakdown["总分"] = sum(breakdown.values())
         breakdown["_skills_over_5"] = skills_over_5
@@ -360,20 +365,35 @@ class StatsCollector:
         print("─" * W)
         print("  得分明细:")
         score_items = [
-            ("消息量 (每 500 条 +0.2)",    "消息量"),
-            ("会话数 (每 30 个 +0.3)",     "会话数"),
-            ("输入 Token (每 500万 +0.3)", "输入Token"),
-            ("缓存 Token (每 500万 +0.15)","缓存Token"),
-            ("输出 Token (每 5万 +0.1)",   "输出Token"),
-            ("Skill 深度 (>5次 每个 +0.4)","Skill深度"),
-            ("工具多样性 (每种 +0.3)",     "工具多样性"),
-            ("代码操作量 (每 200次 +0.2)", "代码操作量"),
-            ("活跃天数 (每天 +0.1)",       "活跃天数"),
+            ("消息量       (线性, 上限 12)",    "消息量"),
+            ("会话数       (线性, 上限 10)",    "会话数"),
+            ("活跃天数     (线性, 上限  8)",    "活跃天数"),
+            ("输入 Token   (对数, 上限 10)",    "输入Token"),
+            ("缓存 Token   (对数, 上限 10)",    "缓存Token"),
+            ("输出 Token   (对数, 上限 10)",    "输出Token"),
+            ("Skill 深度   (线性, 上限 15)",    "Skill深度"),
+            ("工具多样性   (线性, 上限 10)",    "工具多样性"),
+            ("代码操作量   (对数, 上限 15)",    "代码操作量"),
         ]
         for label, key in score_items:
             print(f"  {label:<36} {sc[key]:>7.2f}")
         print("─" * W)
-        print(f"  {'总分':<36} {sc['总分']:>7.2f}")
+        print(f"  {'总分 (满分 100)':<36} {sc['总分']:>7.2f}")
+
+        # 评级
+        total = sc['总分']
+        if total >= 80:
+            grade, desc = "S", "重度用户：多维度接近上限，每天使用，大量工具调用"
+        elif total >= 60:
+            grade, desc = "A", "高频用户：大部分维度表现良好，偶有短板"
+        elif total >= 35:
+            grade, desc = "B", "中度用户：日常使用但不够深入，工具多样性有限"
+        else:
+            grade, desc = "C", "轻度用户：偶尔使用，token 量少，skill 使用少"
+
+        print("─" * W)
+        print(f"  评级: {grade}  —  {desc}")
+        print(f"  (S≥80 / A≥60 / B≥35 / C<35，满分 100)")
         print("═" * W + "\n")
 
 
