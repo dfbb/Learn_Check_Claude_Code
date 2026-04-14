@@ -81,4 +81,4 @@ Claude Code 参考文档：
 ## 鸣谢
 
 - 题库内容参考自 [FlorianBruniaux/claude-code-ultimate-guide](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/tree/main/quiz)
-- 评分脚本灵感来自知乎用户 [Alex Hu](https://zhuanlan.zhihu.com/p/2009744974980331332)
+- Claude Code 最佳应用指南参考自知乎用户 [Alex Hu](https://zhuanlan.zhihu.com/p/2009744974980331332)
