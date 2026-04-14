@@ -1,42 +1,130 @@
 #!/usr/bin/env python3
+"""
+Claude Code / Codex 使用情况统计工具
+统计过去 30 天内的使用数据，输出多维度报告和综合得分。
+"""
 import json
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Optional
 
+
+# ─── 工具分类 ────────────────────────────────────────────────────────────────
+
+# 编码类工具：衡量实际编码工作量
+CODE_TOOLS = {"Edit", "Write", "Read", "Glob", "Grep", "NotebookEdit"}
+
+# 高级能力工具：衡量工具使用深度
+ADVANCED_TOOLS = {"Agent", "WebSearch", "WebFetch", "LSP", "Bash", "Task",
+                  "TaskCreate", "TaskUpdate", "TaskGet", "TaskList"}
+
+
+# ─── 统计收集器 ───────────────────────────────────────────────────────────────
 
 class StatsCollector:
     def __init__(self):
+        # Token 统计
         self.total_input_tokens = 0
         self.total_cached_input_tokens = 0
         self.total_cache_read_input_tokens = 0
         self.total_output_tokens = 0
+
+        # 会话与消息
         self.total_sessions = 0
         self.total_messages = 0
+
+        # Skill 统计
         self.total_skill_uses = 0
         self.skill_counts = defaultdict(int)
 
-    def extract_tokens(self, obj):
-        """从对象中提取各种 token 计数"""
-        if 'input_tokens' in obj:
-            self.total_input_tokens += obj['input_tokens']
-        if 'cached_input_tokens' in obj:
-            self.total_cached_input_tokens += obj['cached_input_tokens']
-        if 'cache_read_input_tokens' in obj:
-            self.total_cache_read_input_tokens += obj['cache_read_input_tokens']
-        if 'output_tokens' in obj:
-            self.total_output_tokens += obj['output_tokens']
+        # 工具调用统计（按工具名）
+        self.tool_counts = defaultdict(int)
 
-    def process_codex_session(self, file_path, one_month_ago_ts):
-        """处理 .codex/sessions 目录下的 jsonl 文件"""
-        if not self.is_recent_file(file_path, one_month_ago_ts):
+        # 活跃日期集合（用于计算 streak）
+        self.active_dates: set = set()
+
+    # ── Token 提取 ────────────────────────────────────────────────────────────
+
+    def _extract_tokens(self, obj: dict):
+        """从 usage 对象中累加各类 token 数量"""
+        self.total_input_tokens += obj.get('input_tokens', 0)
+        self.total_cached_input_tokens += obj.get('cached_input_tokens', 0)
+        self.total_cache_read_input_tokens += obj.get('cache_read_input_tokens', 0)
+        self.total_output_tokens += obj.get('output_tokens', 0)
+
+    # ── 时间工具 ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_timestamp(ts) -> Optional[float]:
+        """将各种格式的时间戳统一转为 Unix 时间戳（秒）"""
+        try:
+            if isinstance(ts, (int, float)):
+                # 毫秒级时间戳自动转换
+                return ts / 1000 if ts > 1e12 else float(ts)
+            if isinstance(ts, str):
+                return datetime.fromisoformat(ts.replace('Z', '+00:00')).timestamp()
+        except Exception:
+            pass
+        return None
+
+    def _record_date(self, ts_raw):
+        """记录活跃日期（用于 streak 计算）"""
+        ts = self._parse_timestamp(ts_raw)
+        if ts:
+            self.active_dates.add(datetime.fromtimestamp(ts).date())
+
+    @staticmethod
+    def _is_recent(ts_raw, cutoff_ts: float) -> bool:
+        """判断时间戳是否在截止时间之后"""
+        ts = StatsCollector._parse_timestamp(ts_raw)
+        return ts is not None and ts >= cutoff_ts
+
+    @staticmethod
+    def _file_is_recent(file_path: str, cutoff_ts: float) -> bool:
+        """通过文件修改时间快速过滤旧文件"""
+        return os.path.getmtime(file_path) >= cutoff_ts
+
+    # ── 工具调用统计 ──────────────────────────────────────────────────────────
+
+    def _process_tool_calls(self, content: list):
+        """
+        从 message.content 数组中提取工具调用。
+        同时处理 Skill 调用和 Agent 子类型。
+        """
+        for item in content:
+            if not isinstance(item, dict) or item.get('type') != 'tool_use':
+                continue
+            name = item.get('name', '')
+            if not name:
+                continue
+
+            inp = item.get('input', {}) or {}
+
+            if name == 'Skill':
+                # Skill 工具：记录具体 skill 名称
+                skill_name = inp.get('skill', '')
+                if skill_name:
+                    self.skill_counts[skill_name] += 1
+                    self.total_skill_uses += 1
+            elif name == 'Agent':
+                # Agent 工具：记录子类型
+                agent_type = inp.get('subagent_type', 'unknown')
+                self.tool_counts[f"Agent:{agent_type}"] += 1
+            else:
+                self.tool_counts[name] += 1
+
+    # ── 文件处理：Codex sessions ──────────────────────────────────────────────
+
+    def process_codex_session(self, file_path: str, cutoff_ts: float):
+        """处理 ~/.codex/sessions/ 下的 JSONL 文件"""
+        if not self._file_is_recent(file_path, cutoff_ts):
             return
 
         self.total_sessions += 1
-
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
+                for line in f:
                     line = line.strip()
                     if not line:
                         continue
@@ -45,64 +133,45 @@ class StatsCollector:
                     except json.JSONDecodeError:
                         continue
 
-                    # 检查时间戳
-                    if 'timestamp' in data and not self.is_recent_timestamp(data['timestamp'], one_month_ago_ts):
+                    ts = data.get('timestamp')
+                    if ts and not self._is_recent(ts, cutoff_ts):
                         continue
+                    if ts:
+                        self._record_date(ts)
 
-                    # 每一行算一条消息
                     self.total_messages += 1
 
-                    # 统计 token 数量 - 多种格式兼容
-                    processed = False
-
-                    # 格式 1: Codex event_msg 类型的 token_count 事件
+                    # Codex token_count 事件（优先用 last_token_usage 避免累计重复）
                     if data.get('type') == 'event_msg':
                         payload = data.get('payload', {})
-                        if (isinstance(payload, dict) and
-                            payload.get('type') == 'token_count' and 'info' in payload):
-                            info = payload['info']
+                        if isinstance(payload, dict) and payload.get('type') == 'token_count':
+                            info = payload.get('info', {})
                             if isinstance(info, dict):
-                                # Codex 格式优先使用 last_token_usage（本轮新增），避免累计重复
-                                # 因为 total_token_usage 是累计总数，每步都会包含之前所有量
-                                if 'last_token_usage' in info:
-                                    usage = info['last_token_usage']
-                                    self.extract_tokens(usage)
-                                    processed = True
-                                elif 'total_token_usage' in info:
-                                    usage = info['total_token_usage']
-                                    self.extract_tokens(usage)
-                                    processed = True
-                                elif 'input_tokens' in info:
-                                    self.extract_tokens(info)
-                                    processed = True
+                                usage = (info.get('last_token_usage')
+                                         or info.get('total_token_usage')
+                                         or info)
+                                if isinstance(usage, dict):
+                                    self._extract_tokens(usage)
 
-                    # 格式 2: Claude Code 直接有 usage 字段
-                    if not processed and 'usage' in data:
-                        usage = data['usage']
-                        if isinstance(usage, dict):
-                            self.extract_tokens(usage)
-                            processed = True
+                    # 通用 usage 字段
+                    elif 'usage' in data and isinstance(data['usage'], dict):
+                        self._extract_tokens(data['usage'])
 
-                    # 格式 3: 顶级直接有 tokens 字段
-                    if not processed:
-                        self.extract_tokens(data)
+                    # 工具调用
+                    content = (data.get('message', {}) or {}).get('content', [])
+                    if isinstance(content, list):
+                        self._process_tool_calls(content)
 
-                    # 统计 Skill 调用 - 直接检查 skill 字段
-                    if 'skill' in data:
-                        skill_name = data['skill']
-                        if isinstance(skill_name, str) and skill_name:
-                            self.skill_counts[skill_name] += 1
-                            self.total_skill_uses += 1
-
-        except Exception as e:
-            # 跳过错误，许多文件可能有不完整的行
+        except Exception:
             pass
 
-    def process_costs_jsonl(self, file_path, one_month_ago_ts):
-        """处理 .claude/metrics/costs.jsonl 文件"""
+    # ── 文件处理：costs.jsonl ─────────────────────────────────────────────────
+
+    def process_costs_jsonl(self, file_path: str, cutoff_ts: float):
+        """处理 ~/.claude/metrics/costs.jsonl"""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
+                for line in f:
                     line = line.strip()
                     if not line:
                         continue
@@ -111,23 +180,28 @@ class StatsCollector:
                     except json.JSONDecodeError:
                         continue
 
-                    if 'timestamp' in data and not self.is_recent_timestamp(data['timestamp'], one_month_ago_ts):
+                    ts = data.get('timestamp')
+                    if ts and not self._is_recent(ts, cutoff_ts):
                         continue
+                    if ts:
+                        self._record_date(ts)
 
-                    self.extract_tokens(data)
+                    self._extract_tokens(data)
                     self.total_messages += 1
         except Exception as e:
-            print(f"处理 {file_path} 出错: {e}")
+            print(f"  ⚠ 处理 costs.jsonl 出错: {e}")
 
-    def process_claude_project_jsonl(self, file_path, one_month_ago_ts):
-        """处理 .claude/projects 目录下的 jsonl 文件"""
-        if not self.is_recent_file(file_path, one_month_ago_ts):
+    # ── 文件处理：Claude projects ─────────────────────────────────────────────
+
+    def process_claude_project_jsonl(self, file_path: str, cutoff_ts: float):
+        """处理 ~/.claude/projects/ 下的 JSONL 文件"""
+        if not self._file_is_recent(file_path, cutoff_ts):
             return
 
+        session_counted = False
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                first_line = True
-                for line_num, line in enumerate(f, 1):
+                for line in f:
                     line = line.strip()
                     if not line:
                         continue
@@ -136,191 +210,204 @@ class StatsCollector:
                     except json.JSONDecodeError:
                         continue
 
-                    # 检查时间戳
-                    if 'timestamp' in data and not self.is_recent_timestamp(data['timestamp'], one_month_ago_ts):
+                    ts = data.get('timestamp')
+                    if ts and not self._is_recent(ts, cutoff_ts):
                         continue
+                    if ts:
+                        self._record_date(ts)
 
-                    # 每个文件算一个 session
-                    if first_line:
+                    # 每个文件计为一个 session（首次有效行时计数）
+                    if not session_counted:
                         self.total_sessions += 1
-                        first_line = False
+                        session_counted = True
 
-                    # 统计消息
-                    if 'type' in data:
-                        if data['type'] in ['user', 'assistant']:
-                            self.total_messages += 1
-                    elif 'message' in data or 'content' in data:
+                    # 统计 user/assistant 消息
+                    msg_type = data.get('type', '')
+                    if msg_type in ('user', 'assistant'):
                         self.total_messages += 1
 
-                    # 检查是否是新会话（另一种格式）
-                    if 'type' in data and data['type'] == 'user' and data.get('parentUuid') is None:
-                        self.total_sessions += 1
-
-                    # 提取 token 使用量
-                    if 'message' in data and isinstance(data['message'], dict) and 'usage' in data['message']:
-                        usage = data['message']['usage']
-                        self.extract_tokens(usage)
-                    elif 'usage' in data:
-                        usage = data['usage']
-                        if isinstance(usage, dict):
-                            self.extract_tokens(usage)
-
-                    # 统计 Skill 调用
-                    if ('message' in data and isinstance(data['message'], dict) and
-                        'content' in data['message']):
-                        content = data['message']['content']
+                    # 提取 token 用量（优先从 message.usage）
+                    msg = data.get('message')
+                    if isinstance(msg, dict):
+                        if 'usage' in msg:
+                            self._extract_tokens(msg['usage'])
+                        # 提取工具调用
+                        content = msg.get('content', [])
                         if isinstance(content, list):
-                            for item in content:
-                                if item.get('type') == 'tool_use':
-                                    name = item.get('name')
-                                    if name == 'Skill':
-                                        input_data = item.get('input', {})
-                                        if 'skill' in input_data:
-                                            skill_name = input_data['skill']
-                                            self.skill_counts[skill_name] += 1
-                                            self.total_skill_uses += 1
-                                    elif name == 'Agent':
-                                        input_data = item.get('input', {})
-                                        if 'subagent_type' in input_data:
-                                            agent_type = input_data['subagent_type']
-                                            self.skill_counts[f"Agent:{agent_type}"] += 1
-                                            self.total_skill_uses += 1
+                            self._process_tool_calls(content)
+                    elif 'usage' in data and isinstance(data['usage'], dict):
+                        self._extract_tokens(data['usage'])
 
-                    # 直接的 skill 调用格式
-                    if 'skill' in data:
-                        skill_name = data['skill']
-                        if isinstance(skill_name, str) and skill_name:
-                            self.skill_counts[skill_name] += 1
-                            self.total_skill_uses += 1
-                    elif 'name' in data and data['name'] == 'Skill' and 'input' in data:
-                        input_data = data['input']
-                        if 'skill' in input_data:
-                            skill_name = input_data['skill']
-                            self.skill_counts[skill_name] += 1
-                            self.total_skill_uses += 1
-
-        except Exception as e:
-            # 跳过错误
+        except Exception:
             pass
 
-    @staticmethod
-    def is_recent_timestamp(timestamp_str, one_month_ago_ts):
-        """检查时间戳是否在最近一个月内"""
-        try:
-            if isinstance(timestamp_str, str):
-                dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                return dt.timestamp() >= one_month_ago_ts
-            elif isinstance(timestamp_str, (int, float)):
-                return timestamp_str >= one_month_ago_ts
-        except:
-            return False
-        return False
+    # ── Streak 计算 ───────────────────────────────────────────────────────────
 
-    @staticmethod
-    def is_recent_file(file_path, one_month_ago_ts):
-        """检查文件是否在最近一个月内修改"""
-        mtime = os.path.getmtime(file_path)
-        return mtime >= one_month_ago_ts
-
-    def calculate_score(self):
-        """根据规则计算得分
-
-        计分规则：
-        - 每 1000 条消息 +0.3 分
-        - 每 50 个 session +0.5 分
-        - 每 1000万 input_token +0.5 分
-        - 每 1000万 cached_input_tokens(cache_read_input_tokens) +0.2 分
-        - 每 10万 output_token +0.1 分
-        - 每个使用次数超过 5 次的 skill +0.5 分
+    def compute_streak(self) -> tuple[int, int]:
         """
-        score = 0.0
-        score += (self.total_messages // 1000) * 0.3
-        score += (self.total_sessions // 50) * 0.5
-        score += (self.total_input_tokens // 10_000_000) * 0.5
+        返回 (总活跃天数, 最长连续天数)。
+        连续天数：相邻日期差为 1 天。
+        """
+        if not self.active_dates:
+            return 0, 0
+
+        sorted_dates = sorted(self.active_dates)
+        total_active = len(sorted_dates)
+
+        max_streak = 1
+        cur_streak = 1
+        for i in range(1, len(sorted_dates)):
+            if (sorted_dates[i] - sorted_dates[i - 1]).days == 1:
+                cur_streak += 1
+                max_streak = max(max_streak, cur_streak)
+            else:
+                cur_streak = 1
+
+        return total_active, max_streak
+
+    # ── 评分计算 ──────────────────────────────────────────────────────────────
+
+    def calculate_score(self) -> dict:
+        """
+        加权平衡评分，各维度贡献均衡。
+        返回各分项和总分的字典。
+        """
         total_cached = self.total_cached_input_tokens + self.total_cache_read_input_tokens
-        score += (total_cached // 10_000_000) * 0.2
-        score += (self.total_output_tokens // 100_000) * 0.1
+        total_active, max_streak = self.compute_streak()
 
-        skills_over_5 = sum(1 for cnt in self.skill_counts.values() if cnt > 5)
-        score += skills_over_5 * 0.5
+        # 代码工具调用总次数
+        code_tool_calls = sum(self.tool_counts[t] for t in CODE_TOOLS)
+        # 高级工具种类数（去重）
+        advanced_tool_types = sum(
+            1 for t in self.tool_counts
+            if t in ADVANCED_TOOLS or t.startswith("Agent:")
+        )
+        # 使用次数超过 5 次的 Skill 数量
+        skills_over_5 = sum(1 for c in self.skill_counts.values() if c > 5)
 
-        return score, skills_over_5
+        breakdown = {
+            "消息量":    (self.total_messages // 500) * 0.2,
+            "会话数":    (self.total_sessions // 30) * 0.3,
+            "输入Token": (self.total_input_tokens // 5_000_000) * 0.3,
+            "缓存Token": (total_cached // 5_000_000) * 0.15,
+            "输出Token": (self.total_output_tokens // 50_000) * 0.1,
+            "Skill深度": skills_over_5 * 0.4,
+            "工具多样性": advanced_tool_types * 0.3,
+            "代码操作量": (code_tool_calls // 200) * 0.2,
+            "活跃天数":  total_active * 0.1,
+        }
+        breakdown["总分"] = sum(breakdown.values())
+        breakdown["_skills_over_5"] = skills_over_5
+        breakdown["_code_tool_calls"] = code_tool_calls
+        breakdown["_advanced_tool_types"] = advanced_tool_types
+        breakdown["_total_active"] = total_active
+        breakdown["_max_streak"] = max_streak
+        return breakdown
+
+    # ── 报告输出 ──────────────────────────────────────────────────────────────
 
     def print_report(self):
-        """打印美观的统计报告"""
-        one_month_ago = datetime.now() - timedelta(days=30)
-        score, skills_over_5 = self.calculate_score()
+        """输出完整统计报告"""
+        now = datetime.now()
+        one_month_ago = now - timedelta(days=30)
         total_cached = self.total_cached_input_tokens + self.total_cache_read_input_tokens
+        sc = self.calculate_score()
 
-        print("\n" + "═" * 70)
-        print(f"📊 最近 30 天使用统计 ({one_month_ago.strftime('%Y-%m-%d')} 至 {datetime.now().strftime('%Y-%m-%d')})")
-        print("═" * 70)
-        print(f"🔹 总会话数:          {self.total_sessions:,}")
-        print(f"🔹 总消息数:          {self.total_messages:,}")
-        print(f"🔹 输入 Token 总数:   {self.total_input_tokens:,}")
-        print(f"🔹 cached_input_tokens:  {self.total_cached_input_tokens:,}")
-        print(f"🔹 cache_read_input_tokens: {self.total_cache_read_input_tokens:,}")
-        print(f"🔹 缓存总计:          {total_cached:,}")
-        print(f"🔹 输出 Token 总数:   {self.total_output_tokens:,}")
-        print(f"🔹 Token 合计:        {self.total_input_tokens + total_cached + self.total_output_tokens:,}")
-        print(f"🔹 使用过的不同 Skill: {len(self.skill_counts)} 个")
-        print(f"🔹 Skill 总调用次数:   {self.total_skill_uses} 次")
+        W = 70
+        print("\n" + "═" * W)
+        print(f"  Claude Code / Codex 使用统计  "
+              f"({one_month_ago.strftime('%Y-%m-%d')} ~ {now.strftime('%Y-%m-%d')})")
+        print("═" * W)
+
+        # ── 基础统计 ──
+        print(f"  会话数:              {self.total_sessions:>10,}")
+        print(f"  消息数:              {self.total_messages:>10,}")
+        print(f"  活跃天数:            {sc['_total_active']:>10}  (最长连续 {sc['_max_streak']} 天)")
         print()
 
-        print("📈 使用频次 Top 10 Skill:")
-        print("─" * 60)
-        sorted_skills = sorted(self.skill_counts.items(), key=lambda x: -x[1])
-        for i, (skill, count) in enumerate(sorted_skills[:10], 1):
-            mark = "✓" if count > 5 else " "
-            print(f"{i:2d}. {skill:<36} {count:>5} 次 {mark}")
+        # ── Token 统计 ──
+        print(f"  输入 Token:          {self.total_input_tokens:>10,}")
+        print(f"  缓存写入 Token:      {self.total_cached_input_tokens:>10,}")
+        print(f"  缓存读取 Token:      {self.total_cache_read_input_tokens:>10,}")
+        print(f"  缓存合计:            {total_cached:>10,}")
+        print(f"  输出 Token:          {self.total_output_tokens:>10,}")
+        print(f"  Token 总计:          {self.total_input_tokens + total_cached + self.total_output_tokens:>10,}")
         print()
 
-        print("🧮 得分计算:")
-        print("─" * 60)
-        print(f"{'消息数 (每 1000 条 +0.3)':<35} {(self.total_messages // 1000) * 0.3:>8.2f}")
-        print(f"{'会话数 (每 50 个 +0.5)':<35} {(self.total_sessions // 50) * 0.5:>8.2f}")
-        print(f"{'输入 Token (每 1000万 +0.5)':<35} {(self.total_input_tokens // 10_000_000) * 0.5:>8.2f}")
-        print(f"{'缓存总计 (每 1000万 +0.2)':<35} {(total_cached // 10_000_000) * 0.2:>8.2f}")
-        print(f"{'输出 Token (每 10万 +0.1)':<35} {(self.total_output_tokens // 100_000) * 0.1:>8.2f}")
-        print(f"{'Skill (使用>5次 每个 +0.5)':<35} {skills_over_5 * 0.5:>8.2f}  ({skills_over_5} 个)")
-        print("─" * 60)
-        print(f"{'🏆 最终总分':<35} {score:>8.2f}")
-        print("─" * 60)
+        # ── 工具使用 ──
+        print(f"  代码工具调用次数:    {sc['_code_tool_calls']:>10,}")
+        print(f"  高级工具种类数:      {sc['_advanced_tool_types']:>10}")
+        if self.tool_counts:
+            top_tools = sorted(self.tool_counts.items(), key=lambda x: -x[1])[:8]
+            print("  Top 工具调用:")
+            for name, cnt in top_tools:
+                print(f"    {name:<30} {cnt:>6,} 次")
+        print()
 
+        # ── Skill 统计 ──
+        print(f"  不同 Skill 数:       {len(self.skill_counts):>10}")
+        print(f"  Skill 总调用次数:    {self.total_skill_uses:>10,}")
+        if self.skill_counts:
+            print("  Top 10 Skill:")
+            for i, (skill, cnt) in enumerate(
+                sorted(self.skill_counts.items(), key=lambda x: -x[1])[:10], 1
+            ):
+                mark = "✓" if cnt > 5 else " "
+                print(f"  {i:2d}. {skill:<36} {cnt:>5} 次 {mark}")
+        print()
+
+        # ── 得分明细 ──
+        print("─" * W)
+        print("  得分明细:")
+        score_items = [
+            ("消息量 (每 500 条 +0.2)",    "消息量"),
+            ("会话数 (每 30 个 +0.3)",     "会话数"),
+            ("输入 Token (每 500万 +0.3)", "输入Token"),
+            ("缓存 Token (每 500万 +0.15)","缓存Token"),
+            ("输出 Token (每 5万 +0.1)",   "输出Token"),
+            ("Skill 深度 (>5次 每个 +0.4)","Skill深度"),
+            ("工具多样性 (每种 +0.3)",     "工具多样性"),
+            ("代码操作量 (每 200次 +0.2)", "代码操作量"),
+            ("活跃天数 (每天 +0.1)",       "活跃天数"),
+        ]
+        for label, key in score_items:
+            print(f"  {label:<36} {sc[key]:>7.2f}")
+        print("─" * W)
+        print(f"  {'总分':<36} {sc['总分']:>7.2f}")
+        print("═" * W + "\n")
+
+
+# ─── 主程序 ───────────────────────────────────────────────────────────────────
 
 def main():
-    # 计算一个月前的日期
-    one_month_ago = datetime.now() - timedelta(days=30)
-    one_month_ago_ts = one_month_ago.timestamp()
-
+    cutoff_ts = (datetime.now() - timedelta(days=30)).timestamp()
+    home = os.path.expanduser("~")
     collector = StatsCollector()
 
-    # 开始扫描
-    home = os.path.expanduser("~")
-    print("🔍 正在扫描 .codex/sessions...")
-    codex_dir = os.path.join(home, '.codex/sessions')
+    # 扫描 Codex sessions
+    codex_dir = os.path.join(home, '.codex', 'sessions')
     if os.path.exists(codex_dir):
-        for root, dirs, files in os.walk(codex_dir):
-            for filename in files:
-                if filename.endswith('.jsonl'):
-                    file_path = os.path.join(root, filename)
-                    collector.process_codex_session(file_path, one_month_ago_ts)
+        print("🔍 扫描 ~/.codex/sessions ...")
+        for root, _, files in os.walk(codex_dir):
+            for fn in files:
+                if fn.endswith('.jsonl'):
+                    collector.process_codex_session(os.path.join(root, fn), cutoff_ts)
 
-    print("🔍 正在扫描 .claude/metrics...")
-    costs_file = os.path.join(home, '.claude/metrics/costs.jsonl')
+    # 扫描 Claude Code 费用记录
+    costs_file = os.path.join(home, '.claude', 'metrics', 'costs.jsonl')
     if os.path.exists(costs_file):
-        collector.process_costs_jsonl(costs_file, one_month_ago_ts)
+        print("🔍 扫描 ~/.claude/metrics/costs.jsonl ...")
+        collector.process_costs_jsonl(costs_file, cutoff_ts)
 
-    print("🔍 正在扫描 .claude/projects...")
-    claude_dir = os.path.join(home, '.claude/projects')
+    # 扫描 Claude Code 项目会话
+    claude_dir = os.path.join(home, '.claude', 'projects')
     if os.path.exists(claude_dir):
-        for root, dirs, files in os.walk(claude_dir):
-            for filename in files:
-                if filename.endswith('.jsonl'):
-                    file_path = os.path.join(root, filename)
-                    collector.process_claude_project_jsonl(file_path, one_month_ago_ts)
+        print("🔍 扫描 ~/.claude/projects ...")
+        for root, _, files in os.walk(claude_dir):
+            for fn in files:
+                if fn.endswith('.jsonl'):
+                    collector.process_claude_project_jsonl(os.path.join(root, fn), cutoff_ts)
 
-    # 输出报告
     collector.print_report()
 
 
